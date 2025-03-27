@@ -23,10 +23,10 @@ class UpdateRequest extends FormRequest
     {
         return [
             'name'=>'required|string|max:255',
-            'email'=>'required|email|string|unique:providers,email'.$this->route('provider')->id.'|max:255',
+            'email'=>'required|email|string|unique:providers,email,'.$this->route('provider')->id.'|max:255',
             'ruc_number'=>'required|string|min:11|unique:providers,ruc_number,'.$this->route('provider')->id.'|max:11',
             'address'=>'nullable|string|max:255',
-            'phone'=>'required|string|min:9|unique:providers,phone'.$this->route('provider')->id.'|max:9',
+            'phone'=>'required|string|min:9|unique:providers,phone,'.$this->route('provider')->id.'|max:9',
         ];
     }
     public function messages()

@@ -20,7 +20,7 @@ class UpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name'=>'string|required|unique:products,name'.$this->route('product')->id.'|max:255',
+            'name'=>'string|required|unique:products,name,'.$this->route('product')->id.'|max:255',
             'image'=>'required|dimension:min_width=100,min_height=200',
             'sell_price'=>'required',
             'category_id'=>'integer|required|exists:App\Category,id',
