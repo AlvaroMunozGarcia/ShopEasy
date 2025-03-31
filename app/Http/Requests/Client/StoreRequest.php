@@ -20,12 +20,13 @@ class StoreRequest extends FormRequest
     {
         return [
             'name'=>'string|required|max:255',
-            'dni'=>'string|required|unique:clients,dni,'.$this->route('client')->id.'|max:8',
-            'ruc'=>'string|required|unique:clients,ruc,'.$this->route('client')->id.'|max:11',
+            'dni'=>'string|required|unique:clients|max:8',
+            'ruc'=>'string|required|unique:clients|max:11',
             'address'=>'string|required|max:255',
-            'phone'=>'string|required|unique:clients,phone,'.$this->route('client')->id.'|max:9',
-            'email'=>'string|required|unique:clients,email,'.$this->route('client')->id.'|max:225|email:rfc,dns',
+            'phone'=>'string|required|unique:clients|max:9',
+            'email'=>'string|required|unique:clients|max:225|email:rfc,dns',
         ];
+      
     }
     public function messages()
     {
