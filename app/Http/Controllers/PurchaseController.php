@@ -30,7 +30,7 @@ class PurchaseController extends Controller
             "quantity"=>$request->quantity[$key],"price"=>$request->price[$key]);
 
         }
-        $purchase->shoppingDetails()->createMany($results);
+        $purchase->purchaseDetails()->createMany($results);
         return redirect()->route('purchases.index');
     }
 
@@ -47,13 +47,13 @@ class PurchaseController extends Controller
 
     public function update(UpdateRequest $request, Purchase $purchase)
     {
-        $purchase->update($request->all());
-        return redirect()->route('purchase.index');
+        //$purchase->update($request->all());
+        //return redirect()->route('purchase.index');
     }
 
     public function destroy(Purchase $purchase)
     {
-       $purchase->delete();
-       return redirect()->route('purchases.index'); 
+       //$purchase->delete();
+       //return redirect()->route('purchases.index'); 
     }
 }
