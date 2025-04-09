@@ -1,0 +1,319 @@
+<style type="text/css" media="print">
+    @page { size: landscape; }
+</style>
+<style type="text/css">
+    .table-scrollable > .table-bordered > thead > tr:last-child > th,
+    .table-scrollable > .table-bordered > thead > tr:last-child > td {
+        border-top: 1px solid #ddd !important;   
+    }
+    .table-scrollable > .table-bordered > tbody > tr:last-child > th,
+    .table-scrollable > .table-bordered > tfoot > tr:last-child > th,
+    .table-scrollable > .table-bordered > tbody > tr:last-child > td,
+    .table-scrollable > .table-bordered > tfoot > tr:last-child > td {
+        border-bottom: 1px solid #cb5a5e !important;
+        border-right: none !important;
+    }
+    tr:last-child { 
+        background-color:#f3d3d4 !important;  border: 1px solid #cb5a5e !important; 
+    }
+</style>
+
+	<!-- BEGIN CONTENT -->
+	<div class="page-content-wrapper">
+		<div class="page-content">
+			<!-- BEGIN PAGE HEADER-->
+			<h3 class="page-title">
+			{$current.title} <small>{$current.sub_title}</small>
+			</h3>
+            <a href="javascript:history.back()" class="btn btn-circle green-haze btn-sm"><i class="fa fa-arrow-left"></i> Volver atrás</a>
+			<!-- END PAGE HEADER-->
+			<!-- BEGIN PAGE CONTENT-->
+			<div class="row">
+				<div class="col-md-12">
+					<!-- Begin: life time stats -->
+					<div class="portlet">
+						<div class="portlet-body">
+							<div class="table-container">
+								<table class="table table-striped table-bordered table-hover" id="datatable_ajax">
+								<thead>
+                                <tr role="row" id="bus_head_cell">
+                                        <th width="100%" colspan="10" id="bus_head_txt">
+                                             <i class="fa fa-search"></i> Opciones de búsqueda
+                                        </th>	
+                                </tr>
+								<tr role="row" id="bus_body_cell">
+									<th width="3%" id="cell_bus">
+										 Codigo
+									</th>
+									<th width="16%" id="cell_left">
+										 Fecha
+									</th>
+									<th width="9%" id="cell_bus">
+										 Factura
+									</th>
+									<th width="9%" id="cell_bus">
+										 Nº registro
+									</th>
+									<th id="cell_bus">
+										 
+									</th>
+									<th id="cell_bus">
+										 Plan operativo
+									</th>
+									<th id="cell_bus">
+										 Ejercicio
+									</th>
+									<th id="cell_bus">
+										 Proveedor
+									</th>
+									<th id="cell_bus">
+										 Estado
+									</th>
+									<th width="8%" id="cell_right">
+										
+									</th>
+								</tr>
+								<tr role="row" class="filter" style="background-color: #eee; height: 80px;">
+									<td></td>
+									<td style="vertical-align: top !important; border-width: 0px 0px 1px 1px;">
+										<div class="input-group date date-picker margin-bottom-5" data-date-format="dd/mm/yyyy">
+											<input type="text" class="form-control form-filter input-sm" readonly name="filter_fch_from" placeholder="Desde" style="background-color: white">
+											<span class="input-group-btn">
+											<button class="btn default" type="button"><i class="fa fa-calendar"></i></button>
+											</span>
+										</div>
+										<div class="input-group date date-picker" data-date-format="dd/mm/yyyy">
+											<input type="text" class="form-control form-filter input-sm" readonly name="filter_fch_to" placeholder="Hasta" style="background-color: white">
+											<span class="input-group-btn">
+											<button class="btn default" type="button"><i class="fa fa-calendar"></i></button>
+											</span>
+										</div>
+									</td>
+									<td style="vertical-align: top !important; border-width: 0px 0px 1px 0px;">
+										<input type="text" class="form-control form-filter input-sm" name="filter_id">
+									</td>
+									<td style="vertical-align: top !important; border-width: 0px 0px 1px 0px;">
+										<input type="text" class="form-control form-filter input-sm" name="filter_ref">
+									</td>
+									<td style="vertical-align: top !important; border-width: 0px 0px 1px 0px;">&nbsp;</td>
+									<td style="vertical-align: top !important; border-width: 0px 0px 1px 0px;">
+										<select name="filter_plo_opf" class="form-control form-filter input-sm">
+											<option value="">Todos</option>
+											{foreach from=$data_vars.plo_opf item=curr_id}
+												<option value="{$curr_id.id}">{$curr_id.name}</option>
+											{/foreach}
+										</select>
+									</td>
+									<td style="vertical-align: top !important; border-width: 0px 0px 1px 0px;">
+										<select name="filter_eje_ges" class="form-control form-filter input-sm">
+											<option value="">Todos</option>
+											{foreach from=$data_vars.eje_ges item=curr_id}
+												<option value="{$curr_id.eje_ges}">{$curr_id.eje_ges}</option>
+											{/foreach}
+										</select>
+									</td>
+									<td style="vertical-align: top !important; border-width: 0px 0px 1px 0px;">
+										<select name="filter_prv" class="form-control form-filter input-sm">
+											<option value="">Todos</option>
+											{foreach from=$data_vars.prv item=curr_id}
+												<option value="{$curr_id.id}">{$curr_id.name}</option>
+											{/foreach}
+										</select>
+									</td>
+									<td style="vertical-align: top !important; border-width: 0px 0px 1px 0px;">
+										<select name="filter_sit" class="form-control form-filter input-sm">
+											<option value="">Todos</option>
+											{foreach from=$data_vars.sit item=curr_id key=key}
+												<option value="{$key}">{$curr_id}</option>
+											{/foreach}
+										</select>
+									</td>
+									<td style="vertical-align: top !important; border-width: 0px 1px 1px 0px;">
+										<div class="btn-group btn-group-circle btn-group-s btn-group-solid" style="width:100px; margin-bottom: 4px;">
+                                                <button type="button" class="btn filter-submit" style="width:60%;margin:0px; background-color:#5E738B; color: white;"><i class="fa fa-search"></i></button>
+                                                <button type="button" class="btn red filter-cancel" style="width:40%;margin:0px"><i class="fa fa-times"></i></button>
+
+                                            </div>
+                                            <br>
+                                            <script LANGUAGE="JavaScript">
+                                                if (window.print) {
+                                                document.write('<a href="javascript:window.print()" class="btn btn-circle" style="background-color:#44B6AE; color:white; width:100px; padding: 4px 10px;font-size: 13px;line-height: 1.5;"><i class="fa fa-print" aria-hidden="true"></i> Imprimir</a>');
+                                                }
+                                            </script>
+									</td>
+								</tr>
+                                <tr role="row" style="border: none;  height: 22px;">
+                                            <th colspan="10" style="border: none;padding: 16px 0px 16px 0px !important;">
+                                           
+                                            </th>
+                                            
+                                        </tr>     
+                                <tr role="row" class="heading">
+									<th style="border-left: 0px solid #dddddd;">
+										 Codigo
+									</th>
+									<th>
+										 Fecha
+									</th>
+									<th>
+										 Factura
+									</th>
+									<th>
+										 Nº registro
+									</th>
+									<th>
+										 Importe
+									</th>
+									<th>
+										 Plan operativo
+									</th>
+									<th>
+										 Ejercicio
+									</th>
+									<th style="border-rigth: 0px solid #dddddd;">
+										 Proveedor
+									</th>
+									<th style="border-rigth: 0px solid #dddddd;">
+										 Estado
+									</th>
+									<th style="border-rigth: 0px solid #dddddd;">
+										 Opciones
+									</th>
+								</tr>
+								</thead>
+								<tbody>
+								</tbody>
+								</table>
+                                <div class="row" id="rowTotales">
+                                    <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+
+                                    </div>
+                                    <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                                        
+                                    </div>
+                                    <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                                        
+                                    </div>
+                                    <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                                        <a class="dashboard-stat dashboard-stat-v2 green-dark" href="#" id="totalizador">
+                                            <div class="visual">
+                                                <i class="fa fa-bar-chart-o" id="totalizador_ico"></i>
+                                            </div>
+                                            <div class="details" id="totalizador_text">
+                                                <div class="number">
+                                                    <span data-counter="counterup" id="divImporte"></span> €</div>
+                                                <div class="desc"> Total general del importe </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                </div>
+							</div>
+						</div>
+					</div>
+					<!-- End: life time stats -->
+				</div>
+			</div>
+            <div class="alert alert-danger">
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <strong>Atención.</strong> Sólo aparecerán datos generados a partir del <strong>1 de Septiembre de 2016.</strong>
+        </div>
+			<!-- END PAGE CONTENT-->
+		</div>
+	</div>
+<script type="text/javascript">
+var TableAjax = function () {
+
+    var initPickers = function () {
+        //init date pickers
+        $('.date-picker').datepicker({
+            rtl: Metronic.isRTL(),
+            autoclose: true
+        });
+    }
+
+    var handleRecords = function () {
+
+        var grid = new Datatable();
+
+        grid.init({
+            src: $("#datatable_ajax"),
+            onSuccess: function (grid) {
+                // execute some code after table records loaded
+            },
+            onError: function (grid) {
+                // execute some code on network or other general error
+            },
+            onDataLoad: function(grid) {
+                // execute some code on ajax data load
+                var divTot = document.getElementById('divImporte');
+                var Tot = document.getElementById('importe');
+                divTot.innerHTML =  Tot.innerHTML; 
+            },
+            loadingMessage: 'Cargando registros...',
+            dataTable: { // here you can define a typical datatable settings from http://datatables.net/usage/options
+
+                // Uncomment below line("dom" parameter) to fix the dropdown overflow issue in the datatable cells. The default datatable layout
+                // setup uses scrollable div(table-scrollable) with overflow:auto to enable vertical scroll(see: assets/global/scripts/datatable.js).
+                // So when dropdowns used the scrollable div should be removed.
+                //"dom": "<'row'<'col-md-8 col-sm-12'pli><'col-md-4 col-sm-12'<'table-group-actions pull-right'>>r>t<'row'<'col-md-8 col-sm-12'pli><'col-md-4 col-sm-12'>>",
+
+                "bStateSave": false, // save datatable state(pagination, sort, etc) in cookie.
+
+                "lengthMenu": [
+                    [10, 20, 50, 100],
+                    [10, 20, 50, 100] // change per page values here
+                ],
+                "pageLength": 100, // default record count per page
+                "ajax": {
+                    "url": "{$config.route}ajax?source={$current.file}", // ajax source
+                },
+                "order": [
+                    [1, "desc"]
+                ]// set first column as a default sort by asc
+            }
+        });
+		var oTable = $("#datatable_ajax").dataTable();
+		oTable.fnSetColumnVis( 0, false);
+        // handle group actionsubmit button click
+        grid.getTableWrapper().on('click', '.table-group-action-submit', function (e) {
+            e.preventDefault();
+            var action = $(".table-group-action-input", grid.getTableWrapper());
+            if (action.val() != "" && grid.getSelectedRowsCount() > 0) {
+                grid.setAjaxParam("customActionType", "group_action");
+                grid.setAjaxParam("customActionName", action.val());
+                grid.setAjaxParam("id", grid.getSelectedRows());
+                grid.getDataTable().ajax.reload();
+                grid.clearAjaxParams();
+            } else if (action.val() == "") {
+                Metronic.alert({
+                    type: 'danger',
+                    icon: 'warning',
+                    message: 'Please select an action',
+                    container: grid.getTableWrapper(),
+                    place: 'prepend'
+                });
+            } else if (grid.getSelectedRowsCount() === 0) {
+                Metronic.alert({
+                    type: 'danger',
+                    icon: 'warning',
+                    message: 'No record selected',
+                    container: grid.getTableWrapper(),
+                    place: 'prepend'
+                });
+            }
+        });
+    }
+
+    return {
+
+        //main function to initiate the module
+        init: function () {
+            initPickers();
+            handleRecords();
+        }
+
+    };
+
+}();
+</script>
+	<!-- END CONTENT -->

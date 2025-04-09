@@ -1,0 +1,112 @@
+<!-- BEGIN CONTENT -->
+<style>
+.table { font-size: 12px; page-break-inside:avoid}
+.cabecera { background-color: #F2F2F2; font-weight:bold}
+</style>
+
+<div class="page-content-wrapper">
+  <div class="page-content">
+    <!-- BEGIN PAGE HEADER-->
+    <h3 class="page-title">
+    {$current.title} <small>{$current.sub_title}</small>
+    </h3>
+      <div class="col-md-12" style="margin-bottom:16px; padding-left:0px;">
+   
+                    <a href="javascript:history.back()" class="btn btn-circle green-haze btn-sm"><i class="fa fa-arrow-left"></i> Volver atrás</a>
+                        <script LANGUAGE="JavaScript">
+                    if (window.print) {
+                    document.write('<a href="javascript:window.print()" class="btn btn-circle blue btn-sm" ><i class="fa fa-print"></i> Imprimir</a>');
+                    }
+                    </script>
+             
+            </div>
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row">
+      <div class="col-md-12">
+        <!-- Begin: life time stats -->
+        <div class="portlet">
+          <div class="portlet-title">
+            <div class="caption">
+              <i class="fa fa-list-alt"></i>Detalle
+            </div>
+            
+          </div>
+            
+          {if $data_vars.sit|count > 0}
+            <div class="col-md-12">
+              <table class="table table-hover">
+                <thead class=cabecera>
+                  <td>Cuenta</td>
+                  <td align="right">Situación</td>
+                  <td>&nbsp;</td>
+                </thead>
+                <tbody>
+                {assign var=tot value=0}
+                {foreach from=$data_vars.sit item=pgc}
+                  <tr>
+                    <td>{$pgc.pgc}</td>
+                    <td align="right">{$pgc.sit_fin|number_format:2:",":"."} €</td>
+                    <td align="right">
+                      <form method=post action=extracto id=form_{$pgc.pgc_id} style="display: inline; margin: 0;">
+                        <input type=hidden name=pgc_sel value={$pgc.pgc_id}>
+                        <input type=hidden name=fch_dsd_inicial_old value="01/01/2016">
+                        <input type=hidden name=fch_dsd value="01/01/2021">
+                        <input type=hidden name=fch_hst value={$smarty.now|date_format:"%d/%m/%Y"}>
+                        <input type=submit value="Ver detalle"></form>
+                    </td>
+                  </tr>
+                  {assign var="tot" value=($tot + $pgc.sit_fin)}
+                {/foreach}
+                </tbody>
+                <tfoot class=cabecera>
+                  <td>Total</td>
+                  <td align="right">{$tot|number_format:2:",":"."} €</td>
+                  <td>&nbsp;</td>
+                </tfoot>
+              </table>
+            </div>
+          {else}
+            No se han encontrado registros para mostrar
+          {/if}
+        </div>
+        <!-- End: life time stats -->
+      </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+  </div>
+</div>
+<!-- END CONTENT -->
+
+
+<script type="text/javascript" src="{$config.assets}global/plugins/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
+<script type="text/javascript">
+
+
+var initPickers_2 = function () {
+    $('.date-picker_dsd').datepicker({
+        autoclose: true
+    });
+    $('.date-picker_dsd').datepicker('update',
+    {if isset($data_vars.fch_dsd)}
+      '{$data_vars.fch_dsd}'
+    {else}
+      new Date()
+    {/if}
+    );
+
+
+    $('.date-picker_hst').datepicker({
+        autoclose: true
+    });
+    $('.date-picker_hst').datepicker('update',
+    {if isset($data_vars.fch_hst)}
+      '{$data_vars.fch_hst}'
+    {else}
+      new Date()
+    {/if}
+    );
+}
+
+initPickers_2();
+</script>
