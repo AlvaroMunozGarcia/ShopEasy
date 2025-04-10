@@ -102,6 +102,7 @@
 </head>
 <body>
 
+  <!-- Header -->
   <div class="header">
     <div class="d-flex align-items-center">
       <i class="bi bi-list menu-toggle" onclick="toggleSidebar()"></i>
@@ -119,7 +120,10 @@
       </ul>
     </div>
   </div>
+
+  <!-- Layout con sidebar y contenido -->
   <div class="layout">
+    <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
       <h5>MENÚ GENERAL</h5>
       <a href="#" class="active"><i class="bi bi-house-door-fill"></i><span>Inicio</span></a>
@@ -150,8 +154,6 @@
     <div class="main-content">
       <h4>Bienvenido al sistema</h4>
       <p>Aquí puedes colocar el contenido principal de la página.</p>
-      @yield('content')
-
     </div>
   </div>
 
