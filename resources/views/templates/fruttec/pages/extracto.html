@@ -1,0 +1,190 @@
+<!-- BEGIN CONTENT -->
+<style>
+.table { font-size: 12px }
+.cabecera { background-color: #F2F2F2; font-weight:bold}
+</style>
+
+<div class="page-content-wrapper">
+  <div class="page-content">
+    <!-- BEGIN PAGE HEADER-->
+    <h3 class="page-title">
+    {$current.title} <small>{$current.sub_title}</small>
+    </h3>
+      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12" style="margin-bottom:16px; padding-left:0px;">
+   
+                    <a href="javascript:history.back()" class="btn btn-circle green-haze btn-sm"><i class="fa fa-arrow-left"></i> Volver atrás</a>
+                        <script LANGUAGE="JavaScript">
+                    if (window.print) {
+                    document.write('<a href="javascript:window.print()" class="btn btn-circle blue btn-sm" ><i class="fa fa-print"></i> Imprimir</a>');
+                    }
+                    </script>
+             
+            </div>
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row">
+      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <!-- Begin: life time stats -->
+        <div class="portlet">
+          <div class="portlet-title">
+            <div class="caption">
+              <i class="fa fa-search"></i>Opciones de búsqueda
+            </div>
+
+           
+          </div>
+            
+<div class="col-lg-2 col-md-3 col-sm-4 col-xs-12">
+            <form method="post" class="form-horizontal" role="form">
+              <div class="form-group">
+                <label class="control-label" for="cuenta">Tipo de cuenta</label>
+                <div class="input-group col-sm-10">
+                  <select name="pgc_sel">
+                    {foreach from=$data_vars.pgc|json_decode item=cuenta}
+                      <option value={$cuenta->ID}
+                        {if isset($data_vars.pgc_sel)}
+                          {if $data_vars.pgc_sel == $cuenta->ID}
+                            selected
+                          {/if}
+                        {/if}
+                      >{$cuenta->NAME}</option>
+                    {/foreach}
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="control-label" for="cuenta">Fecha desde</label>
+                <div class="input-group date date-picker_dsd" data-date-format="dd/mm/yyyy">
+                  <input type="text" class="form-control form-filter input-sm" readonly name="fch_dsd">
+                  <span class="input-group-btn">
+                  <button class="btn btn-sm default" type="button"><i class="fa fa-calendar"></i></button>
+                  </span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="control-label" for="cuenta">Fecha hasta</label>
+                <div class="input-group date date-picker_hst" data-date-format="dd/mm/yyyy">
+                  <input type="text" class="form-control form-filter input-sm" readonly name="fch_hst">
+                  <span class="input-group-btn">
+                  <button class="btn btn-sm default" type="button"><i class="fa fa-calendar"></i></button>
+                  </span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="control-label" for="cuenta"></label>
+                <div class="input-group" data-date-format="dd/mm/yyyy">
+                  <input type=submit value="Consultar">
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+              <div class="portlet">
+            <div class="portlet-title">
+            <div class="caption">
+              <i class="fa fa-list-alt"></i>Movimientos
+            </div>
+          </div>
+              </div>
+                  {if isset($data_vars.pgc_sel)}
+                    {if isset($data_vars.sit)}
+                      <div class="panel panel-default">
+                        <div class="panel-heading"><strong>Saldo inicial a fecha {$data_vars.fch_dsd}</strong>: &nbsp;&nbsp;{$data_vars.sit.ini_res|number_format:2:",":"."} €</div>
+                      </div>
+
+                      {if $data_vars.apu|strlen > 2}
+            <div class="table-responsive">
+                        <table class="table table-hover">
+                          <thead class=cabecera>
+                            <td>Fecha</td>
+                            <td>Concepto</td>
+                            <td>Documento</td>
+                            <td align="right">Debe</td>
+                            <td align="right">Haber</td>
+                            <td align="right">Saldo</td>
+                          </thead>
+                          <tbody>
+                          {foreach from=$data_vars.apu|json_decode item=apunte}
+                            <tr>
+                              <td>{$apunte->FCH}</td>
+                              <td>{$apunte->NAME}</td>
+                              <td>{$apunte->DOC_REF}</td>
+                              <td align="right">
+                                {if $apunte->DEBE>0}
+                                  {$apunte->DEBE|number_format:2:",":"."} €
+                                {/if}
+                              </td>
+                              <td align="right">
+                                {if $apunte->HABER>0}
+                                  {$apunte->HABER|number_format:2:",":"."} €
+                                {/if}
+                              </td>
+                              <td align="right">
+                                {$apunte->SALDO|number_format:2:",":"."} €
+                              </td>
+                            </tr>
+                          {/foreach}
+                          </tbody>
+                        </table>
+            </div>
+                      {else}
+                        <div>&nbsp;&nbsp;No se han encontrado movimientos para mostrar en el extracto.<br><br></div>
+                      {/if}
+
+                    {else}
+                        <div>&nbsp;&nbsp;La fecha inicial de búsqueda debe ser mayor al 1 de Septiembre del 2016.<br><br></div>
+                    {/if}
+
+                      <div class="panel panel-default">
+                        <div class="panel-heading"><strong>Saldo final a fecha {$data_vars.fch_hst}</strong>: &nbsp;&nbsp;{$data_vars.sit.fin_res|number_format:2:",":"."} €</div>
+                      </div>
+
+                {/if}
+          </div>
+
+        </div>
+        <!-- End: life time stats -->
+      </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+      <div class="alert alert-danger">
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <strong>Atención.</strong> Sólo aparecerán extractos generados a partir del <strong>1 de Septiembre de 2016.</strong>
+        </div>
+  </div>
+</div>
+<!-- END CONTENT -->
+
+
+<script type="text/javascript" src="{$config.assets}global/plugins/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
+<script type="text/javascript">
+
+
+var initPickers_2 = function () {
+    $('.date-picker_dsd').datepicker({
+        autoclose: true
+    });
+    $('.date-picker_dsd').datepicker('update',
+    {if isset($data_vars.fch_dsd)}
+      '{$data_vars.fch_dsd}'
+    {else}
+      new Date()
+    {/if}
+    );
+
+
+    $('.date-picker_hst').datepicker({
+        autoclose: true
+    });
+    $('.date-picker_hst').datepicker('update',
+    {if isset($data_vars.fch_hst)}
+      '{$data_vars.fch_hst}'
+    {else}
+      new Date()
+    {/if}
+    );
+}
+
+initPickers_2();
+</script>

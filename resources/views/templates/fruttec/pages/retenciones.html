@@ -1,0 +1,168 @@
+<!-- BEGIN CONTENT -->
+<style>
+.table { font-size: 12px }
+.cabecera { background-color: #F2F2F2; font-weight:bold}
+</style>
+
+<div class="page-content-wrapper">
+  <div class="page-content">
+    <!-- BEGIN PAGE HEADER-->
+    <h3 class="page-title">
+    {$current.title} <small>{$current.sub_title}</small>
+    </h3>
+      <div class="col-md-12" style="margin-bottom:16px; padding-left:0px;">
+   
+                    <a href="javascript:history.back()" class="btn btn-circle green-haze btn-sm"><i class="fa fa-arrow-left"></i> Volver atrás</a>
+                        <script LANGUAGE="JavaScript">
+                    if (window.print) {
+                    document.write('<a href="javascript:window.print()" class="btn btn-circle blue btn-sm" ><i class="fa fa-print"></i> Imprimir</a>');
+                    }
+                    </script>
+             
+            </div>
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row">
+      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <!-- Begin: life time stats -->
+        <div class="portlet">
+          <div class="portlet-title">
+            <div class="caption">
+              <i class="fa fa-search"></i>Opciones de búsqueda
+            </div>
+</div>
+            
+<div class="col-lg-2 col-md-3 col-sm-4 col-xs-12">
+            
+          
+
+            <form method="post" class="form-horizontal" role="form">
+              <div class="form-group">
+                <label class="control-label" for="cuenta">Fecha desde</label>
+                <div class="input-group date date-picker_dsd" data-date-format="dd/mm/yyyy">
+                  <input type="text" class="form-control form-filter input-sm" readonly name="fch_dsd">
+                  <span class="input-group-btn">
+                  <button class="btn btn-sm default" type="button"><i class="fa fa-calendar"></i></button>
+                  </span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="control-label" for="cuenta">Fecha hasta</label>
+                <div class="input-group date date-picker_hst" data-date-format="dd/mm/yyyy">
+                  <input type="text" class="form-control form-filter input-sm" readonly name="fch_hst">
+                  <span class="input-group-btn">
+                  <button class="btn btn-sm default" type="button"><i class="fa fa-calendar"></i></button>
+                  </span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="control-label" for="cuenta"></label>
+                <div class="input-group" data-date-format="dd/mm/yyyy">
+                  <input type=submit value="Consultar">
+                </div>
+              </div>
+            </form>
+            </div>          
+        
+<div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+    <div class="portlet">
+          <div class="portlet-title">
+            <div class="caption">
+              <i class="fa fa-list-alt"></i>Movimientos
+            </div>
+          </div>
+    </div>
+          {if isset($data_vars.fch_dsd)}
+              {if $data_vars.ret|strlen > 2}
+               
+                    <div class="table-responsive">
+                  <table class="table table-hover" >
+                    <thead class=cabecera>
+                      <td>Fecha</td>
+                      <td>Documento</td>
+                      <td align="right">Base</td>
+                      <td align="right">Retención (%)</td>
+                      <td align="right">Importe</td>
+                    </thead>
+                    <tbody>
+                    {assign var="tot_ret" value=0}
+                    {assign var="tot_bas" value=0}
+
+                    {foreach from=$data_vars.ret|json_decode item=ret}
+                      <tr>
+                        <td>{$ret->CTB_FCH}</td>
+                        <td>{$ret->DOC_REF}</td>
+                        <td align="right">
+                            {$ret->BAS|number_format:2:",":"."} €
+                            {assign var="tot_bas" value=($tot_bas + $ret->BAS)}
+                        </td>
+                        <td align="right">
+                            {$ret->POR|number_format:2:",":"."} %
+                        </td>
+                        <td align="right">
+                            {$ret->IMP|number_format:2:",":"."} €
+                            {assign var="tot_ret" value=($tot_ret + $ret->IMP)}
+                        </td>
+                      </tr>
+                    {/foreach}
+                    <tr class=cabecera>
+                      <td>Total</td>
+                      <td align="right" colspan="2">{$tot_bas|number_format:2:",":"."} €</td>
+                      <td align="right" colspan="2">{$tot_ret|number_format:2:",":"."} €</td>
+                    </tr>
+                    </tbody>
+                  </table>
+                    </div>
+               
+              {else}
+                
+              {/if}
+          {else}
+            
+          {/if}
+          </div>
+        </div>
+        <!-- End: life time stats -->
+      </div>
+    </div>
+      <div class="alert alert-danger">
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+  <strong>Atención.</strong> Sólo aparecerán cobros y retenciones generados a partir del <strong>1 de Septiembre de 2016.</strong>
+</div>
+    <!-- END PAGE CONTENT-->
+  </div>
+</div>
+<!-- END CONTENT -->
+
+
+<script type="text/javascript" src="{$config.assets}global/plugins/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
+<script type="text/javascript">
+
+
+var initPickers_2 = function () {
+    $('.date-picker_dsd').datepicker({
+        autoclose: true
+    });
+    $('.date-picker_dsd').datepicker('update',
+    {if isset($data_vars.fch_dsd)}
+      '{$data_vars.fch_dsd}'
+    {else}
+      new Date()
+    {/if}
+    );
+
+
+    $('.date-picker_hst').datepicker({
+        autoclose: true
+    });
+    $('.date-picker_hst').datepicker('update',
+    {if isset($data_vars.fch_hst)}
+      '{$data_vars.fch_hst}'
+    {else}
+      new Date()
+    {/if}
+    );
+}
+
+initPickers_2();
+</script>

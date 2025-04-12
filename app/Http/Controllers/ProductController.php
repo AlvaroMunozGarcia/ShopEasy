@@ -36,7 +36,8 @@ class ProductController extends Controller
     {
         $categories=Category::get();
         $providers=Provider::get();
-        return view('admin.product.show',compact('product','categories','providers'));
+        return view('admin.product.edit', compact('product', 'categories', 'providers')); // <-- Vista correcta
+
     }
     public function update(UpdateRequest $request, Product $product)
     {

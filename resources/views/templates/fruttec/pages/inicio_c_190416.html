@@ -1,0 +1,218 @@
+<div class = "page-content-wrapper">
+	<div class="page-content" style="min-height:441px">	
+<h3 class="page-title" id='titulopag'>
+	Resumen <small>y estadísticas globales</small>
+</h3>
+<div class="row">
+<div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+	<div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+		<div class="dashboard-stat blue-madison">
+			<div class="visual">
+				<i class="fa fa-comments"></i>
+			</div>
+			<div class="details">
+				{assign var=tot value=0}
+                {foreach from=$data_vars.sit item=pgc}
+                  {assign var="tot" value=($tot + $pgc.sit_fin)}
+                {/foreach}
+				<div class="number">
+					 {$tot|number_format:2:",":"."} €
+				</div>
+				<div class="desc">
+					 Situación de cuentas
+				</div>
+			</div>
+			<a class="more" href="{$config.route}cuentas">
+			Ver detalle <i class="m-icon-swapright m-icon-white"></i>
+			</a>
+		</div>
+	</div>
+	<!--<div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+		<div class="dashboard-stat red-intense">
+			<div class="visual">
+				<i class="fa fa-bar-chart-o"></i>
+			</div>
+			<div class="details">
+				<div class="number">
+					 5,2 Kg
+				</div>
+				<div class="desc">
+					 Kg/m2
+				</div>
+			</div>
+			<a class="more" href="javascript:;">
+			Ver detalle <i class="m-icon-swapright m-icon-white"></i>
+			</a>
+		</div>
+	</div>
+	<div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+		<div class="dashboard-stat green-haze">
+			<div class="visual">
+				<i class="fa fa-shopping-cart"></i>
+			</div>
+			<div class="details">
+				<div class="number">
+					 549,00 €
+				</div>
+				<div class="desc">
+					 Subvenciones OPFH
+				</div>
+			</div>
+			<a class="more" href="javascript:;">
+			Ver detalle <i class="m-icon-swapright m-icon-white"></i>
+			</a>
+		</div>
+	</div>
+	<div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+		<div class="dashboard-stat purple-plum">
+			<div class="visual">
+				<i class="fa fa-globe"></i>
+			</div>
+			<div class="details">
+				<div class="number">
+					 1.500 m2
+				</div>
+				<div class="desc">
+					 m2 en producción
+				</div>
+			</div>
+			<a class="more" href="javascript:;">
+			Ver detalle <i class="m-icon-swapright m-icon-white"></i>
+			</a>
+		</div>
+	</div>-->
+	</div>
+</div>
+<div>
+
+</div>
+<h3 class="page-title" id='titulopag'>
+	Estadística <small>por producto</small>
+</h3>
+<div class="row">
+<div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+
+
+
+    {if $data_vars.est|count > 0}
+			<div class="col-md-12">
+              <table class="table table-hover">
+                <thead class=cabecera>
+					<tr style="background-color: #375d8c; color: white">
+						<td rowspan="2" style="border-right: 1px solid #dddddd; vertical-align:middle;" align="center">Producto</th>
+						<td colspan="3" align="center" style="border-right: 1px solid #dddddd;">Campaña anterior</td>
+						<td colspan="3" align="center">Campaña actual</td>
+						
+					</tr>
+					<tr style="background-color: #597aa5; color: white">        
+						
+						<td align="center">Kilos</td>
+						<td align="center">Importe</td>
+						<td align="center" style="border-right: 1px solid #dddddd;">Precio medio</td>
+						<td align="center">Kilos</td>
+						<td align="center">Importe</td>
+						<td align="center">Precio medio</td>
+					
+					</tr>
+                </thead>
+                <tbody>
+                {assign var=tot_kg_ant value=0}
+				{assign var=tot_imp_ant value=0}
+				{assign var=tot_pre_med_ant value=0}
+				{assign var=tot_kg_act value=0}
+				{assign var=tot_imp_act value=0}
+				{assign var=tot_pre_med_act value=0}
+                {foreach from=$data_vars.est item=estad}
+                  <tr>
+                    <td style="border-left: 1px solid #dddddd; border-right: 1px solid #dddddd;"><b>{$estad.articulo}</b></td>
+					<td align="right">{$estad.kg_ant|number_format:2:",":"."} Kg.</td>
+					<td align="right">{$estad.imp_ant|number_format:2:",":"."} €</td>
+					<td align="right" style="border-right: 1px solid #dddddd;"><b>{$estad.pre_med_ant|number_format:2:",":"."} €</b></td>
+					<td align="right">{$estad.kg_act|number_format:2:",":"."} Kg.</td>
+					<td align="right">{$estad.imp_act|number_format:2:",":"."} €</td>
+					<td align="right" style="border-right: 1px solid #dddddd;"><b>{$estad.pre_med_act|number_format:2:",":"."} €</b></td>
+
+                  </tr>
+                  {assign var="tot_kg_ant" value=($tot_kg_ant + $estad.kg_ant)}
+				  {assign var="tot_imp_ant" value=($tot_imp_ant + $estad.imp_act)}
+				  {assign var="tot_pre_med_ant" value=($tot_pre_med_ant + $estad.pre_med_ant)}
+				  {assign var="tot_kg_act" value=($tot_kg_act + $estad.kg_act)}
+				  {assign var="tot_imp_act" value=($tot_imp_act + $estad.imp_act)}
+				  {assign var="tot_pre_med_act" value=($tot_pre_med_act + $estad.pre_med_act)}
+                {/foreach}
+                </tbody>
+                <tfoot class=cabecera style="background-color: #ecbb5d; color: #483818">
+                  <td style="border-right: 1px solid #dddddd;"><b>Total</b></td>
+                  <td align="right">{$tot_kg_ant|number_format:2:",":"."} Kg.</td>
+				  <td align="right">{$tot_imp_ant|number_format:2:",":"."} €</td>
+				  <td align="right" style="border-right: 1px solid #dddddd;"><b>{($tot_pre_med_ant/$data_vars.est|count)|number_format:2:",":"."} €</b></td>
+				  <td align="right">{$tot_kg_act|number_format:2:",":"."} Kg.</td>
+				  <td align="right">{$tot_imp_act|number_format:2:",":"."} €</td>
+				  <td align="right"><b>{($tot_pre_med_act/$data_vars.est|count)|number_format:2:",":"."} €</b></td>
+               
+                </tfoot>
+              </table>
+            </div>
+          {else}
+            No se han encontrado registros para mostrar
+          {/if}
+
+
+</div>
+</div>
+</div>
+<style type="text/css">
+	#chartdiv {
+	width		: 100%;
+	height		: 500px;
+	font-size	: 11px;
+}	
+#chartdiv_lin {
+    width   : 100%;
+    height  : 500px;
+}						
+</style>	
+<script src="http://www.amcharts.com/lib/3/amcharts.js"></script>
+<script src="http://www.amcharts.com/lib/3/serial.js"></script>
+<script src="http://www.amcharts.com/lib/3/themes/light.js"></script>
+<script type="text/javascript">
+
+function cargarData(art){
+        $.ajax({
+                //data:  parametros,
+                url:   '{$config.route}ajax?source=inicio_div&art='+art,
+                type:  'post',
+                beforeSend: function () {
+                        $("#resultado").html("Procesando, espere por favor...");
+                },
+                success:  function (response) {
+                        $("#resultado").html(response);
+                }
+        });  
+    }
+
+jQuery(document).ready(function() { 
+
+   $( "#combo" ).on('change', function() {
+  		$( ".chart_help" ).html($( "#combo option:selected" ).text());
+  		cargarData($( "#combo option:selected" ).val());
+	});
+   $( ".chart_help" ).html($( "#combo option:selected" ).text());
+   cargarData($( "#combo option:selected" ).val());
+
+ 
+
+});
+
+
+
+	
+   /*function changeArt()
+   {
+    var select = document.getElementById('art.ctr');
+    var artctr_id = select.options[select.selectedIndex].text;
+    document.querySelector('.chart_1').innerHTML = artctr_id;
+    document.querySelector('.chart_2').innerHTML = artctr_id;
+   } */
+</script>
+

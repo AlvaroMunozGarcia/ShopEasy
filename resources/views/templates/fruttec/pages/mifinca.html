@@ -1,0 +1,426 @@
+<script src="https://www.amcharts.com/lib/3/amcharts.js"></script>
+<script src="https://www.amcharts.com/lib/3/pie.js"></script>
+<script src="https://www.amcharts.com/lib/3/themes/light.js"></script>
+
+<link href="{$config.assets}global/plugins/bootstrap-fileinput/bootstrap-fileinput.css" rel="stylesheet" type="text/css"/>
+<link type="text/css" rel="stylesheet" href="{$config.assets}admin/pages/css/profile-old.css">
+{if $data_vars.permisoConsultarCultivo>0}
+<div class = "page-content-wrapper">
+
+	<div class="page-content" style="min-height:441px">
+
+	{if isset($data_vars.ctrid)}
+<div class="row">
+    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+
+    
+                
+                    <h1 class="page-title">
+                        Cultivo {$data_vars.ctrname} 
+                    </h1>  
+            
+            
+                    <h1 class="page-title">
+                        <small>
+                            <ul class="list-inline">
+                                <li>
+                                    <i class="fa fa-leaf"></i> <b>Producto: </b>{$data_vars.artname}
+                                </li>
+                                <li>
+                                    <i class="fa fa-expand"></i> <b>Superficie: </b>{$data_vars.m2} m2
+                                </li>
+                                <li>
+                                    <i class="fa fa-calendar"></i> <b>Fecha plantación: </b>{$data_vars.fch_pln}
+                                </li>
+                            </ul>
+                        </small> 
+                    </h1>  
+                    <h1 class="page-title">
+                    <small>
+                        <ul class="list-inline">
+                            <li>
+                                <i class="fa fa-car"></i> <b>Última visita: </b>{$data_vars.fch_ult_vis}
+                            </li>
+                            {if $data_vars.fch_ult_trt != ""}
+                                <li>
+                                    <i class="fa fa-ambulance"></i> <b>Último tratamiento: </b>{$data_vars.fch_ult_trt}
+                                </li>
+                            {/if}
+                            
+                        </ul>
+                    </small> 
+                    </h1> 
+    </div>
+
+<div class="col-md-8 profile-info" style="margin-bottom:16px">
+<a href="javascript:history.back()" class="btn btn-circle green-haze btn-sm"><i class="fa fa-arrow-left"></i> Volver atrás</a>
+<script LANGUAGE="JavaScript">
+if (window.print) {
+document.write('<a href="javascript:window.print()" class="btn btn-circle blue btn-sm" ><i class="fa fa-print"></i> Imprimir</a>');
+}
+</script>
+    
+</div>
+<!--end col-md-8-->
+
+
+</div>
+{assign var=totrend value=0}
+{foreach from=$data_vars.rendxctr item=rend}
+	{assign var="totrend" value=($totrend + $rend.calculo)}
+{/foreach}
+{assign var=totkg value=0}
+{assign var=totprcdest value=0}
+{assign var=totkgdest value=0}
+{foreach from=$data_vars.destxctr item=dest}
+	{assign var="totkg" value=($dest.pso)}
+	{assign var="totprcdest" value=($dest.porcdes)}
+	{assign var="totkgdest" value=($dest.kgdes)}
+{/foreach}
+{assign var=toteur value=0}
+{assign var=rendeur value=0}
+{foreach from=$data_vars.eurxctr item=eur}
+	{assign var="toteur" value=($eur.totaleuros)}
+	{assign var="rendeur" value=($eur.eurosm2)}
+{/foreach}
+
+
+		<div class="row" style="background: #eef1f5;">
+
+			<div class="col-lg-12 col-md-12 col-sm-12 col-xs-12" style="padding-top:32px; padding-bottom:16px;">
+		                        <div class="col-lg-4 col-md-3 col-sm-6 col-xs-12">
+		                            <div class="dashboard-stat2 ">
+		                                <div class="display">
+		                                    <div class="number">
+		                                        <h3 class="font-green-sharp">
+		                                            <span data-counter="counterup">{$totkg|number_format:0:",":"."}</span>
+		                                            <small class="font-green-sharp">Kg.</small>
+		                                        </h3>
+		                                        <small>KILOS ENTREGADOS</small>
+		                                    </div>
+		                                    <div class="icon">
+																						<i class="icon-basket"></i>
+		                                    </div>
+		                                </div>
+																		<div class="progress-info">
+																				<div class="progress">
+																						<!--<span style="width: 100%;" class="progress-bar progress-bar-success green-sharp">
+																								<span class="sr-only">100% progreso</span>
+																						</span>-->
+																				</div>
+																				<div class="status">
+																						<!--<div class="status-title"> Progreso </div>
+																						<div class="status-number"> 100% </div>-->
+																				</div>
+																		</div>
+		                            </div>
+		                        </div>
+														<div class="col-lg-4 col-md-3 col-sm-6 col-xs-12">
+		                            <div class="dashboard-stat2 ">
+		                                <div class="display">
+		                                    <div class="number">
+		                                        <h3 class="font-green-sharp">
+		                                            <span data-counter="counterup" data-value="{$totprcdest|number_format:2:",":"."}">{$toteur|number_format:2:",":"."}</span>
+																								<small class="font-green-sharp">€</small>
+		                                        </h3>
+		                                        <small>TOTAL EUROS</small>
+		                                    </div>
+		                                    <div class="icon">
+																						<i class="icon-like"></i>
+		                                    </div>
+		                                </div>
+		                                <div class="progress-info">
+		                                    <div class="progress">
+		                                        <!--<span style="width: {$totprcdest}%;" class="progress-bar progress-bar-success red-haze">
+		                                            <span class="sr-only">{$toteur|number_format:2:",":"."}% Destrío</span>
+		                                        </span>-->
+		                                    </div>
+		                                    <div class="status">
+		                                      <!--  <div class="status-title"> Destrío </div>
+		                                        <div class="status-number"> {$toteur|number_format:2:",":"."} € </div>-->
+		                                    </div>
+		                                </div>
+		                            </div>
+		                        </div>
+		                        <div class="col-lg-4 col-md-3 col-sm-6 col-xs-12">
+		                            <div class="dashboard-stat2 ">
+		                                <div class="display">
+		                                    <div class="number">
+		                                        <h3 class="font-purple-soft">
+		                                            <span data-counter="counterup">{($totkg/$data_vars.m2)|number_format:2:",":"."}</span>
+																								<small class="font-purple-soft">KG/M2</small>
+		                                        </h3>
+		                                        <small>RENDIMIENTO DEL CULTIVO</small>
+		                                    </div>
+		                                    <div class="icon">
+		                                    	<i class="icon-graph"></i>
+		                                    </div>
+		                                </div>
+																		<div class="progress-info">
+																				<div class="progress">
+																						<!--<span style="width: 100%;" class="progress-bar progress-bar-success green-sharp">
+																								<span class="sr-only">100% progreso</span>
+																						</span>-->
+																				</div>
+																				<div class="status">
+																						<!--<div class="status-title"> Progreso </div>
+																						<div class="status-number"> 100% </div>-->
+																				</div>
+																		</div>
+		                            </div>
+		                        </div>
+														<div class="col-lg-4 col-md-3 col-sm-6 col-xs-12">
+																<div class="dashboard-stat2 ">
+																		<div class="display">
+																				<div class="number">
+																						<h3 class="font-purple-soft">
+																								<span data-counter="counterup" data-value="{$totprcdest|number_format:2:",":"."}">{($toteur/$data_vars.m2)|number_format:2:",":"."}</span>
+																								<small class="font-purple-soft">€/M2</small>
+																						</h3>
+																						<small>RENDIMIENTO DEL CULTIVO</small>
+																				</div>
+																				<div class="icon">
+																						<i class="icon-graph"></i>
+																				</div>
+																		</div>
+																		<div class="progress-info">
+																				<div class="progress">
+																						<!--<span style="width: {$totprcdest}%;" class="progress-bar progress-bar-success red-haze">
+																								<span class="sr-only">{$eurosm2|number_format:2:",":"."}% Destrío</span>
+																						</span>-->
+																				</div>
+																				<div class="status">
+																						<!--<div class="status-title"> Destrío </div>
+																						<div class="status-number"> {$totprcdest|number_format:2:",":"."}% </div>-->
+																				</div>
+																		</div>
+																</div>
+														</div>
+		                        <!--<div class="col-lg-4 col-md-3 col-sm-6 col-xs-12">
+		                            <div class="dashboard-stat2 ">
+		                                <div class="display">
+		                                    <div class="number">
+		                                        <h3 class="font-red-haze">
+		                                            <span data-counter="counterup" data-value="{$totkgdest|number_format:2:",":"."}">{$totkgdest|number_format:2:",":"."} </span>
+																								<small class="font-red-haze">KG.</small>
+		                                        </h3>
+		                                        <small>KILOS DESTRÍO</small>
+		                                    </div>
+		                                    <div class="icon">
+																						<i class="icon-pie-chart"></i>
+		                                    </div>
+		                                </div>
+																		<div class="progress-info">
+																				<div class="progress">
+																						<!--<span style="width: 100%;" class="progress-bar progress-bar-success green-sharp">
+																								<span class="sr-only">100% progreso</span>
+																						</span>
+																				</div>
+																				<div class="status">
+																						<!--<div class="status-title"> Progreso </div>
+																						<div class="status-number"> 100% </div>
+																				</div>
+																		</div>
+		                            </div>
+		                        </div>-->
+				                <div class="col-lg-4 col-md-3 col-sm-6 col-xs-12">
+		                            <div class="dashboard-stat2 ">
+		                                <div class="display">
+		                                    <div class="number">
+		                                        <h3 class="font-red-haze">
+		                                            <span data-counter="counterup" data-value="{$totprcdest|number_format:2:",":"."}">{$totprcdest|number_format:2:",":"."}</span>
+																								<small class="font-red-haze">%</small>
+		                                        </h3>
+		                                        <small>PORCENTAJE DESTRÍO</small>
+		                                    </div>
+		                                    <div class="icon">
+																						<i class="icon-pie-chart"></i>
+		                                    </div>
+		                                </div>
+		                                <div class="progress-info">
+		                                    <div class="progress">
+		                                        <!--<span style="width: {$totprcdest}%;" class="progress-bar progress-bar-success red-haze">
+		                                            <span class="sr-only">{$totprcdest|number_format:2:",":"."}% Destrío/span>
+		                                        </span>-->
+		                                    </div>
+		                                    <div class="status">
+		                                      <!--  <div class="status-title"> Destrío </div>
+		                                        <div class="status-number"> {$totprcdest|number_format:2:",":"."}% </div>-->
+		                                    </div>
+		                                </div>
+		                            </div>
+		                        </div>
+                <div class="col-lg-4 col-md-3 col-sm-6 col-xs-12">
+		                            <div class="dashboard-stat2 ">
+		                                <div class="display">
+		                                    <div class="number">
+		                                        <h3 class="font-red-haze">
+		                                            <span data-counter="counterup" data-value="{$totprcdest|number_format:2:",":"."}">{$data_vars.kgpendfact|number_format:0:",":"."}</span>
+																								<small class="font-red-haze">KG.</small>
+		                                        </h3>
+		                                        <small>KILOS SIN FACTURAR</small>
+		                                    </div>
+		                                    <div class="icon">
+																						<i class="icon-basket"></i>
+		                                    </div>
+		                                </div>
+		                                <div class="progress-info">
+		                                    <div class="progress">
+		                                        <!--<span style="width: {$totprcdest}%;" class="progress-bar progress-bar-success red-haze">
+		                                            <span class="sr-only">{$totprcdest|number_format:2:",":"."}% Destrío/span>
+		                                        </span>-->
+		                                    </div>
+		                                    <div class="status">
+		                                      <!--  <div class="status-title"> Destrío </div>
+		                                        <div class="status-number"> {$totprcdest|number_format:2:",":"."}% </div>-->
+		                                    </div>
+		                                </div>
+		                            </div>
+		                        </div>
+
+
+													</div>
+            <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12" style="padding-top:0px; padding-bottom:16px;">
+                <button type="button" class="btn btn-success" data-toggle="modal" data-target="#myModal" style="width:100%;margin:0px; background-color:#BFCAD1; color: white;"> <i class="fa fa-check icon-info"></i> Consultar media general</button>
+            </div>
+		                    </div>
+												<br>
+		<div class="row">
+                        <div class="col-md-12">
+													<div class="clearfix">
+                                        <div class="panel panel-success">
+                                            <!-- Default panel contents -->
+                                            <div class="panel-heading">
+                                                <h3 class="panel-title">Últimos muestreos</h3>
+                                            </div>
+                                            <div class="panel-body">
+                                                <p> Esta opción sólo muestra las partidas <b>MUESTREADAS </b> del cultivo <b>{$data_vars.ctrname}</b>. Para ver todas las partidas pulse el botón inferior. 
+                                                   <br><br> <a href="{$config.route}entradas?idctr={$data_vars.ctrid}" class="btn btn-circle" style="background-color:#44B6AE; color:white; width:100px; padding: 4px 10px;font-size: 13px;line-height: 1.5;">Ir a partidas</a>
+                                                    </p>
+                                            </div>
+                                            <!-- Table -->
+												<div class="table-responsive">
+				                                        <table class="table ">
+				                                            <thead>
+				                                                <tr>
+				                                                    <th scope="col"> Fecha </th>
+				                                                    <th scope="col"> Nro. Serie </th>
+				                                                    <th scope="col"> Bultos </th>
+				                                                    <th scope="col"> Kilos </th>
+																														<th scope="col"> Destrío </th>
+				                                                    <th scope="col">  </th>
+
+				                                                </tr>
+				                                            </thead>
+				                                            <tbody>
+												                {foreach from=$data_vars.entxctr item=ptd}
+				                                                <tr>
+				                                                    <td> {$ptd.fch|date_format:"%d/%m/%Y"} </td>
+				                                                    <td> {$ptd.nro_ser} </td>
+				                                                    <td> {$ptd.cja_nro}</td>
+				                                                    <td> {$ptd.pso_net} Kg.</td>
+																        <td style="color:#e7505a; background-color:#FDD0D3;"><b> {$ptd.kg_des_clb}</b> Kg.</td>
+				                                                    <td> 
+                                                                        <a href="{$config.route}partida?id={$ptd.id}" class="btn btn-circle green-haze btn-sm">Ver detalle</a>
+                                                                    </td>
+				                                                </tr>
+				                                              {/foreach}
+				                                            </tbody>
+				                                        </table>
+				                                    </div>
+                                        </div>
+                                    </div>
+
+
+
+                        </div>
+                    </div>
+
+
+		{else}
+		<h1 class="page-title" style="text-align:left;float:left;font-size:42px;">
+			¡Ups!
+			<br><br>
+			<small>Ha ocurrido un error al consultar esta finca.{$data_vars.ctrname}</small>
+		</h1>
+		{/if}
+	</div>
+
+</div>
+{else}
+<div class = "page-content-wrapper">
+    <div class="page-content" style="min-height:441px">
+        <div class="row">
+            <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                <div id="bootstrap_alerts_demo"> 
+                    <div id="prefix_484469373747" class="custom-alerts alert alert-danger fade in"><button type="button" class="close" data-dismiss="alert" aria-hidden="true"></button>¡Ups! Houston, parece que tenemos un problema... ¿Podría informarnos de esto para mejorarlo? <br><br> <b>Gracias.</b>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{/if}
+
+<div id="myModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+               <H2><b>{$data_vars.artname}</b></H2>
+            </div>
+            <div class="modal-body">
+                
+            
+                <div class="table-responsive">
+				<table class="table ">
+                <thead>
+                    <tr>
+                        <td style="background-color:#1BA39C;color:white;"> Media de destrío de <b>{$data_vars.artname}</b>. </td>
+                            <td style="background-color:#1BA39C;color:white;">  </td>
+
+                    </tr>
+                </thead>
+
+                                <tr>
+
+                        <td> Cultivo {$data_vars.ctrname}  </td>
+                        <td align='right' width="20%" style="background-color:#E9EDEF;"> <b>{$totprcdest|number_format:2:",":"."}</b> %</td>
+                                     <tr>
+                                    </tr>
+                        <td> Empresa </td>
+                        <td align='right' width="20%" style="background-color:#E9EDEF;"> <b>{$data_vars.mediadestrio}</b> %</td>
+                    </tr>
+       
+                    
+             
+                </table>
+            </div></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-circle btn-primary" data-dismiss="modal" style="background-color:#1BA39C; color: white;">
+                           <i class="fa fa-thumbs-o-up" aria-hidden="true"></i> Cerrar 
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+var chart_cake = AmCharts.makeChart( "chartdiv_cake", {
+  "type": "pie",
+  "theme": "light",
+  "dataProvider": [
+		{foreach from=$data_vars.dataPage.data item=curr_id}
+			{
+		    "country": "{$curr_id['tarcalpso']}",
+		    "litres": {((($curr_id['cnt_fac'])*100)/($data_vars.dataPage.psoNet))|round:2}
+			},
+		{/foreach}
+	],
+  "valueField": "litres",
+  "titleField": "country",
+  "export": {
+    "enabled": true
+  }
+} );
+</script>

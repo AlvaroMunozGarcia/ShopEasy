@@ -23,7 +23,7 @@ class StoreRequest extends FormRequest
     {
         return [
             'name'=>'required|string|max:50',
-            'description'=>'nulllable|string|max:50'
+            'description'=>'nullable|string|max:50'
         ];
     }
     public function messages()
