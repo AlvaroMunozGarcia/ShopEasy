@@ -21,10 +21,10 @@ class UpdateRequest extends FormRequest
     {
         return [
             'name'=>'string|required|unique:products,name,'.$this->route('product')->id.'|max:255',
-            'image'=>'required|dimension:min_width=100,min_height=200',
+            'image'=>'required|dimensions:min_width=100,min_height=200', 
             'sell_price'=>'required',
-            'category_id'=>'integer|required|exists:App\Category,id',
-            'provider_id'=>'integer|required|exists:App\Procider,id',
+            'category_id' => 'required|exists:categories,id',
+            'provider_id'=>'integer|required|exists:providers,id',
         ];
     }
 

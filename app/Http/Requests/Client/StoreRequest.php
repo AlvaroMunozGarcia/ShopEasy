@@ -20,7 +20,7 @@ class StoreRequest extends FormRequest
     {
         return [
             'name'=>'string|required|max:255',
-            'dni'=>'string|required|unique:clients|max:8',
+            'dni'=>'string|required|unique:clients|max:9',
             'ruc'=>'string|required|unique:clients|max:11',
             'address'=>'string|required|max:255',
             'phone'=>'string|required|unique:clients|max:9',
@@ -38,8 +38,8 @@ class StoreRequest extends FormRequest
             'dni.string'=>'El valor no es correcto.',
             'dni.required'=>'Este campo es requerido.',
             'dni.unique'=>'Este DNI ya se encuentra registrado.',
-            'dni.min'=>'Se requiere de 8 caracteres.',
-            'dni.max'=>'Solo se permite 8 caracteres.',
+            'dni.min'=>'Se requiere de 9 caracteres.',
+            'dni.max'=>'Solo se permite 9 caracteres.',
 
             'ruc.string'=>'El vaor no es correcto.',
             'ruc.unique'=>'El numero de RUC ya se encuentra registrado.',
