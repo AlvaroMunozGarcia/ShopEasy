@@ -148,18 +148,25 @@
 
     <!-- Main Content -->
     <div class="main-content">
-      <h4>Bienvenido al sistema</h4>
-      <p>Aquí puedes colocar el contenido principal de la página.</p>
+      {{-- <h4>Bienvenido al sistema</h4> --}}
+      {{-- <p>Aquí puedes colocar el contenido principal de la página.</p> --}}
+      {{-- El contenido específico de cada página se insertará aquí --}}
       @yield('content')
 
     </div>
   </div>
 
+  {{-- Script para el menú lateral --}}
   <script>
     function toggleSidebar() {
       document.getElementById("sidebar").classList.toggle("collapsed");
     }
   </script>
+  {{-- Script de Bootstrap (Bundle incluye Popper) --}}
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  {{-- AQUÍ SE INSERTARÁN LOS SCRIPTS ESPECÍFICOS DE CADA VISTA --}}
+  @stack('scripts')
+
 </body>
 </html>

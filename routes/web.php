@@ -18,3 +18,7 @@ Route::resource('purchases', PurchaseController::class)->names('purchases');
 Route::resource('sales', SaleController::class)->names('sales');
 
 
+
+Auth::routes();
+
+Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');

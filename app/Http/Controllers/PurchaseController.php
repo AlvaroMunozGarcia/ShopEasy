@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Models\PurchaseDetails;
+use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\Provider;
 use App\Http\Requests\Purchase\StoreRequest;
@@ -15,12 +15,13 @@ class PurchaseController extends Controller
     public function index()
     {
         $purchases=Purchase::get();
-        return view('admin.purchase.index',compact('purchase'));
+        return view('admin.purchase.index',compact('purchases'));
     }
     public function create()
     {
         $providers=Provider::get();
-        return view('admin.purchase.create',compact('providers'));
+        $products=Product::get();
+        return view('admin.purchase.create',compact('providers','products'));
     }
     public function store(StoreRequest $request)
     {
