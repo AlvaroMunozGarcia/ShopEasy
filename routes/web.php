@@ -15,6 +15,7 @@ Route::resource('clients', ClientController::class)->names('clients');
 Route::resource('products', ProductController::class)->names('products');
 Route::resource('providers', ProviderController::class)->names('providers');
 Route::resource('purchases', PurchaseController::class)->names('purchases');
+Route::get('purchases/pdf/{purchase}', [PurchaseController::class, 'generatePDF'])->name('purchases.pdf');
 Route::resource('sales', SaleController::class)->names('sales');
 
 

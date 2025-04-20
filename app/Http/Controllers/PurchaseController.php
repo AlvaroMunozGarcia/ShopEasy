@@ -6,6 +6,8 @@ use App\Models\Purchase;
 use App\Models\Provider;
 use App\Http\Requests\Purchase\StoreRequest;
 use App\Http\Requests\Purchase\UpdateRequest;
+use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 use function Ramsey\Uuid\v1;
 
@@ -25,15 +27,56 @@ class PurchaseController extends Controller
     }
     public function store(StoreRequest $request)
     {
-        $purchase= Purchase::create($request->all());
-        foreach ($request->product_id as $key=>$product){
-            $results[]= array("product_id"=>$request->product_id[$key],
-            "quantity"=>$request->quantity[$key],"price"=>$request->price[$key]);
-
+        // Verifica que el array 'details' exista
+        if (!isset($request->details) || !is_array($request->details)) {
+            return redirect()->back()->withErrors(['details' => 'Debe agregar al menos un producto.']);
         }
-        $purchase->purchaseDetails()->createMany($results);
-        return redirect()->route('purchases.index');
+    
+        $total = 0;
+        $details = [];
+    
+        foreach ($request->details as $detail) {
+            // Validación defensiva para cada item
+            if (
+                !isset($detail['product_id']) ||
+                !isset($detail['quantity']) ||
+                !isset($detail['price']) ||
+                !is_numeric($detail['quantity']) ||
+                !is_numeric($detail['price'])
+            ) {
+                continue; // Opcional: podrías lanzar un error si algún detalle está incompleto
+            }
+    
+            $subtotal = $detail['quantity'] * $detail['price'];
+            $total += $subtotal;
+    
+            $details[] = [
+                'product_id' => $detail['product_id'],
+                'quantity' => $detail['quantity'],
+                'price' => $detail['price'],
+            ];
+        }
+    
+        // Si no hay detalles válidos
+        if (empty($details)) {
+            return redirect()->back()->withErrors(['details' => 'Todos los detalles están vacíos o mal formateados.']);
+        }
+    
+        // Crear la compra
+        $purchase = Purchase::create([
+            'provider_id' => $request->provider_id,
+            'purchase_date' => Carbon::now('America/Lima'),
+            'tax' => $request->tax,
+            'total' => $total,
+            'user_id' => Auth::id(),
+        ]);
+    
+        // Crear detalles
+        $purchase->purchaseDetails()->createMany($details);
+    
+        return redirect()->route('purchases.index')->with('success', 'Compra registrada correctamente.');
     }
+    
 
     public function show(Purchase $purchase)
     {

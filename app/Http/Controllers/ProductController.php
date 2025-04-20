@@ -41,7 +41,14 @@ class ProductController extends Controller
     }
     public function update(UpdateRequest $request, Product $product)
     {
-        $product->update($request->all());
+        if($request->hasFile('picture')){
+            $file=$request->file('picture');
+            $image_name=time().'_'.$file->getClientOriginalName();
+            $file->move(public_path("/image/"), $image_name);
+            $product->picture($image_name);
+
+        }
+        $product->update($request->all()+['image'=>$image_name,]);
         return redirect()->route('products.index');
     }
     public function destroy(Product $product)
