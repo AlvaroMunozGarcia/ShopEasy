@@ -17,6 +17,15 @@ class Purchase extends Model
         'picture',
 
     ];
+
+    protected $casts = [
+        'purchase_date' => 'datetime', // ¡Esta es la línea clave!
+        // 'total' => 'decimal:2', // Ejemplo: podrías castear el total también si es necesario
+        // 'tax' => 'float',       // Ejemplo
+    ];
+
+
+
     public function user(){
         return $this->belongsTo(User::class);
     }

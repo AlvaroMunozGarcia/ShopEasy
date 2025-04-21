@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 use App\Models\Client;
 use App\Models\Purchase;
 use App\Models\Provider;
+use App\Models\Product;
 use App\Http\Requests\Sale\StoreRequest;
 use App\Http\Requests\Sale\UpdateRequest;
 use App\Models\Sale;
+use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 use function Ramsey\Uuid\v1;
 
@@ -18,11 +21,13 @@ class SaleController extends Controller
         $sales=Sale::get();
         return view('admin.sale.index',compact('sales'));
     }
-    public function create()
-    {
-        $clients=Client::get();
-        return view('admin.sale.create',compact('clients'));
-    }
+public function create()
+{
+    $clients = Client::get();
+    $products = Product::get(); 
+    return view('admin.sale.create', compact('clients', 'products')); // <-- Añadir products
+}
+
     public function store(StoreRequest $request)
     {
         $sale= Sale::create($request->all());
