@@ -168,6 +168,11 @@
           <i class="bi bi-person-gear"></i><span>Usuarios</span> {{-- Icono de gestión de usuarios --}}
         </a>
         @endrole
+        @role('Admin')
+        <a href="{{ route('admin.roles.index') }}" class="{{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
+          <i class="bi bi-shield-lock-fill"></i><span>Roles</span> {{-- Icono para roles/permisos --}}
+        </a>
+        @endrole
 
 
 

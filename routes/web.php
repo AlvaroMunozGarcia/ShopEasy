@@ -13,7 +13,7 @@ use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\UserController;
-
+use App\Http\Controllers\RoleController; // <-- Añadir importación
 
 Route::get('/', function () {
     return view('welcome');
@@ -74,15 +74,23 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('printers', PrinterController::class)->names('printers')->only(['index','update']);
     });
 
+    // --- Grupo para Administración (Usuarios y Roles) ---
     Route::middleware(['auth', 'role:Admin'])->prefix('admin')->name('admin.')->group(function () {
+
+        // Rutas de Usuarios (ya existentes)
         Route::get('users', [UserController::class, 'index'])->name('users.index');
         Route::get('users/create', [UserController::class, 'create'])->name('users.create');
         Route::post('users', [UserController::class, 'store'])->name('users.store');
         Route::get('users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
         Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
         Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
-        Route::get('users/{user}', [UserController::class, 'show'])->name('users.show'); // Mantenida por si la necesitas
+        Route::get('users/{user}', [UserController::class, 'show'])->name('users.show');
+
+        Route::get('roles', [RoleController::class, 'index'])->name('roles.index');
+        Route::get('roles/{role}', [RoleController::class, 'show'])->name('roles.show');
+
     });
+
 
     Route::get('/prueba', function () {
         return view('prueba');
