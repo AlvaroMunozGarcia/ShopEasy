@@ -163,6 +163,16 @@
          <a href="{{ route('categories.index') }}" class="{{ request()->routeIs('categories.*') ? 'active' : '' }}">
           <i class="bi bi-tag-fill"></i><span>Categorías</span>
         </a>
+        @role('Admin')
+        <a href="{{ route('admin.users.index') }}" class="{{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+          <i class="bi bi-person-gear"></i><span>Usuarios</span> {{-- Icono de gestión de usuarios --}}
+        </a>
+        @endrole
+
+
+
+
+
         {{-- Puedes añadir enlace a Usuarios si lo tienes --}}
         {{-- <a href="{{ route('users.index') }}" class="{{ request()->routeIs('users.*') ? 'active' : '' }}">
           <i class="bi bi-person-gear"></i><span>Usuarios</span>
