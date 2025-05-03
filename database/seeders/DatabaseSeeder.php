@@ -14,7 +14,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call(BusinessSeeder::class); // <-- Esta línea ya está
-
+        $this->call(PrinterSeeder::class); // <<<--- Añade esta línea
         // Llama al Seeder de Roles y Permisos PRIMERO
         $this->call([
             RolesAndPermissionsSeeder::class,

@@ -165,7 +165,13 @@
         </a>
 
 
-        
+        @role('Admin')
+        <a href="{{ route('admin.printer.index') }}" class="{{ request()->routeIs('admin.printer.*') ? 'active' : '' }}">
+          <i class="bi bi-printer-fill"></i><span>Impresora</span>
+      </a>
+        @endrole
+
+
 
         
         @role('Admin') {{-- Solo el Admin ve este enlace --}}

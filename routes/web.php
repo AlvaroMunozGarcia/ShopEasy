@@ -90,6 +90,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('business', [BusinessController::class, 'index'])->name('business.index');
         Route::put('business/{business}', [BusinessController::class, 'update'])->name('business.update');
 
+
+        Route::get('printer', [PrinterController::class, 'index'])->name('printer.index');
+        Route::put('printer/{printer}', [PrinterController::class, 'update'])->name('printer.update'); 
     });
 
 
