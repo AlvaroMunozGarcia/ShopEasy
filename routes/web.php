@@ -69,10 +69,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('sales/report_results', [ReportController::class,'report_results'])->name('report.results');
     });
 
-    Route::middleware(['role:Admin'])->group(function () {
-        Route::resource('business', BusinessController::class)->names('business')->only(['index','update']);
-        Route::resource('printers', PrinterController::class)->names('printers')->only(['index','update']);
-    });
+   
 
     // --- Grupo para Administración (Usuarios y Roles) ---
     Route::middleware(['auth', 'role:Admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -88,6 +85,10 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('roles', [RoleController::class, 'index'])->name('roles.index');
         Route::get('roles/{role}', [RoleController::class, 'show'])->name('roles.show');
+
+        
+        Route::get('business', [BusinessController::class, 'index'])->name('business.index');
+        Route::put('business/{business}', [BusinessController::class, 'update'])->name('business.update');
 
     });
 

@@ -163,11 +163,25 @@
          <a href="{{ route('categories.index') }}" class="{{ request()->routeIs('categories.*') ? 'active' : '' }}">
           <i class="bi bi-tag-fill"></i><span>Categorías</span>
         </a>
+
+
+        
+
+        
+        @role('Admin') {{-- Solo el Admin ve este enlace --}}
+        <a href="{{ route('admin.business.index') }}" class="{{ request()->routeIs('admin.business.*') ? 'active' : '' }}">
+          <i class="bi bi-briefcase-fill"></i><span>Negocio</span> {{-- Icono para negocio/empresa --}}
+        </a>
+        @endrole
+        
+        
         @role('Admin')
         <a href="{{ route('admin.users.index') }}" class="{{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
           <i class="bi bi-person-gear"></i><span>Usuarios</span> {{-- Icono de gestión de usuarios --}}
         </a>
         @endrole
+
+
         @role('Admin')
         <a href="{{ route('admin.roles.index') }}" class="{{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
           <i class="bi bi-shield-lock-fill"></i><span>Roles</span> {{-- Icono para roles/permisos --}}
