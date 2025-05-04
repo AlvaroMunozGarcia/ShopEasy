@@ -56,23 +56,15 @@
                                     @endif
                                 </td>
                                 <td>
-                                    {{-- Botón Ver Detalles --}}
+
                                     <a href="{{ route('purchases.show', $purchase) }}" class="btn btn-sm btn-info" title="Ver Detalles"><i class="bi bi-eye"></i></a>
-
-                                    {{-- Botón Editar (Generalmente deshabilitado o con lógica específica) --}}
-                                    {{-- <a href="{{ route('purchases.edit', $purchase) }}" class="btn btn-sm btn-warning" title="Editar"><i class="bi bi-pencil-square"></i></a> --}}
-
-                                    {{-- Botón Cancelar (Formulario para actualizar estado vía ruta destroy) --}}
+                                
                                     @if($purchase->status == 'VALID')
-                                    <form action="{{ route('purchases.destroy', $purchase) }}" method="POST" style="display: inline-block;" onsubmit="return confirm('¿Estás seguro de que quieres cancelar esta compra?');">
-                                        @csrf
-                                        @method('DELETE') {{-- El método DELETE aquí dispara la cancelación en el controlador --}}
-                                        <button type="submit" class="btn btn-sm btn-warning" title="Cancelar Compra"><i class="bi bi-x-circle"></i></button>
-                                    </form>
+                                   
                                     @endif
 
                                      {{-- Botón PDF --}}
-                                    <a href="{{ route('purchases.pdf', $purchase) }}" target="_blank" class="btn btn-sm btn-danger" title="Descargar PDF">
+                                    <a href="{{ route('purchases.print', $purchase) }}" target="_blank" class="btn btn-sm btn-danger" title="Descargar PDF">
                                         <i class="bi bi-file-earmark-pdf"></i>
                                     </a>
                                 </td>

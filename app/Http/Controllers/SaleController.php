@@ -10,6 +10,7 @@ use App\Models\Product; // Necesario para actualizar stock
 use App\Http\Requests\Sale\StoreRequest;
 use App\Http\Requests\Sale\UpdateRequest;
 use App\Models\Sale;
+use Barryvdh\DomPDF\PDF;
 use Illuminate\Support\Facades\Auth; // Asegúrate que esté importado
 use Carbon\Carbon; // Asegúrate que esté importado
 
@@ -138,4 +139,19 @@ class SaleController extends Controller
 
         // $sale->delete(); // Evita borrar físicamente si quieres mantener historial
     }
+
+
+    public function pdf(Sale $sale)
+    {
+        
+        $sale->load('client', 'user', 'saleDetails.product');
+        $pdfCreationDate = Carbon::now()->format('Y-m-d H:i:s');
+
+        $pdf = PDF::loadView('admin.sale.pdf', compact('sale', 'pdfCreationDate'));
+        $fileName = 'venta_' . $sale->id . '_' . $sale->sale_date->format('Ymd') . '.pdf';
+
+        return $pdf->stream($fileName);
+    }
+
+
 }

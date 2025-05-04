@@ -46,7 +46,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('purchases', [PurchaseController::class, 'index'])->name('purchases.index');
         Route::get('purchases/create', [PurchaseController::class, 'create'])->name('purchases.create');
         Route::get('purchases/{purchase}', [PurchaseController::class, 'show'])->name('purchases.show');
-        Route::get('purchases/pdf/{purchase}', [PurchaseController::class, 'generatePDF'])->name('purchases.pdf');
+        Route::get('purchases/pdf/{purchase}', [PurchaseController::class, 'pdf'])->name('purchases.pdf');
+        Route::get('purchases/{purchase}/print', [PurchaseController::class, 'printView'])->name('purchases.print');
+
     });
     Route::post('purchases', [PurchaseController::class, 'store'])->name('purchases.store')->middleware('can:create purchases');
     Route::get('purchase/upload/{purchase}', [PurchaseController::class,'upload'])->name('upload.purchase')->middleware('can:create purchases');
@@ -56,6 +58,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('sales', [SaleController::class, 'index'])->name('sales.index');
         Route::get('sales/create', [SaleController::class, 'create'])->name('sales.create');
         Route::get('sales/{sale}', [SaleController::class, 'show'])->name('sales.show');
+        Route::get('sales/{sale}/print', [PurchaseController::class, 'printView'])->name('sales.print');
+
     });
 
     Route::get('/dashboard', function () {return view('dashboard');})->middleware(['auth', 'verified'])->name('dashboard');
@@ -89,6 +93,11 @@ Route::middleware(['auth'])->group(function () {
         
         Route::get('business', [BusinessController::class, 'index'])->name('business.index');
         Route::put('business/{business}', [BusinessController::class, 'update'])->name('business.update');
+        
+        
+        
+        Route::put('business/pdf/{business}', 'PurchaseController@pdf')->name('business.pdf');
+
 
 
         Route::get('printer', [PrinterController::class, 'index'])->name('printer.index');

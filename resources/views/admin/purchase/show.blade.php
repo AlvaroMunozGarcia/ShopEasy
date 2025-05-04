@@ -112,7 +112,7 @@
                             <a href="{{ route('purchases.index') }}" class="btn btn-secondary">Volver al Listado</a>
                             {{-- Puedes añadir un botón de editar si implementas esa funcionalidad --}}
                             {{-- <a href="{{ route('purchases.edit', $purchase) }}" class="btn btn-primary">Editar</a> --}}
-                             <a href="{{ route('purchases.pdf', $purchase) }}" class="btn btn-info float-right" target="_blank">
+                             <a href="{{ route('purchases.print', $purchase) }}" class="btn btn-info float-right" target="_blank">
                                 <i class="fas fa-file-pdf"></i> Imprimir PDF
                             </a>
                         </div>
