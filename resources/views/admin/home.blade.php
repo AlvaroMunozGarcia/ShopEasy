@@ -160,27 +160,30 @@
       <div class="row">
         <div class="col-lg-6">
           <div class="card">
-            <div class="card-header">
-              <h3 class="card-title">Próximamente: Gráfico de Ventas</h3>
+            <div class="card-header border-0">
+              <h3 class="card-title">Ventas Últimos 7 Días</h3>
               <div class="card-tools">
-                {{-- Botones para acciones del card --}}
+                {{-- Puedes añadir botones aquí si quieres (ej. descargar) --}}
               </div>
             </div>
             <div class="card-body">
-              {{-- Aquí iría el canvas para un gráfico (ej. Chart.js) --}}
-              <p class="text-center text-muted py-4">Gráfico en desarrollo.</p>
+              <div class="position-relative mb-4">
+                <canvas id="sales-chart-canvas" height="200"></canvas>
+              </div>
             </div>
           </div>
           <!-- /.card -->
         </div>
         <div class="col-lg-6">
            <div class="card">
-            <div class="card-header">
-              <h3 class="card-title">Próximamente: Actividad Reciente</h3>
+            <div class="card-header border-0">
+              <h3 class="card-title">Ventas vs Compras (Últimos 12 Meses)</h3>
+               <div class="card-tools">
+                 {{-- Puedes añadir botones aquí si quieres --}}
+               </div>
             </div>
             <div class="card-body">
-               <p class="text-center text-muted py-4">Listado en desarrollo.</p>
-               {{-- Aquí iría una tabla o lista --}}
+                <canvas id="comparison-chart-canvas" height="200"></canvas>
             </div>
           </div>
           <!-- /.card -->
@@ -200,9 +203,80 @@
 
 @push('scripts')
 {{-- Si necesitas scripts específicos para esta página (ej. para gráficos) --}}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script> 
-{{-- <script> // Ejemplo básico si añades Chart.js
-  // const ctx = document.getElementById('myChart');
-  // new Chart(ctx, { ...configuración... });
-</script> --}}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // --- Gráfico Ventas Últimos 7 Días ---
+    const salesCtx = document.getElementById('sales-chart-canvas').getContext('2d');
+    const salesChart = new Chart(salesCtx, {
+      type: 'bar', // Tipo de gráfico
+      data: {
+        labels: @json($salesLast7DaysLabels), // Etiquetas (días) desde el controlador
+        datasets: [{
+          label: 'Ventas (S/)',
+          backgroundColor: 'rgba(60,141,188,0.9)', // Color azul AdminLTE
+          borderColor: 'rgba(60,141,188,0.8)',
+          pointRadius: false,
+          pointColor: '#3b8bba',
+          pointStrokeColor: 'rgba(60,141,188,1)',
+          pointHighlightFill: '#fff',
+          pointHighlightStroke: 'rgba(60,141,188,1)',
+          data: @json($salesLast7DaysData) // Datos (montos) desde el controlador
+        }]
+      },
+      options: {
+        maintainAspectRatio: false,
+        responsive: true,
+        legend: {
+          display: false // Ocultar leyenda si solo hay un dataset
+        },
+        scales: {
+          xAxes: [{
+            gridLines: { display: false }
+          }],
+          yAxes: [{
+            ticks: { beginAtZero: true } // Empezar eje Y en 0
+          }]
+        }
+      }
+    });
+
+    // --- Gráfico Comparativa Ventas vs Compras (12 Meses) ---
+    const comparisonCtx = document.getElementById('comparison-chart-canvas').getContext('2d');
+    const comparisonChart = new Chart(comparisonCtx, {
+        type: 'line',
+        data: {
+            labels: @json($monthlyComparisonLabels),
+            datasets: [
+                {
+                    label: 'Ventas (S/)',
+                    backgroundColor: 'rgba(0, 166, 90, 0.2)', // Verde AdminLTE con transparencia
+                    borderColor: 'rgba(0, 166, 90, 1)',
+                    data: @json($monthlySalesData),
+                    fill: true, // Rellenar área bajo la línea
+                },
+                {
+                    label: 'Compras (S/)',
+                    backgroundColor: 'rgba(243, 156, 18, 0.2)', // Naranja AdminLTE con transparencia
+                    borderColor: 'rgba(243, 156, 18, 1)',
+                    data: @json($monthlyPurchasesData),
+                    fill: true, // Rellenar área bajo la línea
+                }
+            ]
+        },
+        options: { // Opciones similares al anterior, puedes personalizarlas
+            maintainAspectRatio: false,
+            responsive: true,
+            legend: { display: true }, // Mostrar leyenda para distinguir líneas
+            scales: {
+                xAxes: [{ gridLines: { display: false } }],
+                yAxes: [{ ticks: { beginAtZero: true } }]
+            },
+            elements: { line: { tension: 0.3 } } // Suavizar un poco las líneas
+        }
+    });
+
+  });
+</script>
 @endpush
