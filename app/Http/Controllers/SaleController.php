@@ -10,7 +10,7 @@ use App\Models\Product; // Necesario para actualizar stock
 use App\Http\Requests\Sale\StoreRequest;
 use App\Http\Requests\Sale\UpdateRequest;
 use App\Models\Sale;
-use Barryvdh\DomPDF\PDF;
+use Barryvdh\DomPDF\Facade as PDF; // Asegúrate de importar la fachada correcta si usas DomPDF
 use Illuminate\Support\Facades\Auth; // Asegúrate que esté importado
 use Carbon\Carbon; // Asegúrate que esté importado
 
@@ -140,18 +140,24 @@ class SaleController extends Controller
         // $sale->delete(); // Evita borrar físicamente si quieres mantener historial
     }
 
-
+    /**
+     * Genera una vista para la impresión/PDF de la venta.
+     *
+     * @param  \App\Models\Sale  $sale
+     * @return \Illuminate\View\View
+     */
     public function pdf(Sale $sale)
     {
-        
         $sale->load('client', 'user', 'saleDetails.product');
-        $pdfCreationDate = Carbon::now()->format('Y-m-d H:i:s');
 
-        $pdf = PDF::loadView('admin.sale.pdf', compact('sale', 'pdfCreationDate'));
-        $fileName = 'venta_' . $sale->id . '_' . $sale->sale_date->format('Ymd') . '.pdf';
-
-        return $pdf->stream($fileName);
+        $subtotal = 0;
+        foreach ($sale->saleDetails as $detail) {
+            $lineSubtotal = ($detail->quantity * $detail->price) * (1 - $detail->discount / 100);
+            $subtotal += $lineSubtotal;
+        }
+        return view('admin.sale.pdf', compact('sale', 'subtotal'));
     }
 
+   
 
 }

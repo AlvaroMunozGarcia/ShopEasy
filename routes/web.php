@@ -58,14 +58,15 @@ Route::middleware(['auth'])->group(function () {
         Route::get('sales', [SaleController::class, 'index'])->name('sales.index');
         Route::get('sales/create', [SaleController::class, 'create'])->name('sales.create');
         Route::get('sales/{sale}', [SaleController::class, 'show'])->name('sales.show');
-        Route::get('sales/{sale}/print', [PurchaseController::class, 'printView'])->name('sales.print');
+        Route::get('sales/{sale}/pdf', [SaleController::class, 'pdf'])->name('sales.pdf'); // <-- MODIFICADA/AÑADIDA ESTA LÍNEA
 
     });
 
     Route::get('/dashboard', function () {return view('dashboard');})->middleware(['auth', 'verified'])->name('dashboard');
 
     Route::post('sales', [SaleController::class, 'store'])->name('sales.store')->middleware('can:create sales');
-    Route::get('change_status/sales/{sale}', [SaleController::class,'change_status'])->name('sales.change_status')->middleware('can:cancel sales');
+    Route::delete('sales/{sale}', [SaleController::class, 'destroy'])->name('sales.destroy')->middleware('can:cancel sales'); // <-- AÑADIR ESTA LÍNEA (Habilita la ANULACIÓN)
+    Route::get('change_status/sales/{sale}', [SaleController::class,'change_status'])->name('sales.change_status')->middleware('can:cancel sales'); // <-- Ruta para cambiar estado (si la usas)
 
     Route::middleware(['can:view reports'])->group(function () {
         Route::get('sales/reports_day', [ReportController::class,'reports_day'])->name('reports.day');

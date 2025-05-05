@@ -15,6 +15,15 @@ class Sale extends Model
         'total',
         'status',
     ];
+
+    protected $casts = [
+        'sale_date' => 'datetime', 
+        'total' => 'decimal:2', 
+        'tax' => 'decimal:2',   
+    ];
+
+
+
     public function user(){
         return $this->belongsTo(User::class);
     }

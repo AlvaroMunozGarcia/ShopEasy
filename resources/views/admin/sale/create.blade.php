@@ -235,19 +235,19 @@
                 const newRow = `
                     <tr data-id="${productId}">
                         <td>
-                            <input type="hidden" name="details[${detailIndex}][product_id]" value="${productId}">
+                            <input type="hidden" name="product_id[]" value="${productId}">
                             ${productName}
                         </td>
                         <td>
-                            <input type="hidden" name="details[${detailIndex}][quantity]" value="${quantity}">
+                            <input type="hidden" name="quantity[]" value="${quantity}">
                             ${quantity}
                         </td>
                         <td>
-                            <input type="hidden" name="details[${detailIndex}][price]" value="${price}">
+                            <input type="hidden" name="price[]" value="${price.toFixed(2)}">
                             ${price.toFixed(2)}
                         </td>
                         <td>
-                            <input type="hidden" name="details[${detailIndex}][discount]" value="${discount}">
+                            <input type="hidden" name="discount[]" value="${discount.toFixed(2)}">
                             ${discount.toFixed(2)}%
                         </td>
                         <td class="row-subtotal">${subtotal.toFixed(2)}</td>

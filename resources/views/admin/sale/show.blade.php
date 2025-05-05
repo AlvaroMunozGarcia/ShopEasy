@@ -33,8 +33,8 @@
                             <h3 class="card-title">Información de la Venta #{{ $sale->id }}</h3>
                             <div class="card-tools">
                                 {{-- Botón para imprimir PDF si existe la ruta --}}
-                                <a href="{{ route('sales.pdf', $sale) }}" class="btn btn-sm btn-info" target="_blank">
-                                    <i class="fas fa-file-pdf"></i> Imprimir PDF
+                                <a href="{{ route('sales.pdf', $sale) }}" target="_blank" class="btn btn-sm btn-danger">
+                                    <i class="fas fa-print"></i> Imprimir/PDF
                                 </a>
                                 {{-- Botón para volver al listado --}}
                                 <a href="{{ route('sales.index') }}" class="btn btn-sm btn-secondary">
@@ -133,9 +133,7 @@
                             <a href="{{ route('sales.index') }}" class="btn btn-secondary">Volver al Listado</a>
                             {{-- Puedes añadir un botón de editar si implementas esa funcionalidad --}}
                             {{-- <a href="{{ route('sales.edit', $sale) }}" class="btn btn-primary">Editar</a> --}}
-                             <a href="{{ route('sales.pdf', $sale) }}" class="btn btn-info float-right" target="_blank">
-                                <i class="fas fa-file-pdf"></i> Imprimir PDF
-                            </a>
+                            
                         </div>
                     </div>
                     <!-- /.card -->

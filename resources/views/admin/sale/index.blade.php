@@ -94,8 +94,9 @@
                                                     @endif
 
                                                     {{-- Botón PDF (si tienes la ruta definida) --}}
+                                                    {{-- Botón PDF --}}
                                                     <a href="{{ route('sales.pdf', $sale) }}" target="_blank" class="btn btn-sm btn-danger" title="Descargar PDF">
-                                                        <i class="fas fa-file-pdf"></i>
+                                                        <i class="fas fa-file-pdf"></i> {{-- O usa bi bi-file-earmark-pdf si prefieres Bootstrap Icons --}}
                                                     </a>
                                                 </td>
                                             </tr>
