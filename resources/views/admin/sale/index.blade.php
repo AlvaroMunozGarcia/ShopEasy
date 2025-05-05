@@ -73,7 +73,9 @@
                                                 <td>S/ {{ number_format($sale->total, 2) }}</td> {{-- Ajusta el símbolo de moneda si es necesario --}}
                                                 <td>
                                                     @if($sale->status == 'VALID') {{-- O el estado que uses para 'activa' --}}
-                                                        <span class="badge bg-success">Válida</span>
+                                                        <a href="{{ route('sales.create') }}" class="btn btn-primary">
+                                                            <i class="fas fa-plus-circle"></i> Registrar Nueva Venta
+                                                        </a>
                                                     @elseif($sale->status == 'CANCELLED') {{-- O el estado que uses para 'anulada' --}}
                                                         <span class="badge bg-danger">Anulada</span>
                                                     @else
