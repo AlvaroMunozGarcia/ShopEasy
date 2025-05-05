@@ -7,6 +7,7 @@ use App\Http\Requests\Product\StoreRequest;
 use App\Http\Requests\Product\UpdateRequest;
 use App\Models\Category;
 use App\Models\Provider;
+use Milon\Barcode\DNS1D; // <-- Añadir esta línea
 
 
 class ProductController extends Controller
@@ -30,7 +31,13 @@ class ProductController extends Controller
     }
     public function show(Product $product)
     {
-        return view('admin.product.show',compact('product'));
+        // Generar el código de barras HTML usando el campo 'code'
+        // 'C128' es un tipo común, puedes cambiarlo (ej: 'EAN13' si tus códigos son EAN)
+        // Los parámetros son: valor, tipo, altura (px), ancho_factor (1, 2, 3...), color, mostrar_valor_abajo (bool)
+        $barcodeGenerator = new DNS1D();
+        $barcodeHtml = $barcodeGenerator->getBarcodeHTML($product->code, 'C128', 2, 33, 'black', true);
+
+        return view('admin.product.show', compact('product', 'barcodeHtml')); // <-- Pasar el HTML a la vista
     }
     public function edit(Product $product)
     {
