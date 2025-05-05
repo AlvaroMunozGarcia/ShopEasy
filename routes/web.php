@@ -69,9 +69,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('change_status/sales/{sale}', [SaleController::class,'change_status'])->name('sales.change_status')->middleware('can:cancel sales'); // <-- Ruta para cambiar estado (si la usas)
 
     Route::middleware(['can:view reports'])->group(function () {
-        Route::get('sales/reports_day', [ReportController::class,'reports_day'])->name('reports.day');
-        Route::get('sales/reports_date', [ReportController::class,'reports_date'])->name('reports.date');
-        Route::post('sales/report_results', [ReportController::class,'report_results'])->name('report.results');
+        Route::get('reports_day', [ReportController::class,'reports_day'])->name('reports.day');
+        Route::get('reports_date', [ReportController::class,'reports_date'])->name('reports.date');
+        Route::post('report_results', [ReportController::class,'report_results'])->name('report.results');
     });
 
    
