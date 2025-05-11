@@ -1,11 +1,16 @@
 @extends('layouts.admin') {{-- Usar tu layout personalizado --}}
 
 @section('content') {{-- Contenido principal para el @yield('content') --}}
-    <h1>Client List</h1>
+    {{-- El título se moverá dentro del card-header para un diseño más integrado --}}
 
     <div class="card mt-3"> {{-- Añadido margen superior para separar del título --}}
         <div class="card-header">
-            <a href="{{ route('clients.create') }}" class="btn btn-primary float-end">Add New Client</a> {{-- float-end para Bootstrap 5 --}}
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">Client List</h4> {{-- Título de la tarjeta --}}
+                <a href="{{ route('clients.create') }}" class="btn btn-primary">
+                    <i class="bi bi-person-plus"></i> Add New Client {{-- Icono añadido y texto --}}
+                </a>
+            </div>
         </div>
         <div class="card-body">
             @if(session('success'))
@@ -16,8 +21,8 @@
             @endif
 
             <div class="table-responsive"> {{-- Para mejor visualización en pantallas pequeñas --}}
-                <table class="table table-bordered table-striped">
-                    <thead>
+                <table class="table table-bordered table-striped table-hover"> {{-- Añadido table-hover --}}
+                    <thead class="table-dark"> {{-- Clase añadida para invertir colores del encabezado --}}
                         <tr>
                             <th>ID</th>
                             <th>Name</th>
@@ -61,4 +66,5 @@
             {{-- $clients->links() --}}
         </div>
     </div>
+
 @endsection
