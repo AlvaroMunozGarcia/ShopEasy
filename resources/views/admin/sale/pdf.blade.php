@@ -3,21 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Detalle de Venta #{{ $sale->id }}</title>
     {{-- Estilos básicos para impresión --}}
     <style>
-        body { font-family: sans-serif; margin: 20px; font-size: 10pt; }
+        body { font-family: DejaVu Sans, sans-serif; margin: 20px; font-size: 10pt; color: #333; }
         table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
         th, td { border: 1px solid #ccc; padding: 6px; text-align: left; vertical-align: top; }
-        th { background-color: #eee; font-weight: bold; }
+        th { background-color: #f2f2f2; font-weight: bold; }
         .text-right { text-align: right; }
         .text-center { text-align: center; }
-        h1, h2, h3, h4 { margin-bottom: 10px; }
-        .header-info { display: flex; justify-content: space-between; margin-bottom: 20px; }
-        .header-info div { width: 48%; }
+        h1, h2, h3, h4 { margin-top: 0; margin-bottom: 10px; color: #222; }
+        h1 { font-size: 18pt; }
+        h2 { font-size: 14pt; }
+        h3 { font-size: 12pt; }
+        h4 { font-size: 10pt; font-weight: bold; }
         .total-section td { font-weight: bold; }
         .no-print { margin-bottom: 15px; } /* Estilo para el contenedor del botón */
-        /* Puedes añadir más estilos según necesites */
+
+        .header-layout-table { width: 100%; margin-bottom: 20px; border: none; }
+        .header-layout-table td { width: 50%; vertical-align: top; border: none; padding: 0 5px; }
+        .header-layout-table td:first-child { padding-left: 0; }
+        .header-layout-table td:last-child { padding-right: 0; }
 
         @media print {
             .no-print { display: none; } /* Oculta el botón al imprimir */
@@ -34,22 +41,29 @@
 
     <h1>Detalle de Venta #{{ $sale->id }}</h1>
 
-    <div class="header-info">
-        <div>
-            <h4>Cliente</h4>
-            <p><strong>Nombre:</strong> {{ $sale->client->name ?? 'N/A' }}</p>
-            <p><strong>{{ $sale->client->dni ? 'DNI' : ($sale->client->ruc ? 'RUC' : 'ID') }}:</strong> {{ $sale->client->dni ?? $sale->client->ruc ?? 'N/A' }}</p>
-            <p><strong>Email:</strong> {{ $sale->client->email ?? 'N/A' }}</p>
-            <p><strong>Teléfono:</strong> {{ $sale->client->phone ?? 'N/A' }}</p>
-        </div>
-        <div>
-            <h4>Información General</h4>
-            <p><strong>Fecha:</strong> {{ $sale->sale_date ? $sale->sale_date->format('d/m/Y H:i') : 'N/A' }}</p>
-            <p><strong>Vendedor:</strong> {{ $sale->user->name ?? 'N/A' }}</p>
-            <p><strong>Impuesto Aplicado:</strong> {{ $sale->tax }}%</p>
-            <p><strong>Estado:</strong> {{ $sale->status == 'VALID' ? 'VÁLIDA' : ($sale->status == 'CANCELLED' ? 'ANULADA' : $sale->status) }}</p>
-        </div>
-    </div>
+    <table class="header-layout-table">
+        <tr>
+            <td>
+                <h4>Cliente</h4>
+                <p><strong>Nombre:</strong> {{ $sale->client->name ?? 'N/A' }}</p>
+                <p><strong>{{ $sale->client->dni ? 'DNI' : ($sale->client->ruc ? 'RUC' : 'ID') }}:</strong> {{ $sale->client->dni ?? $sale->client->ruc ?? 'N/A' }}</p>
+                <p><strong>Email:</strong> {{ $sale->client->email ?? 'N/A' }}</p>
+                <p><strong>Teléfono:</strong> {{ $sale->client->phone ?? 'N/A' }}</p>
+            </td>
+            <td>
+                <h4>Información General</h4>
+                <p><strong>Fecha:</strong> {{ $sale->sale_date ? $sale->sale_date->format('d/m/Y H:i') : 'N/A' }}</p>
+                <p><strong>Vendedor:</strong> {{ $sale->user->name ?? 'N/A' }}</p>
+                <p><strong>Impuesto Aplicado:</strong> {{ $sale->tax }}%</p>
+                <p><strong>Estado:</strong>
+                    @if($sale->status == 'VALID') VÁLIDA
+                    @elseif($sale->status == 'CANCELLED') ANULADA
+                    @else {{ Str::title(str_replace('_', ' ', $sale->status)) }}
+                    @endif
+                </p>
+            </td>
+        </tr>
+    </table>
 
     <h2>Productos Vendidos</h2>
     <table>

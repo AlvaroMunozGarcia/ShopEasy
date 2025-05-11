@@ -12,8 +12,9 @@
         </div>
         <div class="card-body">
             @if($sales->count())
-                <table class="table table-bordered table-striped">
-                    <thead>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover align-middle">
+                        <thead class="table-dark">
                         <tr>
                             <th>ID Venta</th>
                             <th>Fecha</th>
@@ -58,6 +59,7 @@
                         </tr>
                     </tfoot>
                 </table>
+                </div>
             @else
                 <div class="alert alert-info">
                     No se encontraron ventas para el día de hoy.
@@ -66,4 +68,3 @@
         </div>
     </div>
 @endsection {{-- Cambiado de @stop a @endsection (más estándar) --}}
-

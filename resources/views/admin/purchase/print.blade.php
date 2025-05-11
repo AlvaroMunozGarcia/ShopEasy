@@ -3,17 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Imprimir Compra #{{ $purchase->id }}</title>
     {{-- Puedes incluir un CSS básico o específico para impresión --}}
     <style>
-        body { font-family: sans-serif; margin: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .no-print { display: block; margin-bottom: 20px; } /* Ocultar botón al imprimir */
+        body { font-family: DejaVu Sans, sans-serif; margin: 20px; font-size: 10pt; color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        th, td { border: 1px solid #ccc; padding: 6px; text-align: left; vertical-align: top; }
+        th { background-color: #f2f2f2; font-weight: bold; }
         .text-right { text-align: right; }
-        h1, h2, h3, h4 { margin-bottom: 15px; }
+        .text-center { text-align: center; }
+        h1, h2, h3, h4 { margin-top: 0; margin-bottom: 10px; color: #222; }
+        h1 { font-size: 18pt; }
+        h2 { font-size: 14pt; }
+        h3 { font-size: 12pt; }
+        h4 { font-size: 10pt; font-weight: bold; }
+        .total-section td { font-weight: bold; }
+        .no-print { margin-bottom: 15px; }
 
+        .header-layout-table { width: 100%; margin-bottom: 20px; border: none; }
+        .header-layout-table td { width: 50%; vertical-align: top; border: none; padding: 0 5px; }
+        .header-layout-table td:first-child { padding-left: 0; }
+        .header-layout-table td:last-child { padding-right: 0; }
         @media print {
             .no-print { display: none; } /* Oculta el botón al imprimir */
             body { margin: 0; } /* Ajusta márgenes para impresión */
@@ -29,20 +40,23 @@
 
     <h1>Detalle de Compra #{{ $purchase->id }}</h1>
 
-    <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-        <div>
-            <h4>Proveedor</h4>
-            <p><strong>Nombre:</strong> {{ $purchase->provider->name ?? 'N/A' }}</p>
-            <p><strong>Email:</strong> {{ $purchase->provider->email ?? 'N/A' }}</p>
-            <p><strong>Teléfono:</strong> {{ $purchase->provider->phone ?? 'N/A' }}</p>
-        </div>
-        <div>
-            <h4>Información General</h4>
-            <p><strong>Fecha:</strong> {{ $purchase->purchase_date->format('d/m/Y H:i') }}</p>
-            <p><strong>Usuario:</strong> {{ $purchase->user->name ?? 'N/A' }}</p>
-            <p><strong>Impuesto:</strong> {{ $purchase->tax }}%</p>
-        </div>
-    </div>
+    <table class="header-layout-table">
+        <tr>
+            <td>
+                <h4>Proveedor</h4>
+                <p><strong>Nombre:</strong> {{ $purchase->provider->name ?? 'N/A' }}</p>
+                <p><strong>Email:</strong> {{ $purchase->provider->email ?? 'N/A' }}</p>
+                <p><strong>Teléfono:</strong> {{ $purchase->provider->phone ?? 'N/A' }}</p>
+            </td>
+            <td>
+                <h4>Información General</h4>
+                <p><strong>Fecha:</strong> {{ $purchase->purchase_date->format('d/m/Y H:i') }}</p>
+                <p><strong>Usuario:</strong> {{ $purchase->user->name ?? 'N/A' }}</p>
+                <p><strong>Impuesto:</strong> {{ $purchase->tax }}%</p>
+                <p><strong>Estado:</strong> {{ Str::title(str_replace('_', ' ', $purchase->status ?? 'RECIBIDA')) }}</p> {{-- Asumiendo un campo status, con 'RECIBIDA' como default si no existe --}}
+            </td>
+        </tr>
+    </table>
 
     <h2>Productos</h2>
     <table>
@@ -64,7 +78,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="4" style="text-align: center;">No hay productos en esta compra.</td>
+                    <td colspan="4" class="text-center">No hay productos en esta compra.</td>
                 </tr>
             @endforelse
         </tbody>

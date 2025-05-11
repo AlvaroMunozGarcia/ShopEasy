@@ -43,8 +43,9 @@
         </div>
         <div class="card-body">
             @if($sales->count())
-                <table class="table table-bordered table-striped">
-                    <thead>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover align-middle">
+                        <thead class="table-dark">
                         <tr>
                             <th>ID Venta</th>
                             <th>Fecha</th>
@@ -89,6 +90,7 @@
                         </tr>
                     </tfoot>
                 </table>
+                </div>
             @else
                 <div class="alert alert-warning">
                     No se encontraron ventas para el rango de fechas seleccionado.
@@ -98,4 +100,3 @@
     </div>
     @endisset
 @endsection {{-- Cambiado de @stop a @endsection --}}
-
