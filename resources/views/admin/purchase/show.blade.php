@@ -33,11 +33,9 @@
                         <div class="card-header">
                             <h3 class="card-title">Información de la Compra #{{ $purchase->id }}</h3>
                             <div class="card-tools">
-                                {{-- Botón para imprimir PDF si existe la ruta --}}
-                                <a href="{{ route('purchases.pdf', $purchase) }}" class="btn btn-sm btn-info" target="_blank">
-                                    <i class="fas fa-file-pdf"></i> Imprimir PDF
-                                </a>
-                                {{-- Botón para volver al listado --}}
+                                <button id="exportDetailPdfButton" class="btn btn-sm btn-info">
+                                    <i class="bi bi-file-earmark-pdf"></i> Exportar a PDF
+                                </button>
                                 <a href="{{ route('purchases.index') }}" class="btn btn-sm btn-secondary">
                                     <i class="fas fa-arrow-left"></i> Volver al Listado
                                 </a>
@@ -63,7 +61,7 @@
 
                             <h4>Detalles de la Compra</h4>
                             <div class="table-responsive">
-                                <table class="table table-bordered table-striped">
+                                <table id="purchaseDetailsTable" class="table table-bordered table-striped">
                                     <thead>
                                         <tr>
                                             <th>Producto</th>
@@ -89,7 +87,6 @@
                                     <tfoot>
                                         <tr>
                                             <td colspan="3" class="text-right"><strong>Subtotal:</strong></td>
-                                            {{-- Calculamos el subtotal antes de impuestos para mostrarlo si es relevante --}}
                                             @php
                                                 $subtotalGeneral = $purchase->total / (1 + ($purchase->tax / 100));
                                             @endphp
@@ -110,11 +107,9 @@
                         <!-- /.card-body -->
                         <div class="card-footer">
                             <a href="{{ route('purchases.index') }}" class="btn btn-secondary">Volver al Listado</a>
-                            {{-- Puedes añadir un botón de editar si implementas esa funcionalidad --}}
-                            {{-- <a href="{{ route('purchases.edit', $purchase) }}" class="btn btn-primary">Editar</a> --}}
-                             <a href="{{ route('purchases.print', $purchase) }}" class="btn btn-info float-right" target="_blank">
-                                <i class="fas fa-file-pdf"></i> Imprimir PDF
-                            </a>
+                            <button id="exportDetailPdfButtonFooter" class="btn btn-info float-right">
+                                <i class="bi bi-file-earmark-pdf"></i> Exportar a PDF
+                            </button>
                         </div>
                     </div>
                     <!-- /.card -->
@@ -129,5 +124,67 @@
 @endsection
 
 @push('scripts')
-{{-- Si necesitas algún script específico para esta vista --}}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    function generatePdf() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        let yPos = 15; // Posición Y inicial para el texto
+
+        // Título del Documento
+        doc.setFontSize(18);
+        doc.text("Detalles de Compra #{{ $purchase->id }}", 14, yPos);
+        yPos += 10; // Espacio después del título
+
+        // Información General de la Compra
+        doc.setFontSize(12);
+        doc.text("Información General:", 14, yPos);
+        yPos += 7; // Espacio
+        doc.setFontSize(10);
+        doc.text(`Proveedor: {{ $purchase->provider->name ?? 'N/A' }}`, 14, yPos);
+        yPos += 6;
+        doc.text(`Email Proveedor: {{ $purchase->provider->email ?? 'N/A' }}`, 14, yPos);
+        yPos += 6;
+        doc.text(`Teléfono Proveedor: {{ $purchase->provider->phone ?? 'N/A' }}`, 14, yPos);
+        yPos += 6;
+        doc.text(`Fecha de Compra: {{ $purchase->purchase_date->format('d/m/Y H:i') }}`, 14, yPos);
+        yPos += 6;
+        doc.text(`Usuario Registrador: {{ $purchase->user->name ?? 'N/A' }}`, 14, yPos);
+        yPos += 6;
+        doc.text(`Impuesto (%): {{ $purchase->tax }}%`, 14, yPos);
+        yPos += 6;
+        doc.setFontSize(12); // Resaltar el total
+        doc.text(`Total Pagado: S/ {{ number_format($purchase->total, 2) }}`, 14, yPos);
+        yPos += 10; // Espacio antes de la tabla
+
+        // Título para la tabla de detalles
+        doc.setFontSize(12);
+        doc.text("Detalles de la Compra:", 14, yPos);
+        yPos += 2; // Pequeño ajuste para que autoTable no sobreescriba el título
+
+        // Tabla de Detalles de la Compra
+        doc.autoTable({
+            html: '#purchaseDetailsTable',
+            startY: yPos,
+            theme: 'grid', // 'striped', 'grid', 'plain'
+            headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' }, // Azul oscuro para cabecera
+            // footStyles: { fillColor: [211, 211, 211], textColor: 0, fontStyle: 'bold' }, // Estilo para el pie de tabla si se usa
+            // didDrawPage: function (data) { // Opcional: para añadir pie de página en cada página
+            //     doc.setFontSize(10);
+            //     doc.text('Página ' + doc.internal.getNumberOfPages(), data.settings.margin.left, doc.internal.pageSize.height - 10);
+            // }
+        });
+
+        doc.save('detalle_compra_{{ $purchase->id }}.pdf');
+    }
+
+    const exportButtonHeader = document.getElementById('exportDetailPdfButton');
+    const exportButtonFooter = document.getElementById('exportDetailPdfButtonFooter');
+
+    if (exportButtonHeader) exportButtonHeader.addEventListener('click', generatePdf);
+    if (exportButtonFooter) exportButtonFooter.addEventListener('click', generatePdf);
+});
+</script>
 @endpush
