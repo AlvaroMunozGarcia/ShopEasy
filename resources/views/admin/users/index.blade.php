@@ -24,14 +24,19 @@
         <div class="card shadow-sm border-0">
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Gestión de Usuarios</h5>
-                <a href="{{ route('admin.users.create') }}" class="btn btn-light text-primary fw-semibold">
-                    <i class="bi bi-person-plus-fill me-1"></i> Crear Nuevo Usuario
-                </a>
+                <div>
+                    <button id="exportPdfButtonList" class="btn btn-info btn-sm fw-semibold me-2">
+                        <i class="bi bi-file-earmark-pdf me-1"></i> Exportar Lista a PDF
+                    </button>
+                    <a href="{{ route('admin.users.create') }}" class="btn btn-light text-primary fw-semibold">
+                        <i class="bi bi-person-plus-fill me-1"></i> Crear Nuevo Usuario
+                    </a>
+                </div>
             </div>
 
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-bordered table-hover mb-0 align-middle">
+                    <table id="usersTable" class="table table-bordered table-hover mb-0 align-middle">
                         <thead class="table-dark text-center">
                             <tr>
                                 <th>ID</th>
@@ -53,9 +58,9 @@
                                         @endforeach
                                     </td>
                                     <td class="text-center">
-                                        {{-- <a href="{{ route('admin.users.show', $user) }}" class="btn btn-sm btn-outline-info me-1" title="Ver">
+                                        <a href="{{ route('admin.users.show', $user) }}" class="btn btn-sm btn-outline-info me-1" title="Ver">
                                             <i class="bi bi-eye"></i>
-                                        </a> --}}
+                                        </a>
                                         <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-sm btn-outline-warning me-1" title="Editar">
                                             <i class="bi bi-pencil-square"></i>
                                         </a>
@@ -88,3 +93,27 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const exportButton = document.getElementById('exportPdfButtonList');
+    if (exportButton) {
+        exportButton.addEventListener('click', function () {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.setFontSize(18);
+            doc.text("Listado de Usuarios", 14, 22);
+            doc.autoTable({
+                html: '#usersTable',
+                startY: 30,
+            });
+            doc.save('listado_usuarios.pdf');
+        });
+    }
+});
+</script>
+@endpush

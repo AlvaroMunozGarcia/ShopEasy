@@ -8,12 +8,17 @@
 
     <div class="card">
         <div class="card-header">
-            <h3 class="card-title">Ventas realizadas hoy: {{ \Carbon\Carbon::today('America/Lima')->format('d/m/Y') }}</h3>
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="card-title mb-0">Ventas realizadas hoy: {{ \Carbon\Carbon::today('America/Lima')->format('d/m/Y') }}</h3>
+                @if($sales->count())
+                    <button id="exportReportPdfButton" class="btn btn-sm btn-success"><i class="bi bi-file-earmark-pdf me-1"></i> Exportar a PDF</button>
+                @endif
+            </div>
         </div>
         <div class="card-body">
             @if($sales->count())
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover align-middle">
+                    <table id="salesReportTable" class="table table-striped table-hover align-middle">
                         <thead class="table-dark">
                         <tr>
                             <th>ID Venta</th>
@@ -45,8 +50,8 @@
                                 <td class="text-right">{{ number_format($sale->total, 2) }}</td>
                                 <td>
                                     {{-- Usando iconos Bootstrap --}}
-                                    <a href="{{ route('sales.show', $sale) }}" class="btn btn-sm btn-info" title="Ver Detalles"><i class="bi bi-eye"></i></a>
-                                    <a href="{{ route('sales.pdf', $sale) }}" target="_blank" class="btn btn-sm btn-danger" title="Ver PDF"><i class="bi bi-file-earmark-pdf"></i></a>
+                                    <a href="{{ route('sales.show', $sale) }}" class="btn btn-sm btn-outline-info" title="Ver Detalles"><i class="bi bi-eye"></i></a>
+                                    {{-- El PDF individual se genera desde la vista show de sales --}}
                                 </td>
                             </tr>
                         @endforeach
@@ -68,3 +73,30 @@
         </div>
     </div>
 @endsection {{-- Cambiado de @stop a @endsection (más estándar) --}}
+
+@push('scripts')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const exportButton = document.getElementById('exportReportPdfButton');
+    if (exportButton) {
+        exportButton.addEventListener('click', function () {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            const todayDate = "{{ \Carbon\Carbon::today('America/Lima')->format('d/m/Y') }}";
+            const title = `Reporte de Ventas del Día (${todayDate})`;
+
+            doc.setFontSize(18);
+            doc.text(title, 14, 22);
+            doc.autoTable({
+                html: '#salesReportTable',
+                startY: 30,
+            });
+            doc.save(`reporte_ventas_dia_${todayDate.replace(/\//g, '-')}.pdf`);
+        });
+    }
+});
+</script>
+@endpush

@@ -7,9 +7,14 @@
         <div class="card shadow-sm border-0">
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Lista de Clientes</h5>
-                <a href="{{ route('clients.create') }}" class="btn btn-light text-primary fw-semibold">
-                    <i class="bi bi-person-plus me-1"></i> Añadir Cliente
-                </a>
+                <div>
+                    <button id="exportPdfButtonList" class="btn btn-info btn-sm fw-semibold me-2">
+                        <i class="bi bi-file-earmark-pdf me-1"></i> Exportar Lista a PDF
+                    </button>
+                    <a href="{{ route('clients.create') }}" class="btn btn-light text-primary fw-semibold">
+                        <i class="bi bi-person-plus me-1"></i> Añadir Cliente
+                    </a>
+                </div>
             </div>
 
             <div class="card-body">
@@ -22,7 +27,7 @@
                 @endif
 
                 <div class="table-responsive">
-                    <table class="table table-bordered table-hover align-middle mb-0">
+                    <table id="clientsTable" class="table table-bordered table-hover align-middle mb-0">
                         <thead class="table-dark text-center">
                             <tr>
                                 <th>ID</th>
@@ -79,3 +84,27 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const exportButton = document.getElementById('exportPdfButtonList');
+    if (exportButton) {
+        exportButton.addEventListener('click', function () {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.setFontSize(18);
+            doc.text("Listado de Clientes", 14, 22);
+            doc.autoTable({
+                html: '#clientsTable',
+                startY: 30,
+            });
+            doc.save('listado_clientes.pdf');
+        });
+    }
+});
+</script>
+@endpush
