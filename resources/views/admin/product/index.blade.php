@@ -1,5 +1,11 @@
 @extends('layouts.admin')
 
+@push('styles')
+{{-- DataTables Bootstrap 5 CSS --}}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
+@endpush
+
 @section('content')
 <div class="content-wrapper py-4">
     <div class="container-fluid">
@@ -98,12 +104,12 @@
                 </div>
             </div>
 
-            {{-- Paginación (si aplica) --}}
-            @if(method_exists($products, 'links'))
+            {{-- La paginación de Laravel se elimina o comenta, DataTables la manejará --}}
+            {{-- @if(method_exists($products, 'links'))
                 <div class="card-footer d-flex justify-content-center">
                     {{ $products->links() }}
                 </div>
-            @endif
+            @endif --}}
         </div>
     </div>
 
@@ -161,28 +167,103 @@
 @endsection
 
 @push('scripts')
+{{-- jQuery (necesario para DataTables) --}}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+{{-- DataTables JS --}}
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+{{-- DataTables Bootstrap 5 JS --}}
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+
+{{-- Librerías para exportación --}}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const exportButton = document.getElementById('exportPdfButtonList');
-    if (exportButton) {
-        exportButton.addEventListener('click', function () {
+    const tableIdToExport = 'productsTable';
+    let dataTableInstance; // Para acceder a la instancia de DataTables
+
+    // Inicializar DataTables
+    if (typeof $ !== 'undefined' && typeof $.fn.DataTable !== 'undefined' && $(`#${tableIdToExport}`).length > 0) {
+        try {
+            dataTableInstance = $(`#${tableIdToExport}`).DataTable({
+                "pageLength": 10,
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.10.19/i18n/Spanish.json"
+                },
+                "responsive": true,
+                "autoWidth": false,
+                "columnDefs": [
+                    { "orderable": false, "searchable": false, "targets": -1 }, // Última columna (Acciones)
+                    { "type": "num", "targets": [0, 5] }, // ID y Stock son numéricos para ordenación
+                    { "type": "num-fmt", "targets": [6] } // Precio Venta (para ordenación con formato)
+                ]
+            });
+            console.log(`DataTables inicializado para #${tableIdToExport}`);
+        } catch (e) {
+            console.error(`Error inicializando DataTables para #${tableIdToExport}:`, e);
+        }
+    }
+
+    // --- Exportación a PDF ---
+    const exportPdfButton = document.getElementById('exportPdfButtonList');
+    if (exportPdfButton) {
+        exportPdfButton.addEventListener('click', function () {
+            if (!dataTableInstance) {
+                alert("La tabla de datos no está inicializada.");
+                return;
+            }
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-
             doc.setFontSize(18);
             doc.text("Listado de Productos", 14, 22);
+
+            const head = [];
+            const body = [];
+            let actionsColumnOriginalIndex = -1;
+
+            // Obtener cabeceras de DataTables (respetando visibilidad y orden)
+            const headerCells = dataTableInstance.table().header().querySelectorAll('th');
+            const currentHead = [];
+            headerCells.forEach((th, index) => {
+                if (th.offsetParent !== null) { // Solo columnas visibles
+                    if (th.innerText.trim().toLowerCase() === 'acciones') {
+                        actionsColumnOriginalIndex = $(th).index(); // Índice original en el DOM
+                    } else {
+                        currentHead.push(th.innerText.trim());
+                    }
+                }
+            });
+            head.push(currentHead);
+
+            // Obtener datos de DataTables (respetando filtro y orden)
+            dataTableInstance.rows({ search: 'applied' }).data().each(function(rowDataArray) {
+                const filteredRow = [];
+                rowDataArray.forEach((cellData, cellIndex) => {
+                    if (cellIndex !== actionsColumnOriginalIndex) {
+                        // Limpiar HTML de badges para el PDF, si es necesario
+                        let cleanData = cellData;
+                        if (typeof cellData === 'string' && cellData.includes('<span class="badge')) {
+                            cleanData = $(cellData).text(); // Extraer solo el texto del badge
+                        }
+                        filteredRow.push(cleanData);
+                    }
+                });
+                if (filteredRow.length > 0) body.push(filteredRow);
+            });
+
             doc.autoTable({
-                html: '#productsTable',
+                head: head,
+                body: body,
                 startY: 30,
             });
             doc.save('listado_productos.pdf');
         });
     }
 
-    // --- Common Export Functions ---
+    // --- Funciones Comunes de Exportación (Adaptadas para DataTables) ---
     function escapeCsvCell(cellData) {
         if (cellData == null) return '';
         let dataString = String(cellData).replace(/"/g, '""');
@@ -190,40 +271,50 @@ document.addEventListener('DOMContentLoaded', function () {
         return dataString;
     }
 
-    function exportTableToCSV(tableId, filename = 'export.csv', separator = ',') {
-        const table = document.getElementById(tableId);
-        if (!table) { alert(`Error: Tabla con id "${tableId}" no encontrada.`); return; }
-        let csv = ['\uFEFF']; // BOM for UTF-8
-        const processRows = (rows, cellType) => {
-            rows.forEach(row => {
-                if (row.style.display === 'none') return;
-                const rowData = [];
-                const cols = row.querySelectorAll(cellType);
-                if (cols.length === 1 && cols[0].getAttribute('colspan')) {
-                    let headerColCount = table.querySelector('thead tr th') ? table.querySelector('thead tr').querySelectorAll('th').length : 0;
-                    if (parseInt(cols[0].getAttribute('colspan')) >= headerColCount) return;
+    function getTableDataForExport(dtInstance, excludeActions = true) {
+        const headers = [];
+        const body = [];
+        let actionsColOriginalIndex = -1;
+
+        // Cabeceras
+        const headerCells = dtInstance.table().header().querySelectorAll('th');
+        headerCells.forEach((th) => {
+            if (th.offsetParent !== null) { // Solo columnas visibles
+                if (excludeActions && th.innerText.trim().toLowerCase() === 'acciones') {
+                    actionsColOriginalIndex = $(th).index();
+                } else {
+                    headers.push(th.innerText.trim());
                 }
-                cols.forEach(col => {
-                    if (cellType === 'td' && col.querySelector('form, a.btn')) {
-                        // Skip action column for data rows
-                    } else {
-                        rowData.push(escapeCsvCell(col.innerText.trim()));
+            }
+        });
+
+        // Cuerpo
+        dtInstance.rows({ search: 'applied' }).data().each(function(rowDataArray) {
+            const filteredRow = [];
+            rowDataArray.forEach((cellData, cellIndex) => {
+                if (cellIndex !== actionsColOriginalIndex) {
+                    let cleanData = cellData;
+                    if (typeof cellData === 'string' && cellData.includes('<span class="badge')) {
+                        cleanData = $(cellData).text();
                     }
-                });
-                if (cellType === 'th') {
-                    const headerData = [];
-                    cols.forEach(col => headerData.push(escapeCsvCell(col.innerText.trim())));
-                    if (headerData.length > 0 && headerData[headerData.length - 1].toLowerCase() === 'acciones') {
-                        headerData.pop();
-                    }
-                    if (headerData.length > 0) csv.push(headerData.join(separator));
-                } else if (rowData.length > 0 && rowData.some(cell => cell !== '""' && cell !== '')) {
-                     csv.push(rowData.join(separator));
+                    filteredRow.push(cleanData);
                 }
             });
-        };
-        processRows(table.querySelectorAll('thead tr'), 'th');
-        processRows(table.querySelectorAll('tbody tr'), 'td');
+            if (filteredRow.length > 0) body.push(filteredRow);
+        });
+        return { headers, body };
+    }
+
+    function exportDataToCSV(filename = 'export.csv', separator = ',', dtInstance) {
+        if (!dtInstance) { alert("La tabla de datos no está inicializada."); return; }
+        const { headers, body: dataRows } = getTableDataForExport(dtInstance);
+        if (headers.length === 0) { alert("No hay datos para exportar."); return; }
+
+        let csv = ['\uFEFF']; // BOM for UTF-8
+        csv.push(headers.map(header => escapeCsvCell(header)).join(separator));
+        dataRows.forEach(rowArray => {
+            csv.push(rowArray.map(cell => escapeCsvCell(cell)).join(separator));
+        });
 
         const blob = new Blob([csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
@@ -237,10 +328,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function parseNumericValue(text) {
-        if (text === null || text === undefined) return text;
-        let cleanText = String(text).trim().replace(/^(S\/\s*|\$\s*|€\s*)/, '').replace(/\s*€$/, ''); // Handle "1.234,56 €"
-        if (cleanText.includes(',') && cleanText.includes('.')) { // Handles "1.234,56" or "1,234.56"
-            if (cleanText.lastIndexOf(',') > cleanText.lastIndexOf('.')) { // "1.234,56"
+        if (text == null) return text; // Handles null or undefined
+        let cleanText = String(text).trim().replace(/^(S\/\s*|\$\s*|€\s*)/, '').replace(/\s*€$/, ''); // Remove currency symbols
+        if (cleanText.includes(',') && cleanText.includes('.')) {
+            if (cleanText.lastIndexOf(',') > cleanText.lastIndexOf('.')) { // European: 1.234,56
                 cleanText = cleanText.replace(/\./g, '').replace(/,/g, '.');
             } else { // "1,234.56"
                 cleanText = cleanText.replace(/,/g, '');
@@ -248,83 +339,69 @@ document.addEventListener('DOMContentLoaded', function () {
         } else if (cleanText.includes(',')) { // Handles "123,45"
             cleanText = cleanText.replace(/,/g, '.');
         }
-        // For "Stock" which is an integer
-        if (!cleanText.includes('.')) { // If it's an integer like "50"
+        // Check if it's an integer after cleaning
+        if (!cleanText.includes('.') && /^\d+$/.test(cleanText)) {
             const intVal = parseInt(cleanText, 10);
             if (!isNaN(intVal) && String(intVal) === cleanText) return intVal;
         }
         const num = parseFloat(cleanText);
-        return isNaN(num) ? text : num;
+        return isNaN(num) ? String(text).trim() : num; // Return original trimmed string if not a valid number
     }
 
-    function processTableForExcel(tableElement, workbook, sheetName) {
-        if (typeof XLSX === 'undefined') { alert("Error: Librería XLSX no cargada."); return false; }
-        let aoaData = [], htmlRowsInfo = [];
-        const processRowCollection = (rows, cellSelector, type) => {
-            rows.forEach(row => {
-                if (row.style.display === 'none') return;
-                const rowData = [], cols = row.querySelectorAll(cellSelector);
-                if (cols.length === 1 && cols[0].getAttribute('colspan')) {
-                    let headerColCount = tableElement.querySelector('thead tr th') ? tableElement.querySelector('thead tr').querySelectorAll('th').length : 0;
-                    if (parseInt(cols[0].getAttribute('colspan')) >= headerColCount) return;
-                }
-                cols.forEach((col) => {
-                    if (cellSelector === 'td' && col.querySelector('form, a.btn')) {
-                        // Skip action column for data rows
-                    } else if (cellSelector === 'th' && col.innerText.trim().toLowerCase() === 'acciones') {
-                        // Skip "Acciones" header
-                    } else {
-                        let cellText = col.innerText.trim();
-                        const isNumeric = col.classList.contains('text-right') || (col.style.textAlign === 'right') ||
-                                          /^\S*\s*[\d,.-]+\d\s*(€)?$/.test(cellText.replace(/[S\/$.]/g, '')) || // Price
-                                          (cellSelector === 'th' && ['stock', 'precio venta'].includes(col.innerText.trim().toLowerCase())) || // Specific headers
-                                          (cellSelector === 'td' && (col.cellIndex === 5 || col.cellIndex === 6)); // Stock and Price by index
+    function exportDataToExcel(filename = 'export.xlsx', sheetName = 'Datos', dtInstance) {
+        if (!dtInstance) { alert("La tabla de datos no está inicializada."); return; }
+        if (typeof XLSX === 'undefined') { alert("Error: Librería XLSX no cargada."); return; }
 
-                        rowData.push(isNumeric ? parseNumericValue(cellText) : cellText);
-                    }
-                });
-                if (rowData.length > 0) { aoaData.push(rowData); htmlRowsInfo.push({ type, element: row }); }
+        const { headers, body: dataRows } = getTableDataForExport(dtInstance);
+        if (headers.length === 0) { alert("No hay datos para exportar."); return; }
+
+        const aoaData = [headers];
+        dataRows.forEach(rowArray => {
+            const processedRow = rowArray.map((cell, colIndex) => {
+                // Column names for numeric parsing (case-insensitive)
+                const numericHeaders = ['id', 'stock', 'precio venta'];
+                if (headers[colIndex] && numericHeaders.includes(headers[colIndex].toLowerCase())) {
+                    return parseNumericValue(cell);
+                }
+                return cell; // Keep as string otherwise
             });
-        };
-        processRowCollection(tableElement.querySelectorAll('thead tr'), 'th', 'header');
-        processRowCollection(tableElement.querySelectorAll('tbody tr'), 'td', 'body');
+            aoaData.push(processedRow);
+        });
 
         const ws = XLSX.utils.aoa_to_sheet(aoaData);
-        let currentWsRow = 0;
-        htmlRowsInfo.forEach(rowInfo => {
-            const htmlCells = rowInfo.element.querySelectorAll(rowInfo.type === 'header' ? 'th' : 'td');
-            let excelColIndex = 0;
-            htmlCells.forEach((htmlCell) => {
-                if (rowInfo.type === 'header' && htmlCell.innerText.trim().toLowerCase() === 'acciones') return;
-                if (rowInfo.type === 'body' && htmlCell.querySelector('form, a.btn')) return;
 
-                const cell_ref = XLSX.utils.encode_cell({ c: excelColIndex, r: currentWsRow });
-                if (!ws[cell_ref]) return;
-                if (!ws[cell_ref].s) ws[cell_ref].s = {};
-                let s = ws[cell_ref].s;
-                if (rowInfo.type === 'header' || htmlCell.querySelector('strong')) {
-                    if (!s.font) s.font = {}; s.font.bold = true;
-                }
-                if (htmlCell.classList.contains('text-right') || htmlCell.style.textAlign === 'right' || (ws[cell_ref].t === 'n' && excelColIndex > 0)) {
-                    if (!s.alignment) s.alignment = {}; s.alignment.horizontal = "right";
-                }
-                if (htmlCell.classList.contains('text-center') || htmlCell.style.textAlign === 'center') {
-                    if (!s.alignment) s.alignment = {}; s.alignment.horizontal = "center";
-                }
-                if (rowInfo.type === 'header' && rowInfo.element.parentElement.classList.contains('table-dark')) {
-                    if (!s.fill) s.fill = {}; s.fill.patternType = "solid"; s.fill.fgColor = { rgb: "FF212529" };
-                    if (!s.font) s.font = {}; s.font.color = { rgb: "FFFFFFFF" };
-                }
-                if (ws[cell_ref].t === 'n') {
-                    // Stock is integer, Price is decimal
-                    s.numFmt = (excelColIndex === 4) ? "0" : "#,##0.00"; // Assuming Stock is 5th col (index 4), Price is 6th (index 5) in Excel after removing actions
-                }
-                excelColIndex++;
-            });
-            currentWsRow++;
-        });
-        const colWidths = [];
+        // Apply styles and number formats
         const range = XLSX.utils.decode_range(ws['!ref']);
+        for (let R = range.s.r; R <= range.e.r; ++R) {
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                const cell_ref = XLSX.utils.encode_cell({ r: R, c: C });
+                if (!ws[cell_ref]) continue;
+                if (!ws[cell_ref].s) ws[cell_ref].s = {};
+
+                // Header style
+                if (R === 0) { // Header row
+                    ws[cell_ref].s.font = { bold: true };
+                    ws[cell_ref].s.fill = { patternType: "solid", fgColor: { rgb: "FFD9D9D9" } }; // Light grey
+                    ws[cell_ref].s.alignment = { horizontal: "center", vertical: "center" };
+                }
+
+                // Number formatting for specific columns
+                const headerName = headers[C] ? headers[C].toLowerCase() : '';
+                if (ws[cell_ref].t === 'n') { // If it's a number type
+                    if (headerName === 'id' || headerName === 'stock') {
+                        ws[cell_ref].s.numFmt = "0"; // Integer
+                    } else if (headerName === 'precio venta') {
+                        ws[cell_ref].s.numFmt = "#,##0.00 €"; // Currency
+                    }
+                    ws[cell_ref].s.alignment = { horizontal: "right" };
+                } else if (headerName === 'estado' || headerName === 'id' || headerName === 'stock') {
+                     ws[cell_ref].s.alignment = { horizontal: "center" };
+                }
+            }
+        }
+
+        // Auto-adjust column widths
+        const colWidths = [];
         for (let C = range.s.c; C <= range.e.c; ++C) {
             let maxLen = 0;
             for (let R = range.s.r; R <= range.e.r; ++R) {
@@ -332,7 +409,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (ws[cell_ref]) {
                     let cellText = ws[cell_ref].v !== null && ws[cell_ref].v !== undefined ? String(ws[cell_ref].v) : "";
                     if (ws[cell_ref].t === 'n' && ws[cell_ref].s && ws[cell_ref].s.numFmt) {
-                        cellText = (ws[cell_ref].s.numFmt === "0") ? Number(ws[cell_ref].v).toString() : Number(ws[cell_ref].v).toFixed(2);
+                        try { // Attempt to format for width calculation
+                            cellText = XLSX.SSF.format(ws[cell_ref].s.numFmt, ws[cell_ref].v);
+                        } catch(e) {
+                            // fallback
+                        }
                     }
                     maxLen = Math.max(maxLen, cellText.length);
                 }
@@ -340,18 +421,11 @@ document.addEventListener('DOMContentLoaded', function () {
             colWidths[C] = { wch: Math.max(10, maxLen + 2) };
         }
         ws['!cols'] = colWidths;
-        XLSX.utils.book_append_sheet(workbook, ws, sheetName);
-        return true;
-    }
 
-    function exportSingleTableToExcel(tableId, filename = 'export.xlsx', sheetName = 'Sheet1') {
-        const tableElement = document.getElementById(tableId);
-        if (!tableElement) { alert(`Error: Tabla con id "${tableId}" no encontrada.`); return; }
-        if (typeof XLSX === 'undefined') { alert("Error: Librería XLSX no cargada."); return; }
+        XLSX.utils.book_append_sheet(workbook, ws, sheetName);
         const wb = XLSX.utils.book_new();
-        if (processTableForExcel(tableElement, wb, sheetName)) {
-            XLSX.writeFile(wb, filename);
-        }
+        XLSX.utils.book_append_sheet(wb, ws, sheetName); // ws already added, this line is redundant if wb is new
+        XLSX.writeFile(wb, filename); // This should be XLSX.writeFile(wb, filename);
     }
 
     // --- Modal Instances & Export Button Event Listeners ---
@@ -364,14 +438,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const csvSeparatorSelect = document.getElementById('csvSeparatorSelect');
     const excelFilenameInput = document.getElementById('excelFilenameInput');
 
-    const tableIdToExport = 'productsTable';
     const date = new Date();
     const todayForFilename = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
     const baseFilename = `listado_productos_${todayForFilename}`;
 
     document.getElementById('exportCsvButtonList')?.addEventListener('click', () => {
-        if (csvModal && csvFilenameInput) {
+        if (csvModal && csvFilenameInput && csvSeparatorSelect) {
             csvFilenameInput.value = `${baseFilename}.csv`;
+            csvSeparatorSelect.value = ';'; // Default
             csvModal.show();
         }
     });
@@ -384,18 +458,18 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     document.getElementById('confirmCsvExportBtn')?.addEventListener('click', () => {
-        if (csvFilenameInput && csvSeparatorSelect) {
+        if (csvFilenameInput && csvSeparatorSelect && dataTableInstance) {
             const filename = csvFilenameInput.value.trim() || `${baseFilename}.csv`;
             const separator = csvSeparatorSelect.value;
-            exportTableToCSV(tableIdToExport, filename, separator);
+            exportDataToCSV(filename, separator, dataTableInstance);
             if(csvModal) csvModal.hide();
         }
     });
 
     document.getElementById('confirmExcelExportBtn')?.addEventListener('click', () => {
-        if (excelFilenameInput) {
+        if (excelFilenameInput && dataTableInstance) {
             const filename = excelFilenameInput.value.trim() || `${baseFilename}.xlsx`;
-            exportSingleTableToExcel(tableIdToExport, filename, 'Listado Productos');
+            exportDataToExcel(filename, 'Listado Productos', dataTableInstance);
             if(excelModal) excelModal.hide();
         }
     });

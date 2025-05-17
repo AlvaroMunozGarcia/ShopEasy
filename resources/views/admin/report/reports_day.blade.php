@@ -1,5 +1,11 @@
 @extends('layouts.admin') {{-- Usando tu layout personalizado --}}
 
+@push('styles')
+{{-- DataTables Bootstrap 5 CSS --}}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
+@endpush
+
 @section('title', 'Reporte de Ventas - Hoy')
 
 {{-- El título ahora va dentro de la sección 'content' --}}
@@ -134,31 +140,106 @@
 </div>
 
 @push('scripts')
+{{-- jQuery (necesario para DataTables) --}}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+{{-- DataTables JS --}}
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+{{-- DataTables Bootstrap 5 JS --}}
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+
+{{-- Librerías para exportación --}}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const exportButton = document.getElementById('exportReportPdfButton');
-    if (exportButton) {
-        exportButton.addEventListener('click', function () {
+    const tableIdToExport = 'salesReportTable';
+    let dataTableInstance;
+
+    // Inicializar DataTables
+    if (typeof $ !== 'undefined' && typeof $.fn.DataTable !== 'undefined' && $(`#${tableIdToExport}`).length > 0 && $(`#${tableIdToExport} tbody tr`).length > 1) { // Solo inicializar si hay datos
+        try {
+            dataTableInstance = $(`#${tableIdToExport}`).DataTable({
+                "pageLength": 10,
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.10.19/i18n/Spanish.json"
+                },
+                "responsive": true,
+                "autoWidth": false,
+                "searching": $(`#${tableIdToExport} tbody tr`).length > 10, // Habilitar búsqueda solo si hay más de 10 filas
+                "paging": $(`#${tableIdToExport} tbody tr`).length > 10,    // Habilitar paginación solo si hay más de 10 filas
+                "info": $(`#${tableIdToExport} tbody tr`).length > 10,     // Habilitar info solo si hay más de 10 filas
+                "columnDefs": [
+                    { "orderable": false, "searchable": false, "targets": -1 }, // Última columna (Acciones)
+                    { "type": "num", "targets": 0 }, // ID Venta
+                    { "type": "date-eu", "targets": 1 }, // Fecha
+                    { "type": "num-fmt", "targets": 5 } // Total (S/)
+                ],
+                "footerCallback": function ( row, data, start, end, display ) {
+                    var api = this.api(), data;
+
+                    // Sumar la columna 'Total (S/)' visible en la página actual
+                    var totalPage = api
+                        .column( 5, { page: 'current'} )
+                        .data()
+                        .reduce( function (a, b) {
+                            return parseFloat(String(a).replace(/[S/.]/g, '').replace(',', '.')) + parseFloat(String(b).replace(/[S/.]/g, '').replace(',', '.'));
+                        }, 0 );
+
+                    // Sumar la columna 'Total (S/)' de todos los datos (después de filtrar)
+                    var totalAll = api
+                        .column( 5, { search: 'applied' } )
+                        .data()
+                        .reduce( function (a, b) {
+                            return parseFloat(String(a).replace(/[S/.]/g, '').replace(',', '.')) + parseFloat(String(b).replace(/[S/.]/g, '').replace(',', '.'));
+                        }, 0 );
+
+                    // Actualizar el footer
+                    // El footer original ya tiene el total general, así que no es estrictamente necesario actualizarlo aquí
+                    // a menos que quieras mostrar el total de la página actual.
+                    // $( api.column( 5 ).footer() ).html(
+                    //     'S/ ' + totalPage.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2}) +
+                    //     ' (S/ ' + totalAll.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' total)'
+                    // );
+                }
+            });
+            console.log(`DataTables inicializado para #${tableIdToExport}`);
+        } catch (e) {
+            console.error(`Error inicializando DataTables para #${tableIdToExport}:`, e);
+        }
+    }
+
+    // --- Exportación a PDF ---
+    const exportPdfButton = document.getElementById('exportReportPdfButton');
+    if (exportPdfButton) {
+        exportPdfButton.addEventListener('click', function () {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-
             const todayDate = "{{ \Carbon\Carbon::today('America/Lima')->format('d/m/Y') }}";
             const title = `Reporte de Ventas del Día (${todayDate})`;
 
             doc.setFontSize(18);
             doc.text(title, 14, 22);
+
+            const { headers, body, footer } = getTableDataForExport(dataTableInstance || document.getElementById(tableIdToExport), true, true);
+            if (headers.length === 0) { alert("No hay datos para exportar."); return; }
+
             doc.autoTable({
-                html: '#salesReportTable',
+                head: [headers],
+                body: body,
+                foot: [footer], // Añadir el pie de tabla
                 startY: 30,
+                theme: 'grid',
+                headStyles: { fillColor: [22, 160, 133], textColor: 255, fontStyle: 'bold' },
+                footStyles: { fillColor: [22, 160, 133], textColor: 255, fontStyle: 'bold' },
             });
             doc.save(`reporte_ventas_dia_${todayDate.replace(/\//g, '-')}.pdf`);
         });
     }
 
-    // --- Common Export Functions ---
+    // --- Funciones Comunes de Exportación (Adaptadas para DataTables) ---
     function escapeCsvCell(cellData) {
         if (cellData == null) return '';
         let dataString = String(cellData).replace(/"/g, '""');
@@ -166,26 +247,96 @@ document.addEventListener('DOMContentLoaded', function () {
         return dataString;
     }
 
-    function exportTableToCSV(tableId, filename = 'export.csv', separator = ',') {
-        const table = document.getElementById(tableId);
-        if (!table) { alert(`Error: Tabla con id "${tableId}" no encontrada.`); return; }
-        let csv = ['\uFEFF']; // BOM for UTF-8
-        const processRows = (rows, cellType) => {
-            rows.forEach(row => {
-                if (row.style.display === 'none') return;
-                const rowData = [];
-                const cols = row.querySelectorAll(cellType);
-                if (cols.length === 1 && cols[0].getAttribute('colspan')) {
-                    let headerColCount = table.querySelector('thead tr th') ? table.querySelector('thead tr').querySelectorAll('th').length : 0;
-                    if (parseInt(cols[0].getAttribute('colspan')) >= headerColCount) return;
+    function getTableDataForExport(tableSource, excludeActions = true, includeFooter = false) {
+        const headers = [];
+        const body = [];
+        const footer = [];
+        let actionsColOriginalIndex = -1;
+
+        if (tableSource instanceof $.fn.dataTable.Api) { // Si es una instancia de DataTables
+            // Cabeceras
+            const headerCells = tableSource.table().header().querySelectorAll('th');
+            headerCells.forEach((th) => {
+                if (th.offsetParent !== null) {
+                    if (excludeActions && th.innerText.trim().toLowerCase() === 'acciones') {
+                        actionsColOriginalIndex = $(th).index();
+                    } else {
+                        headers.push(th.innerText.trim());
+                    }
                 }
-                cols.forEach(col => rowData.push(escapeCsvCell(col.innerText.trim())));
-                if (rowData.length > 0 && rowData.some(cell => cell !== '""' && cell !== '')) csv.push(rowData.join(separator));
             });
-        };
-        processRows(table.querySelectorAll('thead tr'), 'th');
-        processRows(table.querySelectorAll('tbody tr'), 'td');
-        processRows(table.querySelectorAll('tfoot tr'), 'td, th');
+            // Cuerpo
+            tableSource.rows({ search: 'applied' }).data().each(function(rowDataArray) {
+                const filteredRow = [];
+                rowDataArray.forEach((cellData, cellIndex) => {
+                    if (cellIndex !== actionsColOriginalIndex) {
+                        let cleanData = cellData;
+                        if (headers[filteredRow.length] && headers[filteredRow.length].toLowerCase() === 'estado' && typeof cellData === 'string' && cellData.includes('<span class="badge')) {
+                            const tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = cellData;
+                            cleanData = tempDiv.querySelector('.badge')?.textContent.trim() || cellData;
+                        }
+                        filteredRow.push(String(cleanData).trim());
+                    }
+                });
+                if (filteredRow.length > 0) body.push(filteredRow);
+            });
+            // Pie de tabla (si DataTables lo maneja o si existe en el HTML)
+            if (includeFooter) {
+                const footerRow = tableSource.table().footer().querySelector('tr');
+                if (footerRow) {
+                    $(footerRow).find('td, th').each(function(index) {
+                        if (index !== actionsColOriginalIndex) { // Considerar si la columna de acciones tiene un td en el footer
+                             footer.push($(this).text().trim());
+                        }
+                    });
+                }
+            }
+        } else { // Si es un elemento de tabla HTML (fallback)
+            const tableElement = tableSource;
+            $(tableElement).find('thead tr th').each(function(index) {
+                if (excludeActions && $(this).text().trim().toLowerCase() === 'acciones') {
+                    actionsColOriginalIndex = index;
+                } else {
+                    headers.push($(this).text().trim());
+                }
+            });
+            $(tableElement).find('tbody tr').each(function() {
+                const rowData = [];
+                $(this).find('td').each(function(index) {
+                    if (index !== actionsColOriginalIndex) {
+                        let cellText = $(this).text().trim();
+                        if (headers[rowData.length] && headers[rowData.length].toLowerCase() === 'estado' && $(this).find('.badge').length) {
+                            cellText = $(this).find('.badge').text().trim();
+                        }
+                        rowData.push(cellText);
+                    }
+                });
+                if (rowData.length > 0) body.push(rowData);
+            });
+            if (includeFooter) {
+                $(tableElement).find('tfoot tr td, tfoot tr th').each(function(index) {
+                     if (index !== actionsColOriginalIndex) {
+                        footer.push($(this).text().trim());
+                     }
+                });
+            }
+        }
+        return { headers, body, footer };
+    }
+
+    function exportDataToCSV(filename = 'export.csv', separator = ',', dataSource) {
+        const { headers, body, footer } = getTableDataForExport(dataSource, true, true);
+        if (headers.length === 0) { alert("No hay datos para exportar."); return; }
+
+        let csv = ['\uFEFF']; // BOM for UTF-8
+        csv.push(headers.map(header => escapeCsvCell(header)).join(separator));
+        body.forEach(rowArray => {
+            csv.push(rowArray.map(cell => escapeCsvCell(cell)).join(separator));
+        });
+        if (footer.length > 0) {
+            csv.push(footer.map(cell => escapeCsvCell(cell)).join(separator));
+        }
 
         const blob = new Blob([csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
@@ -200,9 +351,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function parseNumericValue(text) {
         if (text === null || text === undefined) return text;
-        let cleanText = String(text).trim().replace(/^(S\/\s*|\$\s*|€\s*)/, '');
+        let cleanText = String(text).trim().replace(/^(S\/\s*|\$\s*|€\s*)/, '').replace(/\s*€$/, '');
         if (cleanText.includes(',') && cleanText.includes('.')) {
-            if (cleanText.lastIndexOf(',') > cleanText.lastIndexOf('.')) { // Format 1.234,56
+            if (cleanText.lastIndexOf(',') > cleanText.lastIndexOf('.')) {
                 cleanText = cleanText.replace(/\./g, '').replace(/,/g, '.');
             } else { // Format 1,234.56
                 cleanText = cleanText.replace(/,/g, '');
@@ -215,85 +366,84 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
         const num = parseFloat(cleanText);
-        return isNaN(num) ? text : num;
+        return isNaN(num) ? String(text).trim() : num;
     }
 
-    function processTableForExcel(tableElement, workbook, sheetName) {
-        if (typeof XLSX === 'undefined') { alert("Error: Librería XLSX no cargada."); return false; }
-        let aoaData = [], htmlRowsInfo = [];
-        const processRowCollection = (rows, cellSelector, type) => {
-            rows.forEach(row => {
-                if (row.style.display === 'none') return;
-                const rowData = [], cols = row.querySelectorAll(cellSelector);
-                if (cols.length === 1 && cols[0].getAttribute('colspan')) {
-                    let headerColCount = tableElement.querySelector('thead tr th') ? tableElement.querySelector('thead tr').querySelectorAll('th').length : 0;
-                    if (parseInt(cols[0].getAttribute('colspan')) >= headerColCount) return;
-                }
-                cols.forEach(col => {
-                    let cellText = col.innerText.trim();
-                    const isNumeric = col.classList.contains('text-right') || (col.style.textAlign === 'right') || /^\S*\s*[\d,.-]+\d$/.test(cellText.replace(/[S\/$.€]/g, ''));
-                    rowData.push(isNumeric ? parseNumericValue(cellText) : cellText);
-                });
-                if (rowData.length > 0) { aoaData.push(rowData); htmlRowsInfo.push({ type, element: row }); }
-            });
-        };
-        processRowCollection(tableElement.querySelectorAll('thead tr'), 'th', 'header');
-        processRowCollection(tableElement.querySelectorAll('tbody tr'), 'td', 'body');
-        processRowCollection(tableElement.querySelectorAll('tfoot tr'), 'td, th', 'footer');
+    function exportDataToExcel(filename = 'export.xlsx', sheetName = 'Datos', dataSource) {
+        if (typeof XLSX === 'undefined') { alert("Error: Librería XLSX no cargada."); return; }
 
+        const { headers, body: dataRows, footer: footerRow } = getTableDataForExport(dataSource, true, true);
+        if (headers.length === 0) { alert("No hay datos para exportar."); return; }
+
+        const aoaData = [headers];
+        dataRows.forEach(rowArray => {
+            const processedRow = rowArray.map((cell, colIndex) => {
+                const headerName = headers[colIndex] ? headers[colIndex].toLowerCase() : '';
+                if (headerName === 'id venta' || headerName === 'total (s/)') {
+                    return parseNumericValue(cell);
+                }
+                return cell;
+            });
+            aoaData.push(processedRow);
+        });
+
+        if (footerRow.length > 0) {
+             const processedFooter = footerRow.map((cell, colIndex) => {
+                // Asumimos que el total en el footer está en la misma posición que la cabecera "Total (S/)"
+                // o que es la última celda numérica relevante.
+                // Esta lógica puede necesitar ajuste si la estructura del footer es compleja.
+                const potentialHeaderIndex = headers.length - footerRow.length + colIndex;
+                const headerName = headers[potentialHeaderIndex] ? headers[potentialHeaderIndex].toLowerCase() : '';
+                 if (cell.toLowerCase().includes('total') && headerName === 'total (s/)') { // Si la celda del footer es un total
+                    return parseNumericValue(cell.replace(/[^0-9,.-]+/g,"")); // Extraer solo el número
+                 }
+                 return cell.includes('Total del Día:') || cell.includes('Total del Periodo:') ? {v: cell, s: {font: {bold: true}}} : cell;
+            });
+            aoaData.push(processedFooter);
+        }
+
+        const wb = XLSX.utils.book_new();
         const ws = XLSX.utils.aoa_to_sheet(aoaData);
-        let currentWsRow = 0;
-        htmlRowsInfo.forEach(rowInfo => {
-            const htmlCells = rowInfo.element.querySelectorAll(rowInfo.type === 'header' ? 'th' : 'td, th');
-            htmlCells.forEach((htmlCell, colIndex) => {
-                const cell_ref = XLSX.utils.encode_cell({ c: colIndex, r: currentWsRow });
+
+        const range = XLSX.utils.decode_range(ws['!ref']);
+        const colWidths = headers.map(header => ({ wch: Math.max(10, header.length + 2) }));
+
+        for (let R = range.s.r; R <= range.e.r; ++R) {
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                const cell_ref = XLSX.utils.encode_cell({ r: R, c: C });
                 if (!ws[cell_ref]) return;
                 if (!ws[cell_ref].s) ws[cell_ref].s = {};
-                let s = ws[cell_ref].s;
-                if (rowInfo.type === 'header' || rowInfo.type === 'footer' || htmlCell.querySelector('strong')) {
-                    if (!s.font) s.font = {}; s.font.bold = true;
+
+                const len = ws[cell_ref].v ? String(ws[cell_ref].v).length : 0;
+                if (colWidths[C]) colWidths[C].wch = Math.max(colWidths[C].wch, len + 2);
+
+                if (R === 0) { // Cabecera
+                    ws[cell_ref].s.font = { bold: true };
+                    ws[cell_ref].s.fill = { patternType: "solid", fgColor: { rgb: "FFD9D9D9" } };
+                    ws[cell_ref].s.alignment = { horizontal: "center", vertical: "center" };
+                } else if (R === range.e.r && footerRow.length > 0) { // Pie de tabla
+                    ws[cell_ref].s.font = { bold: true };
+                    ws[cell_ref].s.fill = { patternType: "solid", fgColor: { rgb: "FFEFEFEF" } };
                 }
-                if (htmlCell.classList.contains('text-right') || htmlCell.style.textAlign === 'right' || (ws[cell_ref].t === 'n' && colIndex > 0)) {
-                    if (!s.alignment) s.alignment = {}; s.alignment.horizontal = "right";
-                }
-                if (htmlCell.classList.contains('text-center') || htmlCell.style.textAlign === 'center') {
-                    if (!s.alignment) s.alignment = {}; s.alignment.horizontal = "center";
-                }
-                if (rowInfo.type === 'header' && rowInfo.element.parentElement.classList.contains('table-dark')) {
-                    if (!s.fill) s.fill = {}; s.fill.patternType = "solid"; s.fill.fgColor = { rgb: "FF212529" };
-                    if (!s.font) s.font = {}; s.font.color = { rgb: "FFFFFFFF" };
-                }
-                if (ws[cell_ref].t === 'n') s.numFmt = "0.00";
-            });
-            currentWsRow++;
-        });
-        const colWidths = [];
-        const range = XLSX.utils.decode_range(ws['!ref']);
-        for (let C = range.s.c; C <= range.e.c; ++C) {
-            let maxLen = 0;
-            for (let R = range.s.r; R <= range.e.r; ++R) {
-                const cell_ref = XLSX.utils.encode_cell({ c: C, r: R });
-                if (ws[cell_ref]) {
-                    let cellText = ws[cell_ref].v !== null && ws[cell_ref].v !== undefined ? String(ws[cell_ref].v) : "";
-                    if (ws[cell_ref].t === 'n' && ws[cell_ref].s && ws[cell_ref].s.numFmt) cellText = Number(ws[cell_ref].v).toFixed(2);
-                    maxLen = Math.max(maxLen, cellText.length);
+
+                const headerName = headers[C] ? headers[C].toLowerCase() : '';
+                if (ws[cell_ref].t === 'n') {
+                    if (headerName === 'id venta') {
+                        ws[cell_ref].s.numFmt = "0";
+                        ws[cell_ref].s.alignment = { horizontal: "center" };
+                    } else if (headerName === 'total (s/)') {
+                        ws[cell_ref].s.numFmt = '"S/" #,##0.00';
+                        ws[cell_ref].s.alignment = { horizontal: "right" };
+                    }
+                } else if (headerName === 'id venta' || headerName === 'estado' || headerName === 'fecha') {
+                     ws[cell_ref].s.alignment = { horizontal: "center" };
                 }
             }
-            colWidths[C] = { wch: Math.max(10, maxLen + 2) };
         }
         ws['!cols'] = colWidths;
-        XLSX.utils.book_append_sheet(workbook, ws, sheetName);
-        return true;
-    }
 
-    function exportSingleTableToExcel(tableId, filename = 'export.xlsx', sheetName = 'Sheet1') {
-        const tableElement = document.getElementById(tableId);
-        if (!tableElement) { alert(`Error: Tabla con id "${tableId}" no encontrada.`); return; }
-        if (typeof XLSX === 'undefined') { alert("Error: Librería XLSX no cargada."); return; }
-        const wb = XLSX.utils.book_new();
-        if (processTableForExcel(tableElement, wb, sheetName)) {
-            XLSX.writeFile(wb, filename);
-        }
+        XLSX.utils.book_append_sheet(workbook, ws, sheetName);
+        XLSX.writeFile(wb, filename);
     }
 
     // --- Modal Instances & Export Button Event Listeners ---
@@ -306,13 +456,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const csvSeparatorSelect = document.getElementById('csvSeparatorSelect');
     const excelFilenameInput = document.getElementById('excelFilenameInput');
 
-    const tableIdToExport = 'salesReportTable'; // Specific to this view
     const todayForFilename = "{{ \Carbon\Carbon::today('America/Lima')->format('Ymd') }}";
     const baseFilename = `reporte_ventas_dia_${todayForFilename}`;
 
     document.getElementById('exportReportCsvButton')?.addEventListener('click', () => {
-        if (csvModal && csvFilenameInput) {
+        if (csvModal && csvFilenameInput && csvSeparatorSelect) {
             csvFilenameInput.value = `${baseFilename}.csv`;
+            csvSeparatorSelect.value = ';';
             csvModal.show();
         }
     });
@@ -328,7 +478,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (csvFilenameInput && csvSeparatorSelect) {
             const filename = csvFilenameInput.value.trim() || `${baseFilename}.csv`;
             const separator = csvSeparatorSelect.value;
-            exportTableToCSV(tableIdToExport, filename, separator);
+            exportDataToCSV(filename, separator, dataTableInstance || document.getElementById(tableIdToExport));
             if(csvModal) csvModal.hide();
         }
     });
@@ -336,7 +486,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('confirmExcelExportBtn')?.addEventListener('click', () => {
         if (excelFilenameInput) {
             const filename = excelFilenameInput.value.trim() || `${baseFilename}.xlsx`;
-            exportSingleTableToExcel(tableIdToExport, filename, 'Reporte Ventas Dia');
+            exportDataToExcel(filename, 'Reporte Ventas Dia', dataTableInstance || document.getElementById(tableIdToExport));
             if(excelModal) excelModal.hide();
         }
     });

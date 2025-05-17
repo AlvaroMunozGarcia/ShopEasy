@@ -1,5 +1,11 @@
 @extends('layouts.admin')
 
+@push('styles')
+{{-- DataTables Bootstrap 5 CSS --}}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
+@endpush
+
 @section('content')
 <div class="content-wrapper py-4">
     <div class="container-fluid">
@@ -86,12 +92,12 @@
                 </div>
             </div>
 
-            {{-- Paginación (descomenta si se utiliza) --}}
-            @if(method_exists($providers, 'links'))
+            {{-- La paginación de Laravel se elimina o comenta, DataTables la manejará --}}
+            {{-- @if(method_exists($providers, 'links'))
                 <div class="card-footer d-flex justify-content-center">
                     {{ $providers->links() }}
                 </div>
-            @endif
+            @endif --}}
         </div>
     </div>
 
@@ -149,28 +155,99 @@
 @endsection
 
 @push('scripts')
+{{-- jQuery (necesario para DataTables) --}}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+{{-- DataTables JS --}}
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+{{-- DataTables Bootstrap 5 JS --}}
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+
+{{-- Librerías para exportación --}}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const exportButton = document.getElementById('exportPdfButtonList');
-    if (exportButton) {
-        exportButton.addEventListener('click', function () {
+    const tableIdToExport = 'providersTable';
+    let dataTableInstance; // Para acceder a la instancia de DataTables
+
+    // Inicializar DataTables para la tabla de proveedores
+    if (typeof $ !== 'undefined' && typeof $.fn.DataTable !== 'undefined' && $(`#${tableIdToExport}`).length > 0) {
+        try {
+            dataTableInstance = $(`#${tableIdToExport}`).DataTable({
+                "pageLength": 10,
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.10.19/i18n/Spanish.json"
+                },
+                "responsive": true,
+                "autoWidth": false,
+                "columnDefs": [
+                    { "orderable": false, "searchable": false, "targets": -1 } // La última columna (Acciones)
+                ]
+            });
+            console.log(`DataTables inicializado para #${tableIdToExport}`);
+        } catch (e) {
+            console.error(`Error inicializando DataTables para #${tableIdToExport}:`, e);
+        }
+    }
+
+    // --- Exportación a PDF ---
+    const exportPdfButton = document.getElementById('exportPdfButtonList');
+    if (exportPdfButton) {
+        exportPdfButton.addEventListener('click', function () {
+            if (!dataTableInstance) {
+                alert("La tabla de datos no está inicializada.");
+                return;
+            }
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-
             doc.setFontSize(18);
             doc.text("Listado de Proveedores", 14, 22);
+
+            const head = [];
+            const body = [];
+            
+            // Obtener cabeceras de DataTables (respetando visibilidad y orden)
+            const headerCells = dataTableInstance.table().header().querySelectorAll('th');
+            const currentHead = [];
+            let actionsColumnIndex = -1;
+            headerCells.forEach((th, index) => {
+                if (th.offsetParent !== null) { // Solo columnas visibles
+                    if (th.innerText.trim().toLowerCase() === 'acciones') {
+                        actionsColumnIndex = index; // Guardamos el índice original de la columna de acciones
+                    } else {
+                        currentHead.push(th.innerText.trim());
+                    }
+                }
+            });
+            head.push(currentHead);
+            
+            // Obtener datos de DataTables (respetando filtro y orden)
+            dataTableInstance.rows({ search: 'applied' }).every(function() {
+                const rowNode = this.node();
+                const rowData = [];
+                $(rowNode).find('td').each(function(index) {
+                     // Comparamos el índice actual de la celda con el índice original de la columna de acciones
+                    if (index !== actionsColumnIndex) { 
+                        rowData.push($(this).text().trim());
+                    }
+                });
+                if (rowData.length > 0) body.push(rowData);
+            });
+
             doc.autoTable({
-                html: '#providersTable',
+                head: head,
+                body: body,
                 startY: 30,
             });
             doc.save('listado_proveedores.pdf');
         });
     }
 
-    // --- Common Export Functions ---
+    // --- Funciones Comunes de Exportación ---
     function escapeCsvCell(cellData) {
         if (cellData == null) return '';
         let dataString = String(cellData).replace(/"/g, '""');
@@ -178,40 +255,49 @@ document.addEventListener('DOMContentLoaded', function () {
         return dataString;
     }
 
-    function exportTableToCSV(tableId, filename = 'export.csv', separator = ',') {
-        const table = document.getElementById(tableId);
-        if (!table) { alert(`Error: Tabla con id "${tableId}" no encontrada.`); return; }
-        let csv = ['\uFEFF']; // BOM for UTF-8
-        const processRows = (rows, cellType) => {
-            rows.forEach(row => {
-                if (row.style.display === 'none') return;
-                const rowData = [];
-                const cols = row.querySelectorAll(cellType);
-                if (cols.length === 1 && cols[0].getAttribute('colspan')) {
-                    let headerColCount = table.querySelector('thead tr th') ? table.querySelector('thead tr').querySelectorAll('th').length : 0;
-                    if (parseInt(cols[0].getAttribute('colspan')) >= headerColCount) return;
+    function getTableDataForExport(tableInstance, excludeActions = true) {
+        const headers = [];
+        const body = [];
+        let actionsColIdx = -1;
+
+        // Cabeceras
+        const headerCells = tableInstance.table().header().querySelectorAll('th');
+        headerCells.forEach((th, idx) => {
+            if (th.offsetParent !== null) { // Solo columnas visibles
+                if (excludeActions && th.innerText.trim().toLowerCase() === 'acciones') {
+                    actionsColIdx = idx;
+                } else {
+                    headers.push(th.innerText.trim());
                 }
-                cols.forEach(col => {
-                    if (cellType === 'td' && col.querySelector('form, a.btn')) {
-                        // Skip action column for data rows
-                    } else {
-                        rowData.push(escapeCsvCell(col.innerText.trim()));
-                    }
-                });
-                if (cellType === 'th') {
-                    const headerData = [];
-                    cols.forEach(col => headerData.push(escapeCsvCell(col.innerText.trim())));
-                    if (headerData.length > 0 && headerData[headerData.length - 1].toLowerCase() === 'acciones') {
-                        headerData.pop();
-                    }
-                    if (headerData.length > 0) csv.push(headerData.join(separator));
-                } else if (rowData.length > 0 && rowData.some(cell => cell !== '""' && cell !== '')) {
-                     csv.push(rowData.join(separator));
+            }
+        });
+        
+        // Cuerpo
+        tableInstance.rows({ search: 'applied' }).every(function() {
+            const rowNode = this.node();
+            const rowData = [];
+            $(rowNode).find('td').each(function(idx) {
+                if (idx !== actionsColIdx) {
+                    rowData.push($(this).text().trim());
                 }
             });
-        };
-        processRows(table.querySelectorAll('thead tr'), 'th');
-        processRows(table.querySelectorAll('tbody tr'), 'td');
+            if (rowData.length > 0) body.push(rowData);
+        });
+        return { headers, body };
+    }
+
+
+    function exportTableToCSV(filename = 'export.csv', separator = ';') {
+        if (!dataTableInstance) { alert("La tabla de datos no está inicializada."); return; }
+        
+        const { headers, body } = getTableDataForExport(dataTableInstance);
+        if (headers.length === 0) { alert("No hay datos para exportar."); return; }
+
+        let csv = ['\uFEFF']; // BOM for UTF-8
+        csv.push(headers.map(header => escapeCsvCell(header)).join(separator));
+        body.forEach(rowArray => {
+            csv.push(rowArray.map(cell => escapeCsvCell(cell)).join(separator));
+        });
 
         const blob = new Blob([csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
@@ -223,118 +309,92 @@ document.addEventListener('DOMContentLoaded', function () {
         document.body.removeChild(link);
         URL.revokeObjectURL(link.href);
     }
-
+    
     function parseNumericValue(text) {
         if (text === null || text === undefined) return text;
-        let cleanText = String(text).trim().replace(/^(S\/\s*|\$\s*|€\s*)/, '');
+        let cleanText = String(text).trim().replace(/^(S\/\s*|\$\s*|€\s*)/, ''); // Quitar símbolos de moneda
+        // Detectar formato: si hay coma y punto, el último es el decimal
         if (cleanText.includes(',') && cleanText.includes('.')) {
-            if (cleanText.lastIndexOf(',') > cleanText.lastIndexOf('.')) {
+            if (cleanText.lastIndexOf(',') > cleanText.lastIndexOf('.')) { // Formato europeo: 1.234,56
                 cleanText = cleanText.replace(/\./g, '').replace(/,/g, '.');
-            } else {
+            } else { // Formato americano: 1,234.56
                 cleanText = cleanText.replace(/,/g, '');
             }
-        } else if (cleanText.includes(',')) {
+        } else if (cleanText.includes(',')) { // Solo coma, podría ser decimal europeo
+             // Asumir que si la coma está seguida de 1 o 2 dígitos es decimal
             if (cleanText.match(/,\d{1,2}$/)) {
                  cleanText = cleanText.replace(/,/g, '.');
-            } else {
+            } else { // Sino, es separador de miles
                  cleanText = cleanText.replace(/,/g, '');
             }
         }
         const num = parseFloat(cleanText);
-        return isNaN(num) ? text : num;
+        return isNaN(num) ? text : num; // Devolver el texto original si no es un número válido
     }
 
-    function processTableForExcel(tableElement, workbook, sheetName) {
-        if (typeof XLSX === 'undefined') { alert("Error: Librería XLSX no cargada."); return false; }
-        let aoaData = [], htmlRowsInfo = [];
-        const processRowCollection = (rows, cellSelector, type) => {
-            rows.forEach(row => {
-                if (row.style.display === 'none') return;
-                const rowData = [], cols = row.querySelectorAll(cellSelector);
-                if (cols.length === 1 && cols[0].getAttribute('colspan')) {
-                    let headerColCount = tableElement.querySelector('thead tr th') ? tableElement.querySelector('thead tr').querySelectorAll('th').length : 0;
-                    if (parseInt(cols[0].getAttribute('colspan')) >= headerColCount) return;
-                }
-                cols.forEach((col) => {
-                    if (cellSelector === 'td' && col.querySelector('form, a.btn')) {
-                        // Skip action column for data rows
-                    } else if (cellSelector === 'th' && col.innerText.trim().toLowerCase() === 'acciones') {
-                        // Skip "Acciones" header
-                    } else {
-                        let cellText = col.innerText.trim();
-                        // For providers, only ID might be numeric, others are generally text (RUC, Phone)
-                        const isNumeric = (cellSelector === 'th' && col.innerText.trim().toLowerCase() === 'id') ||
-                                          (cellSelector === 'td' && col.cellIndex === 0); // ID column
-                        rowData.push(isNumeric ? parseNumericValue(cellText) : cellText);
-                    }
-                });
-                if (rowData.length > 0) { aoaData.push(rowData); htmlRowsInfo.push({ type, element: row }); }
-            });
-        };
-        processRowCollection(tableElement.querySelectorAll('thead tr'), 'th', 'header');
-        processRowCollection(tableElement.querySelectorAll('tbody tr'), 'td', 'body');
+    function exportTableToExcel(filename = 'export.xlsx', sheetName = 'Datos') {
+        if (!dataTableInstance) { alert("La tabla de datos no está inicializada."); return; }
+        if (typeof XLSX === 'undefined') { alert("Error: Librería XLSX no cargada."); return; }
 
-        const ws = XLSX.utils.aoa_to_sheet(aoaData);
-        let currentWsRow = 0;
-        htmlRowsInfo.forEach(rowInfo => {
-            const htmlCells = rowInfo.element.querySelectorAll(rowInfo.type === 'header' ? 'th' : 'td');
-            let excelColIndex = 0;
-            htmlCells.forEach((htmlCell) => {
-                if (rowInfo.type === 'header' && htmlCell.innerText.trim().toLowerCase() === 'acciones') return;
-                if (rowInfo.type === 'body' && htmlCell.querySelector('form, a.btn')) return;
+        const { headers, body: dataRows } = getTableDataForExport(dataTableInstance);
+        if (headers.length === 0) { alert("No hay datos para exportar."); return; }
 
-                const cell_ref = XLSX.utils.encode_cell({ c: excelColIndex, r: currentWsRow });
-                if (!ws[cell_ref]) return;
-                if (!ws[cell_ref].s) ws[cell_ref].s = {};
-                let s = ws[cell_ref].s;
-                if (rowInfo.type === 'header' || htmlCell.querySelector('strong')) {
-                    if (!s.font) s.font = {}; s.font.bold = true;
+        const aoaData = [headers]; // Array of Arrays
+        dataRows.forEach(rowArray => {
+            const processedRow = rowArray.map((cell, colIndex) => {
+                // Intentar convertir a número si la cabecera es 'ID' o si parece numérico
+                // Para proveedores, solo ID es claramente numérico. RUC y Teléfono son cadenas.
+                if (headers[colIndex] && headers[colIndex].toLowerCase() === 'id') {
+                    return parseNumericValue(cell);
                 }
-                if (htmlCell.classList.contains('text-right') || htmlCell.style.textAlign === 'right' || (ws[cell_ref].t === 'n' && excelColIndex > 0)) {
-                    if (!s.alignment) s.alignment = {}; s.alignment.horizontal = "right";
-                }
-                if (htmlCell.classList.contains('text-center') || htmlCell.style.textAlign === 'center') {
-                    if (!s.alignment) s.alignment = {}; s.alignment.horizontal = "center";
-                }
-                if (rowInfo.type === 'header' && rowInfo.element.parentElement.classList.contains('table-dark')) {
-                    if (!s.fill) s.fill = {}; s.fill.patternType = "solid"; s.fill.fgColor = { rgb: "FF212529" };
-                    if (!s.font) s.font = {}; s.font.color = { rgb: "FFFFFFFF" };
-                }
-                if (ws[cell_ref].t === 'n') s.numFmt = "0"; // ID is integer
-                excelColIndex++;
+                return cell; // Dejar como texto por defecto
             });
-            currentWsRow++;
+            aoaData.push(processedRow);
         });
-        const colWidths = [];
+        
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(aoaData);
+
+        // Aplicar estilos básicos y autoajuste de columnas
+        const colWidths = headers.map(header => ({ wch: Math.max(10, header.length + 2) }));
+        aoaData.forEach(row => {
+            row.forEach((cell, colIndex) => {
+                const len = cell ? String(cell).length : 0;
+                if (colWidths[colIndex]) {
+                    colWidths[colIndex].wch = Math.max(colWidths[colIndex].wch, len + 2);
+                }
+            });
+        });
+        ws['!cols'] = colWidths;
+
+        // Estilo para cabeceras
         const range = XLSX.utils.decode_range(ws['!ref']);
         for (let C = range.s.c; C <= range.e.c; ++C) {
-            let maxLen = 0;
-            for (let R = range.s.r; R <= range.e.r; ++R) {
-                const cell_ref = XLSX.utils.encode_cell({ c: C, r: R });
-                if (ws[cell_ref]) {
-                    let cellText = ws[cell_ref].v !== null && ws[cell_ref].v !== undefined ? String(ws[cell_ref].v) : "";
-                    if (ws[cell_ref].t === 'n' && ws[cell_ref].s && ws[cell_ref].s.numFmt) cellText = Number(ws[cell_ref].v).toString();
-                    maxLen = Math.max(maxLen, cellText.length);
+            const cell_ref = XLSX.utils.encode_cell({ c: C, r: 0 }); // Primera fila (cabeceras)
+            if (ws[cell_ref]) {
+                if (!ws[cell_ref].s) ws[cell_ref].s = {};
+                ws[cell_ref].s.font = { bold: true };
+                ws[cell_ref].s.fill = { patternType: "solid", fgColor: { rgb: "FFD9D9D9" } }; // Gris claro
+                ws[cell_ref].s.alignment = { horizontal: "center" };
+            }
+        }
+        // Formato para columna ID como número
+        const idColIndex = headers.findIndex(h => h.toLowerCase() === 'id');
+        if (idColIndex !== -1) {
+            for (let R = range.s.r + 1; R <= range.e.r; ++R) { // Empezar desde la segunda fila (datos)
+                const cell_ref = XLSX.utils.encode_cell({ c: idColIndex, r: R });
+                if (ws[cell_ref] && typeof ws[cell_ref].v === 'number') {
+                    if (!ws[cell_ref].s) ws[cell_ref].s = {};
+                    ws[cell_ref].s.numFmt = "0"; // Formato de número entero
                 }
             }
-            colWidths[C] = { wch: Math.max(10, maxLen + 2) };
         }
-        ws['!cols'] = colWidths;
-        XLSX.utils.book_append_sheet(workbook, ws, sheetName);
-        return true;
+
+        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+        XLSX.writeFile(wb, filename);
     }
 
-    function exportSingleTableToExcel(tableId, filename = 'export.xlsx', sheetName = 'Sheet1') {
-        const tableElement = document.getElementById(tableId);
-        if (!tableElement) { alert(`Error: Tabla con id "${tableId}" no encontrada.`); return; }
-        if (typeof XLSX === 'undefined') { alert("Error: Librería XLSX no cargada."); return; }
-        const wb = XLSX.utils.book_new();
-        if (processTableForExcel(tableElement, wb, sheetName)) {
-            XLSX.writeFile(wb, filename);
-        }
-    }
-
-    // --- Modal Instances & Export Button Event Listeners ---
+    // --- Modales y Event Listeners para botones de exportación ---
     const csvModalEl = document.getElementById('csvExportModal');
     const csvModal = csvModalEl ? new bootstrap.Modal(csvModalEl) : null;
     const excelModalEl = document.getElementById('excelExportModal');
@@ -344,7 +404,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const csvSeparatorSelect = document.getElementById('csvSeparatorSelect');
     const excelFilenameInput = document.getElementById('excelFilenameInput');
 
-    const tableIdToExport = 'providersTable';
     const date = new Date();
     const todayForFilename = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
     const baseFilename = `listado_proveedores_${todayForFilename}`;
@@ -352,7 +411,10 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('exportCsvButtonList')?.addEventListener('click', () => {
         if (csvModal && csvFilenameInput) {
             csvFilenameInput.value = `${baseFilename}.csv`;
+            if (csvSeparatorSelect) csvSeparatorSelect.value = ';'; // Default
             csvModal.show();
+        } else {
+            exportTableToCSV(`${baseFilename}.csv`); // Exportar directamente si no hay modal
         }
     });
 
@@ -360,14 +422,16 @@ document.addEventListener('DOMContentLoaded', function () {
         if (excelModal && excelFilenameInput) {
             excelFilenameInput.value = `${baseFilename}.xlsx`;
             excelModal.show();
+        } else {
+            exportTableToExcel(`${baseFilename}.xlsx`, 'Proveedores'); // Exportar directamente
         }
     });
 
-    document.getElementById('confirmCsvExportBtn')?.addEventListener('click', ()¡ => {
+    document.getElementById('confirmCsvExportBtn')?.addEventListener('click', () => {
         if (csvFilenameInput && csvSeparatorSelect) {
             const filename = csvFilenameInput.value.trim() || `${baseFilename}.csv`;
             const separator = csvSeparatorSelect.value;
-            exportTableToCSV(tableIdToExport, filename, separator);
+            exportTableToCSV(filename, separator);
             if(csvModal) csvModal.hide();
         }
     });
@@ -375,7 +439,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('confirmExcelExportBtn')?.addEventListener('click', () => {
         if (excelFilenameInput) {
             const filename = excelFilenameInput.value.trim() || `${baseFilename}.xlsx`;
-            exportSingleTableToExcel(tableIdToExport, filename, 'Listado Proveedores');
+            exportTableToExcel(filename, 'Proveedores');
             if(excelModal) excelModal.hide();
         }
     });

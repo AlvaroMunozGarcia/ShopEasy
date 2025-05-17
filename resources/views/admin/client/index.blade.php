@@ -1,5 +1,12 @@
 @extends('layouts.admin')
 
+@push('styles')
+{{-- DataTables Bootstrap 5 CSS --}}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
+@endpush
+
+
 @section('content')
 <div class="content-wrapper py-4">
     <div class="container-fluid">
@@ -80,11 +87,12 @@
                 </div>
             </div>
 
-            @if(method_exists($clients, 'links'))
+            {{-- La paginación de Laravel se elimina o comenta, DataTables la manejará --}}
+            {{-- @if(method_exists($clients, 'links'))
                 <div class="card-footer d-flex justify-content-center">
                     {{ $clients->links() }}
                 </div>
-            @endif
+            @endif --}}
         </div>
 
     </div>
@@ -143,6 +151,15 @@
 @endsection
 
 @push('scripts')
+{{-- jQuery (necesario para DataTables) --}}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+{{-- DataTables JS --}}
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+{{-- DataTables Bootstrap 5 JS --}}
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -156,8 +173,42 @@ document.addEventListener('DOMContentLoaded', function () {
 
             doc.setFontSize(18);
             doc.text("Listado de Clientes", 14, 22);
+
+            const table = document.getElementById('clientsTable');
+            const head = [];
+            const body = [];
+            let actionsColumnIndex = -1;
+
+            // Process header
+            const headerRow = table.querySelector('thead tr');
+            if (headerRow) {
+                const ths = Array.from(headerRow.querySelectorAll('th'));
+                const currentHead = [];
+                ths.forEach((th, index) => {
+                    if (th.innerText.trim().toLowerCase() === 'acciones') {
+                        actionsColumnIndex = index;
+                    } else {
+                        currentHead.push(th.innerText.trim());
+                    }
+                });
+                head.push(currentHead);
+            }
+
+            // Process body (visible rows after DataTables filtering/pagination)
+            $('#clientsTable').DataTable().rows({ search: 'applied' }).every(function() {
+                const rowNode = this.node();
+                const rowData = [];
+                $(rowNode).find('td').each(function(index) {
+                    if (index !== actionsColumnIndex) {
+                        rowData.push($(this).text().trim());
+                    }
+                });
+                if (rowData.length > 0) body.push(rowData);
+            });
+
             doc.autoTable({
-                html: '#clientsTable',
+                head: head,
+                body: body,
                 startY: 30,
             });
             doc.save('listado_clientes.pdf');
@@ -377,6 +428,30 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    // Inicializar DataTables
+    if (typeof $ !== 'undefined' && typeof $.fn.DataTable !== 'undefined' && $('#clientsTable').length > 0) {
+        try {
+            $('#clientsTable').DataTable({
+                "pageLength": 10,
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.10.19/i18n/Spanish.json"
+                },
+                "responsive": true,
+                "autoWidth": false,
+                "columnDefs": [
+                    { "orderable": false, "searchable": false, "targets": -1 } // La última columna (Acciones) no se ordena ni se busca
+                ],
+                // dom: 'lBfrtip', // Si quisieras botones de DataTables (necesitarías más librerías: buttons.html5.min.js, etc.)
+                // Para la estructura estándar de BS5:
+                // dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                //      "<'row'<'col-sm-12'tr>>" +
+                //      "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+            });
+            console.log("DataTables inicializado para #clientsTable");
+        } catch (e) {
+            console.error("Error inicializando DataTables para #clientsTable:", e);
+        }
+    }
 });
 </script>
 @endpush
