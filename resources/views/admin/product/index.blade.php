@@ -422,10 +422,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         ws['!cols'] = colWidths;
 
-        XLSX.utils.book_append_sheet(workbook, ws, sheetName);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, sheetName); // ws already added, this line is redundant if wb is new
-        XLSX.writeFile(wb, filename); // This should be XLSX.writeFile(wb, filename);
+        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+        XLSX.writeFile(wb, filename);
     }
 
     // --- Modal Instances & Export Button Event Listeners ---

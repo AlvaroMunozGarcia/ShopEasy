@@ -342,7 +342,7 @@ document.addEventListener('DOMContentLoaded', function () {
         for (let R = range.s.r; R <= range.e.r; ++R) {
             for (let C = range.s.c; C <= range.e.c; ++C) {
                 const cell_ref = XLSX.utils.encode_cell({ r: R, c: C });
-                if (!ws[cell_ref]) return;
+                if (!ws[cell_ref]) continue; // Asegura que el bucle continúe si la celda no existe
                 if (!ws[cell_ref].s) ws[cell_ref].s = {};
 
                 const len = ws[cell_ref].v ? String(ws[cell_ref].v).length : 0;
@@ -370,7 +370,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         ws['!cols'] = colWidths;
 
-        XLSX.utils.book_append_sheet(workbook, ws, sheetName);
+        XLSX.utils.book_append_sheet(wb, ws, sheetName); // Corregido: usa wb en lugar de workbook
         XLSX.writeFile(wb, filename);
     }
 
