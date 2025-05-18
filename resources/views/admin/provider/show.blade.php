@@ -59,6 +59,20 @@
                 </dl>
             </div>
 
+            {{-- Nueva sección para acciones de productos --}}
+            <div class="card-body border-top">
+                <h5 class="mb-3 pt-3">Productos Relacionados con {{ $provider->name }}</h5>
+                <div class="mb-2">
+                    <a href="{{ route('products.create', ['provider_id' => $provider->id]) }}" class="btn btn-success me-2">
+                        <i class="bi bi-plus-circle"></i> Añadir Producto para este Proveedor
+                    </a>
+                    <a href="{{ route('products.index', ['provider_id' => $provider->id]) }}" class="btn btn-info">
+                        <i class="bi bi-list-ul"></i> Ver Productos de este Proveedor
+                    </a>
+                </div>
+            </div>
+            {{-- Fin de la nueva sección --}}
+
             <div class="card-footer text-end">
                 <a href="{{ route('providers.edit', $provider) }}" class="btn btn-warning fw-semibold me-2">
                     <i class="bi bi-pencil"></i> Editar

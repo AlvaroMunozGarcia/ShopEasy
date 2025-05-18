@@ -7,22 +7,36 @@ use App\Http\Requests\Product\StoreRequest;
 use App\Http\Requests\Product\UpdateRequest;
 use App\Models\Category;
 use App\Models\Provider;
+use Illuminate\Http\Request; // <-- Añadir esta línea
 use Milon\Barcode\DNS1D; // <-- Añadir esta línea
 
 
 class ProductController extends Controller
 {
-    
+
     public function index()
     {
         $products=Product::get();
         return view('admin.product.index', compact('products'));
     }
-    public function create()
+    public function create(Request $request) // <-- Modificar para aceptar Request
     {
         $categories=Category::get();
         $providers=Provider::get();
-        return view('admin.product.create', compact('categories','providers'));
+
+        // Obtener el provider_id de la query string, si existe
+        $selected_provider_id = $request->query('provider_id', null);
+
+        // Opcional: Validar que el provider_id es válido si quieres ser extra seguro
+        if ($selected_provider_id && !Provider::find($selected_provider_id)) {
+            $selected_provider_id = null; // Si no es válido, no preseleccionar nada
+        }
+
+        return view('admin.product.create', compact(
+            'categories',
+            'providers',
+            'selected_provider_id' // <-- Pasar la variable a la vista
+        ));
     }
     public function store(StoreRequest $request)
     {

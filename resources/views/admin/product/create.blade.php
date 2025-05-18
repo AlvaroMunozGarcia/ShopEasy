@@ -66,10 +66,15 @@
                      <div class="col-md-6 mb-3">
                         <label for="provider_id" class="form-label">Proveedor <span class="text-danger">*</span></label>
                         <select class="form-select @error('provider_id') is-invalid @enderror" id="provider_id" name="provider_id" required>
-                            <option value="" selected disabled>Selecciona un proveedor</option>
-                            @foreach ($providers as $provider)
-                                <option value="{{ $provider->id }}" {{ old('provider_id') == $provider->id ? 'selected' : '' }}>
-                                    {{ $provider->name }}
+                            {{-- La opción "Selecciona un proveedor" solo está seleccionada si no hay un valor 'old' ni un 'selected_provider_id' --}}
+                            <option value=""
+                                @if(!old('provider_id') && !isset($selected_provider_id)) selected @endif
+                                disabled>Selecciona un proveedor</option>
+                            @foreach ($providers as $provider_item) {{-- Renombrado para evitar conflicto con $provider de la vista show/edit del proveedor --}}
+                                <option value="{{ $provider_item->id }}"
+                                    {{-- Se prioriza el valor 'old', luego el 'selected_provider_id' pasado desde el controlador --}}
+                                    {{ old('provider_id', $selected_provider_id ?? null) == $provider_item->id ? 'selected' : '' }}>
+                                    {{ $provider_item->name }}
                                 </option>
                             @endforeach
                         </select>
