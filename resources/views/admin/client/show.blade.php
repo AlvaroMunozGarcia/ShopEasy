@@ -1,11 +1,22 @@
 @extends('layouts.admin') {{-- Usar tu layout personalizado --}}
 
+@section('title', 'Detalles del Cliente')
+
+@section('page_header')
+    Detalles del Cliente: <span class="text-muted" id="clientNameHeader">{{ $client->name }}</span>
+@endsection
+
+@section('breadcrumbs')
+    <li class="breadcrumb-item"><a href="{{ route('clients.index') }}">Clientes</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Detalles</li>
+@endsection
+
 @section('content') {{-- Contenido principal para el @yield('content') --}}
 <div class="content-wrapper py-4">
     <div class="container-fluid">
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Detalles del Cliente: <span id="clientName">{{ $client->name }}</span></h5>
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center"> {{-- El título principal ya está en @page_header, pero este H5 puede servir como título de la tarjeta --}}
+                <h5 class="mb-0">Información Detallada <small class="text-white-50">({{ $client->name }})</small></h5>
                 <div>
                     <button id="exportDetailPdfButtonTrigger" class="btn btn-sm btn-info me-2">
                         <i class="bi bi-file-earmark-pdf"></i> Exportar a PDF
@@ -21,7 +32,7 @@
                     <dt class="col-sm-3">ID</dt>
                     <dd class="col-sm-9" id="clientId">{{ $client->id }}</dd>
 
-                    <dt class="col-sm-3">Nombre</dt>
+                    <dt class="col-sm-3">Nombre</dt> {{-- El nombre ya está en el @page_header y en el card-header --}}
                     <dd class="col-sm-9">{{ $client->name }}</dd> {{-- Ya capturado en clientName --}}
 
                     <dt class="col-sm-3">DNI</dt>

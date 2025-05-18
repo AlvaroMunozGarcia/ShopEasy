@@ -1,8 +1,18 @@
 @extends('layouts.admin') {{-- Usar tu layout personalizado --}}
 
-@section('content') {{-- Contenido principal para el @yield('content') --}}
-    <h1>Edit Client: {{ $client->name }}</h1>
+@section('title', 'Editar Cliente')
 
+@section('page_header')
+    Editar Cliente: <span class="text-muted">{{ $client->name }}</span>
+@endsection
+
+@section('breadcrumbs')
+    <li class="breadcrumb-item"><a href="{{ route('clients.index') }}">Clientes</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Editar</li>
+@endsection
+
+@section('content') {{-- Contenido principal para el @yield('content') --}}
+    {{-- El H1 anterior se elimina ya que @page_header lo maneja --}}
     <div class="card mt-3">
         <div class="card-body">
             <form action="{{ route('clients.update', $client) }}" method="POST">

@@ -1,9 +1,18 @@
 {{-- resources/views/admin/provider/create.blade.php --}}
 @extends('layouts.admin')
 
+@section('title', 'Añadir Nuevo Proveedor')
+
+@section('page_header', 'Añadir Nuevo Proveedor')
+
+@section('breadcrumbs')
+    <li class="breadcrumb-item"><a href="{{ route('providers.index') }}">Proveedores</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Añadir Nuevo</li>
+@endsection
+
 @section('content')
 <div class="container-fluid">
-    <h1>Añadir Nuevo Proveedor</h1>
+    {{-- El H1 anterior se elimina ya que @page_header lo maneja --}}
 
     <div class="card shadow-sm">
         <div class="card-body">

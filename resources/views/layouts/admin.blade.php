@@ -234,6 +234,26 @@
 
     <!-- Main Content -->
     <div class="main-content">
+      {{-- INICIO: Cabecera de Página con Título y Breadcrumbs --}}
+      <div class="page-header mb-3">
+        <div class="row align-items-center">
+          <div class="col">
+            {{-- Título principal de la página --}}
+            <h1 class="h3 page-main-title mb-0">@yield('page_header', 'Panel')</h1>
+          </div>
+          <div class="col-auto">
+            {{-- Breadcrumbs --}}
+            <nav aria-label="breadcrumb">
+              <ol class="breadcrumb bg-transparent p-0 m-0">
+                <li class="breadcrumb-item"><a href="{{ route('home') }}">Inicio</a></li>
+                @yield('breadcrumbs') {{-- Las vistas hijas deben proporcionar los <li> adicionales --}}
+              </ol>
+            </nav>
+          </div>
+        </div>
+      </div>
+      {{-- FIN: Cabecera de Página --}}
+
       {{-- El contenido específico de cada página se insertará aquí --}}
       @yield('content')
     </div>

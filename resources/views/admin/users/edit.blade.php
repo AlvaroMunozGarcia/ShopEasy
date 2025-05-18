@@ -2,9 +2,17 @@
 
 @section('title', 'Editar Usuario')
 
-@section('content')
-<h1>Edit User: {{ $user->name }}</h1>
+@section('page_header')
+    Editar Usuario: <span class="text-muted">{{ $user->name }}</span>
+@endsection
 
+@section('breadcrumbs')
+    <li class="breadcrumb-item"><a href="{{ route('admin.users.index') }}">Usuarios</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Editar</li>
+@endsection
+
+@section('content')
+{{-- El H1 anterior se elimina ya que @page_header lo maneja --}}
 <div class="card mt-3">
     <div class="card-body">
         <form action="{{ route('admin.users.update', $user) }}" method="POST">

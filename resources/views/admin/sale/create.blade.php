@@ -1,27 +1,20 @@
 @extends('layouts.admin') {{-- O tu layout principal --}}
 
-@section('title', 'Registrar Venta')
+@section('title', 'Registrar Nueva Venta')
+
+@section('page_header', 'Registrar Nueva Venta')
+
+@section('breadcrumbs')
+    <li class="breadcrumb-item"><a href="{{ route('sales.index') }}">Ventas</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Registrar Nueva</li>
+@endsection
 
 @section('content')
 <div class="content-wrapper">
-    <!-- Content Header (Page header) -->
-    <div class="content-header">
-        <div class="container-fluid">
-            <div class="row mb-2">
-                <div class="col-sm-6">
-                    <h1 class="m-0">Registrar Venta</h1>
-                </div><!-- /.col -->
-                <div class="col-sm-6">
-                    <ol class="breadcrumb float-sm-right">
-                        <li class="breadcrumb-item"><a href="{{ route('home') }}">Inicio</a></li>
-                        <li class="breadcrumb-item"><a href="{{ route('sales.index') }}">Ventas</a></li>
-                        <li class="breadcrumb-item active">Registrar Venta</li>
-                    </ol>
-                </div><!-- /.col -->
-            </div><!-- /.row -->
-        </div><!-- /.container-fluid -->
-    </div>
-    <!-- /.content-header -->
+    {{-- La cabecera anterior con H1 y breadcrumbs se elimina,
+         ya que @page_header y @breadcrumbs del layout principal
+         se encargarán de esto.
+    --}}
 
     <!-- Main content -->
     <section class="content">

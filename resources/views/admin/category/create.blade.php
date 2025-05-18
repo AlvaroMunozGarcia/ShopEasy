@@ -1,8 +1,17 @@
 @extends('layouts.admin')
 
+@section('title', 'Crear Nueva Categoría')
+
+@section('page_header', 'Crear Nueva Categoría')
+
+@section('breadcrumbs')
+    <li class="breadcrumb-item"><a href="{{ route('categories.index') }}">Categorías</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Crear Nueva</li>
+@endsection
+
 @section('content')
   <div class="container mt-4">
-    <h3>Crear Nueva Categoría</h3>
+    {{-- El H3 anterior se elimina ya que @page_header lo maneja --}}
     <form action="{{ route('categories.store') }}" method="POST">
       @csrf
       <div class="mb-3">

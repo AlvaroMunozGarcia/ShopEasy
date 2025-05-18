@@ -1,13 +1,23 @@
 @extends('layouts.admin')
 
+@section('title', 'Detalles de la Categoría')
+
+@section('page_header')
+    Detalles de la Categoría: <span class="text-muted" id="categoryNameHeader">{{ $category->name }}</span>
+@endsection
+
+@section('breadcrumbs')
+    <li class="breadcrumb-item"><a href="{{ route('categories.index') }}">Categorías</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Detalles</li>
+@endsection
+
 @section('content')
 <div class="content-wrapper py-4">
     <div class="container-fluid">
-
         {{-- Card principal --}}
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Detalles de la Categoría: <span id="categoryName">{{ $category->name }}</span></h5>
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center"> {{-- El título principal ya está en @page_header --}}
+                <h5 class="mb-0">Información Detallada <small class="text-white-50" id="categoryNameCardHeader">({{ $category->name }})</small></h5>
                 <div>
                     <button id="exportDetailPdfButtonTrigger" class="btn btn-sm btn-info me-2">
                         <i class="bi bi-file-earmark-pdf"></i> Exportar a PDF
@@ -27,7 +37,7 @@
                             <dd class="col-sm-9" id="categoryId">{{ $category->id }}</dd>
 
                             <dt class="col-sm-3">Nombre:</dt>
-                            <dd class="col-sm-9">{{ $category->name }}</dd> {{-- Ya capturado arriba --}}
+                            <dd class="col-sm-9">{{ $category->name }}</dd> {{-- El nombre ya está en el @page_header y en el card-header --}}
 
                             <dt class="col-sm-3">Descripción:</dt>
                             <dd class="col-sm-9" id="categoryDescription">{{ $category->description ?: 'No especificada' }}</dd>
@@ -96,10 +106,12 @@ document.addEventListener('DOMContentLoaded', function () {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             let yPos = 15;
-
-            const categoryName = document.getElementById('categoryName')?.innerText || 'Categoría';
+            // Intentar obtener el nombre de la categoría de varias fuentes
+            const categoryName = document.getElementById('categoryNameHeader')?.innerText || // Del nuevo @page_header
+                                 document.getElementById('categoryNameCardHeader')?.innerText.match(/\(([^)]+)\)/)?.[1] || // Del card-header (extraer de paréntesis)
+                                 '{{ $category->name }}'; // Fallback directo
             const categoryId = document.getElementById('categoryId')?.innerText;
-            const defaultFilename = `detalle_categoria_${(categoryId || 'N_A').replace(/[^a-z0-9]/gi, '_')}.pdf`;
+            const defaultFilename = `detalle_categoria_${(categoryName || 'Categoria').replace(/[^a-z0-9]/gi, '_')}_${(categoryId || 'N_A').replace(/[^a-z0-9]/gi, '_')}.pdf`;
             const finalFilename = filename || defaultFilename;
 
             doc.setFontSize(18);
@@ -130,7 +142,9 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('exportDetailPdfButtonTrigger')?.addEventListener('click', function () {
         if (pdfDetailModal && pdfDetailFilenameInput) {
             const categoryId = document.getElementById('categoryId')?.innerText || 'N_A';
-            const categoryName = document.getElementById('categoryName')?.innerText.replace(/[^a-z0-9]/gi, '_').substring(0,30) || 'categoria';
+            const categoryName = (document.getElementById('categoryNameHeader')?.innerText || // Del nuevo @page_header
+                                  document.getElementById('categoryNameCardHeader')?.innerText.match(/\(([^)]+)\)/)?.[1] || // Del card-header
+                                  '{{ $category->name }}').replace(/[^a-z0-9]/gi, '_').substring(0,30) || 'categoria';
             const date = new Date();
             const todayForFilename = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
             pdfDetailFilenameInput.value = `detalle_${categoryName}_${categoryId}_${todayForFilename}.pdf`.replace(/[^a-z0-9_.-]/gi, '_').replace(/__+/g, '_');

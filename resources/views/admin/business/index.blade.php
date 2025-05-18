@@ -2,17 +2,16 @@
 
 @section('title', 'Información del Negocio')
 
+@section('page_header', 'Gestionar Información del Negocio')
+
+@section('breadcrumbs')
+    <li class="breadcrumb-item active" aria-current="page">Información del Negocio</li>
+@endsection
+
 @section('content')
 <div class="content-wrapper py-4">
     <div class="container-fluid">
-        <div class="page-header mb-4">
-            <h3 class="page-title">Gestionar Información del Negocio</h3>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb bg-light p-2 rounded">
-                    <li class="breadcrumb-item active" aria-current="page">Información del Negocio</li>
-                </ol>
-            </nav>
-        </div>
+        {{-- La cabecera anterior ha sido reemplazada por @page_header y @breadcrumbs del layout --}}
 
         <div class="row justify-content-center">
             <div class="col-lg-10">

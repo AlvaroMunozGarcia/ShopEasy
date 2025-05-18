@@ -6,13 +6,21 @@
 <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
 @endpush
 
+@section('title', 'Gestión de Clientes')
+
+@section('page_header', 'Gestión de Clientes')
+
+@section('breadcrumbs')
+    <li class="breadcrumb-item active" aria-current="page">Clientes</li>
+@endsection
+
 
 @section('content')
 <div class="content-wrapper py-4">
     <div class="container-fluid">
-
+        {{-- El @page_header ya muestra el título principal de la página. --}}
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center"> {{-- Este encabezado de tarjeta puede mantenerse --}}
                 <h5 class="mb-0">Lista de Clientes</h5>
                 <div>
                     <button id="exportCsvButtonList" class="btn btn-outline-light btn-sm fw-semibold me-2">

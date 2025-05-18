@@ -1,10 +1,20 @@
 {{-- resources/views/admin/provider/edit.blade.php --}}
 @extends('layouts.admin')
 
+@section('title', 'Editar Proveedor')
+
+@section('page_header')
+    Editar Proveedor: <span class="text-muted">{{ $provider->name }}</span>
+@endsection
+
+@section('breadcrumbs')
+    <li class="breadcrumb-item"><a href="{{ route('providers.index') }}">Proveedores</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Editar</li>
+@endsection
+
 @section('content')
 <div class="container-fluid">
-     {{-- La variable $provider viene del controlador --}}
-    <h1>Editar Proveedor: {{ $provider->name }}</h1>
+    {{-- El H1 anterior se elimina ya que @page_header lo maneja --}}
 
     <div class="card shadow-sm">
         <div class="card-body">

@@ -1,9 +1,20 @@
 {{-- resources/views/admin/product/edit.blade.php --}}
 @extends('layouts.admin')
 
+@section('title', 'Editar Producto')
+
+@section('page_header')
+    Editar Producto: <span class="text-muted">{{ $product->name }}</span>
+@endsection
+
+@section('breadcrumbs')
+    <li class="breadcrumb-item"><a href="{{ route('products.index') }}">Productos</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Editar</li>
+@endsection
+
 @section('content')
 <div class="container-fluid">
-    <h1>Editar Producto: {{ $product->name }}</h1>
+    {{-- El H1 anterior se elimina ya que @page_header lo maneja --}}
 
     <div class="card shadow-sm">
         <div class="card-body">

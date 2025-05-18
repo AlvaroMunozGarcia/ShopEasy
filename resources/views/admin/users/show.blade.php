@@ -2,12 +2,21 @@
 
 @section('title', 'Detalles del Usuario')
 
+@section('page_header')
+    Detalles del Usuario: <span class="text-muted" id="userNameHeader">{{ $user->name }}</span>
+@endsection
+
+@section('breadcrumbs')
+    <li class="breadcrumb-item"><a href="{{ route('admin.users.index') }}">Usuarios</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Detalles</li>
+@endsection
+
 @section('content')
 <div class="content-wrapper py-4">
     <div class="container-fluid">
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Detalles del Usuario: <span id="userNameShow">{{ $user->name }}</span></h5>
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center"> {{-- El título principal ya está en @page_header --}}
+                <h5 class="mb-0">Información Detallada <small class="text-white-50" id="userNameShowCardHeader">({{ $user->name }})</small></h5>
                 <div>
                     <button id="exportDetailPdfButtonTrigger" class="btn btn-sm btn-info me-2">
                         <i class="bi bi-file-earmark-pdf"></i> Exportar a PDF
@@ -24,7 +33,7 @@
                     <dd class="col-sm-9" id="userId">{{ $user->id }}</dd>
 
                     <dt class="col-sm-3">Nombre:</dt>
-                    <dd class="col-sm-9">{{ $user->name }}</dd> {{-- Ya capturado en userNameShow --}}
+                    <dd class="col-sm-9">{{ $user->name }}</dd> {{-- El nombre ya está en el @page_header y en el card-header --}}
 
                     <dt class="col-sm-3">Email:</dt>
                     <dd class="col-sm-9" id="userEmail">{{ $user->email }}</dd>
@@ -100,9 +109,11 @@ document.addEventListener('DOMContentLoaded', function () {
             const doc = new jsPDF();
             let yPos = 15;
 
-            const userName = document.getElementById('userNameShow')?.innerText || 'Usuario';
+            const userName = document.getElementById('userNameHeader')?.innerText || // Del nuevo @page_header
+                             document.getElementById('userNameShowCardHeader')?.innerText.match(/\(([^)]+)\)/)?.[1] || // Del card-header (extraer de paréntesis)
+                             '{{ $user->name }}'; // Fallback directo
             const userId = document.getElementById('userId')?.innerText;
-            const defaultFilename = `detalle_usuario_${(userId || 'N_A').replace(/[^a-z0-9]/gi, '_')}.pdf`;
+            const defaultFilename = `detalle_usuario_${(userName || 'Usuario').replace(/[^a-z0-9]/gi, '_')}_${(userId || 'N_A').replace(/[^a-z0-9]/gi, '_')}.pdf`;
             const finalFilename = filename || defaultFilename;
 
             doc.setFontSize(18);
@@ -141,7 +152,9 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('exportDetailPdfButtonTrigger')?.addEventListener('click', function () {
         if (pdfDetailModal && pdfDetailFilenameInput) {
             const userId = document.getElementById('userId')?.innerText || 'N_A';
-            const userName = document.getElementById('userNameShow')?.innerText.replace(/[^a-z0-9]/gi, '_').substring(0,30) || 'usuario';
+            const userName = (document.getElementById('userNameHeader')?.innerText || // Del nuevo @page_header
+                              document.getElementById('userNameShowCardHeader')?.innerText.match(/\(([^)]+)\)/)?.[1] || // Del card-header
+                              '{{ $user->name }}').replace(/[^a-z0-9]/gi, '_').substring(0,30) || 'usuario';
             const date = new Date();
             const todayForFilename = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
             pdfDetailFilenameInput.value = `detalle_${userName}_${userId}_${todayForFilename}.pdf`.replace(/[^a-z0-9_.-]/gi, '_').replace(/__+/g, '_');

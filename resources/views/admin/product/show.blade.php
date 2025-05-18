@@ -1,12 +1,23 @@
 {{-- resources/views/admin/product/show.blade.php --}}
 @extends('layouts.admin')
 
+@section('title', 'Detalles del Producto')
+
+@section('page_header')
+    Detalles del Producto: <span class="text-muted" id="productNameHeader">{{ $product->name }}</span>
+@endsection
+
+@section('breadcrumbs')
+    <li class="breadcrumb-item"><a href="{{ route('products.index') }}">Productos</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Detalles</li>
+@endsection
+
 @section('content')
 <div class="content-wrapper py-4">
     <div class="container-fluid">
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Detalles del Producto: <span id="productNameShow">{{ $product->name }}</span></h5>
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center"> {{-- El título principal ya está en @page_header --}}
+                <h5 class="mb-0">Información Detallada <small class="text-white-50" id="productNameShowCardHeader">({{ $product->name }})</small></h5>
                 <div>
                     <button id="exportDetailPdfButtonTrigger" class="btn btn-sm btn-info me-2">
                         <i class="bi bi-file-earmark-pdf"></i> Exportar a PDF
@@ -25,7 +36,7 @@
                             <dd class="col-sm-8" id="productId">{{ $product->id }}</dd>
 
                             <dt class="col-sm-4">Nombre</dt>
-                            <dd class="col-sm-8">{{ $product->name }}</dd> {{-- Ya capturado en productNameShow --}}
+                            <dd class="col-sm-8">{{ $product->name }}</dd> {{-- El nombre ya está en el @page_header y en el card-header --}}
 
                             <dt class="col-sm-4">Código</dt>
                             <dd class="col-sm-8" id="productCode">{{ $product->code }}</dd>
@@ -123,9 +134,11 @@ document.addEventListener('DOMContentLoaded', function () {
             const doc = new jsPDF();
             let yPos = 15;
 
-            const productName = document.getElementById('productNameShow')?.innerText || 'Producto';
+            const productName = document.getElementById('productNameHeader')?.innerText || // Del nuevo @page_header
+                                document.getElementById('productNameShowCardHeader')?.innerText.match(/\(([^)]+)\)/)?.[1] || // Del card-header (extraer de paréntesis)
+                                '{{ $product->name }}'; // Fallback directo
             const productId = document.getElementById('productId')?.innerText;
-            const defaultFilename = `detalle_producto_${(productId || 'N_A').replace(/[^a-z0-9]/gi, '_')}.pdf`;
+            const defaultFilename = `detalle_producto_${(productName || 'Producto').replace(/[^a-z0-9]/gi, '_')}_${(productId || 'N_A').replace(/[^a-z0-9]/gi, '_')}.pdf`;
             const finalFilename = filename || defaultFilename;
 
             doc.setFontSize(18);
@@ -168,7 +181,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('exportDetailPdfButtonTrigger')?.addEventListener('click', function () {
         if (pdfDetailModal && pdfDetailFilenameInput) {
             const productId = document.getElementById('productId')?.innerText || 'N_A';
-            const productName = document.getElementById('productNameShow')?.innerText.replace(/[^a-z0-9]/gi, '_').substring(0,30) || 'producto';
+            const productName = (document.getElementById('productNameHeader')?.innerText || '{{ $product->name }}').replace(/[^a-z0-9]/gi, '_').substring(0,30) || 'producto';
             const date = new Date();
             const todayForFilename = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
             

@@ -2,9 +2,16 @@
 
 @section('title', 'Crear Nuevo Usuario')
 
+@section('page_header', 'Crear Nuevo Usuario')
+
+@section('breadcrumbs')
+    <li class="breadcrumb-item"><a href="{{ route('admin.users.index') }}">Usuarios</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Crear Nuevo</li>
+@endsection
+
 @section('content')
 <div class="container">
-    <h1>Crear Nuevo Usuario</h1>
+    {{-- El H1 anterior se elimina ya que @page_header lo maneja --}}
 
     {{-- Mostrar errores de validación --}}
     @if ($errors->any())

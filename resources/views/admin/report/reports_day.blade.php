@@ -8,9 +8,15 @@
 
 @section('title', 'Reporte de Ventas - Hoy')
 
-{{-- El título ahora va dentro de la sección 'content' --}}
+@section('page_header', 'Reporte de Ventas del Día')
+
+@section('breadcrumbs')
+    <li class="breadcrumb-item"><a href="{{ route('home') }}">Reportes</a></li> {{-- Asumiendo que 'home' es el inicio de reportes o dashboard general --}}
+    <li class="breadcrumb-item active" aria-current="page">Del Día</li>
+@endsection
+
 @section('content')
-    <h1>Reporte de Ventas del Día</h1>
+    {{-- El H1 anterior se elimina ya que @page_header lo maneja --}}
 
     <div class="card">
         <div class="card-header">

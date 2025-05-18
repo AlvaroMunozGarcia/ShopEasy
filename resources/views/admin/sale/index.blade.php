@@ -8,9 +8,16 @@
 
 @section('title', 'Listado de Ventas')
 
+@section('page_header', 'Gestión de Ventas')
+
+@section('breadcrumbs')
+    <li class="breadcrumb-item active" aria-current="page">Ventas</li>
+@endsection
+
 @section('content')
 <div class="content-wrapper py-4">
     <div class="container-fluid">
+        {{-- El @page_header ya muestra el título principal de la página. --}}
 
         {{-- Mensajes Flash --}}
         @if(session('success'))
@@ -28,7 +35,7 @@
 
         {{-- Tarjeta de Ventas --}}
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center"> {{-- Este encabezado de tarjeta puede mantenerse --}}
                 <h5 class="mb-0">Listado de Ventas</h5>
                 <div>
                     <button id="exportCsvButtonList" class="btn btn-outline-light btn-sm fw-semibold me-2">

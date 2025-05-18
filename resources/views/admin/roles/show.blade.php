@@ -2,12 +2,21 @@
 
 @section('title', 'Detalles del Rol')
 
+@section('page_header')
+    Detalles del Rol: <span class="text-muted" id="roleNameHeader">{{ $role->name }}</span>
+@endsection
+
+@section('breadcrumbs')
+    <li class="breadcrumb-item"><a href="{{ route('admin.roles.index') }}">Roles</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Detalles</li>
+@endsection
+
 @section('content')
 <div class="content-wrapper py-4">
     <div class="container-fluid">
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Detalles del Rol: <span id="roleNameShow">{{ $role->name }}</span></h5>
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center"> {{-- El título principal ya está en @page_header --}}
+                <h5 class="mb-0">Información Detallada <small class="text-white-50" id="roleNameShowCardHeader">({{ $role->name }})</small></h5>
                 <div>
                     <button id="exportDetailPdfButtonTrigger" class="btn btn-sm btn-info me-2">
                         <i class="bi bi-file-earmark-pdf"></i> Exportar a PDF
@@ -24,7 +33,7 @@
                     <dd class="col-sm-9" id="roleId">{{ $role->id }}</dd>
 
                     <dt class="col-sm-3">Nombre:</dt>
-                    <dd class="col-sm-9">{{ $role->name }}</dd> {{-- Ya capturado en roleNameShow --}}
+                    <dd class="col-sm-9">{{ $role->name }}</dd> {{-- El nombre ya está en el @page_header y en el card-header --}}
 
                     <dt class="col-sm-3">Guard Name:</dt>
                     <dd class="col-sm-9" id="roleGuardName">{{ $role->guard_name }}</dd>
@@ -94,8 +103,10 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            let yPos = 15;
-            const roleName = document.getElementById('roleNameShow')?.innerText || 'Rol';
+            let yPos = 15;            
+            const roleName = document.getElementById('roleNameHeader')?.innerText || // Del nuevo @page_header
+                             document.getElementById('roleNameShowCardHeader')?.innerText.match(/\(([^)]+)\)/)?.[1] || // Del card-header (extraer de paréntesis)
+                             '{{ $role->name }}'; // Fallback directo
             const roleId = document.getElementById('roleId')?.innerText;
 
             doc.setFontSize(18);
@@ -142,7 +153,9 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('exportDetailPdfButtonTrigger')?.addEventListener('click', function () {
         if (pdfDetailModal && pdfDetailFilenameInput) {
             const roleId = document.getElementById('roleId')?.innerText || 'N_A';
-            const roleName = document.getElementById('roleNameShow')?.innerText.replace(/[^a-z0-9]/gi, '_').substring(0,30) || 'rol';
+            const roleName = (document.getElementById('roleNameHeader')?.innerText || // Del nuevo @page_header
+                              document.getElementById('roleNameShowCardHeader')?.innerText.match(/\(([^)]+)\)/)?.[1] || // Del card-header
+                              '{{ $role->name }}').replace(/[^a-z0-9]/gi, '_').substring(0,30) || 'rol';
             const date = new Date();
             const todayForFilename = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
             pdfDetailFilenameInput.value = `detalle_${roleName}_${roleId}_${todayForFilename}.pdf`.replace(/[^a-z0-9_.-]/gi, '_').replace(/__+/g, '_');

@@ -2,12 +2,19 @@
 
 @section('title', 'Configuración de Impresora') {{-- Título específico de la página --}}
 
+@section('page_header', 'Configuración de Impresora')
+
+@section('breadcrumbs')
+    <li class="breadcrumb-item active" aria-current="page">Impresora</li>
+@endsection
+
 @section('content')
 <div class="container-fluid">
+    {{-- El @page_header ya muestra el título principal de la página. --}}
     <div class="row">
         <div class="col-md-12">
             <div class="card">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header bg-primary text-white"> {{-- Este encabezado de tarjeta puede mantenerse --}}
                     <h3 class="card-title">Configuración de Impresora Predeterminada</h3>
                 </div>
                 <div class="card-body">

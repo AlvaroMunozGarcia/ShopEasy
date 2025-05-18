@@ -1,12 +1,23 @@
 {{-- resources/views/admin/provider/show.blade.php --}}
 @extends('layouts.admin')
 
+@section('title', 'Detalles del Proveedor')
+
+@section('page_header')
+    Detalles del Proveedor: <span class="text-muted" id="providerNameHeader">{{ $provider->name }}</span>
+@endsection
+
+@section('breadcrumbs')
+    <li class="breadcrumb-item"><a href="{{ route('providers.index') }}">Proveedores</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Detalles</li>
+@endsection
+
 @section('content')
 <div class="content-wrapper py-4">
     <div class="container-fluid">
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Detalles del Proveedor: <span id="providerName">{{ $provider->name }}</span></h5>
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center"> {{-- El título principal ya está en @page_header --}}
+                <h5 class="mb-0">Información Detallada <small class="text-white-50" id="providerNameCardHeader">({{ $provider->name }})</small></h5>
                 <div>
                     <button id="exportDetailPdfButtonTrigger" class="btn btn-sm btn-info me-2">
                         <i class="bi bi-file-earmark-pdf"></i> Exportar a PDF
@@ -22,7 +33,7 @@
                     <dt class="col-sm-3">ID</dt>
                     <dd class="col-sm-9" id="providerId">{{ $provider->id }}</dd>
 
-                    <dt class="col-sm-3">Nombre</dt>
+                    <dt class="col-sm-3">Nombre</dt> {{-- El nombre ya está en el @page_header y en el card-header --}}
                     <dd class="col-sm-9">{{ $provider->name }}</dd> {{-- Ya capturado en providerName --}}
 
                     <dt class="col-sm-3">Email</dt>
@@ -102,8 +113,10 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!jsPDF) { console.error("jsPDF no está cargado."); alert("Error: jsPDF no está cargado."); return; }
             const doc = new jsPDF();
             let yPos = 15;
-
-            const providerName = document.getElementById('providerName')?.innerText || 'Proveedor';
+            // Intentar obtener el nombre del proveedor de varias fuentes
+            const providerName = document.getElementById('providerNameHeader')?.innerText || // Nuevo ID en page_header
+                                 document.getElementById('providerNameCardHeader')?.innerText.match(/\(([^)]+)\)/)?.[1] || // Del card-header (extraer de paréntesis)
+                                 '{{ $provider->name }}'; // Fallback directo
             const providerId = document.getElementById('providerId')?.innerText;
             const defaultFilename = `detalle_proveedor_${(providerId || 'N_A').replace(/[^a-z0-9]/gi, '_')}.pdf`;
             const finalFilename = filename || defaultFilename;

@@ -1,9 +1,20 @@
 {{-- resources/views/admin/sale/show.blade.php --}}
 @extends('layouts.admin')
 
+@section('title', 'Detalles de la Venta')
+
+@section('page_header')
+    Detalles de la Venta <span class="text-muted">#{{ $sale->id }}</span>
+@endsection
+
+@section('breadcrumbs')
+    <li class="breadcrumb-item"><a href="{{ route('sales.index') }}">Ventas</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Detalles</li>
+@endsection
+
 @section('content')
 <div class="container-fluid">
-    <h1>Detalles de la Venta #{{ $sale->id }}</h1>
+    {{-- El H1 anterior se elimina ya que @page_header lo maneja --}}
 
     <div class="card shadow-sm mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">

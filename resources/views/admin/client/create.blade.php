@@ -1,8 +1,16 @@
 @extends('layouts.admin') {{-- Usar tu layout personalizado --}}
 
-@section('content') {{-- Contenido principal para el @yield('content') --}}
-    <h1>Create New Client</h1>
+@section('title', 'Añadir Nuevo Cliente')
 
+@section('page_header', 'Añadir Nuevo Cliente')
+
+@section('breadcrumbs')
+    <li class="breadcrumb-item"><a href="{{ route('clients.index') }}">Clientes</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Añadir Nuevo</li>
+@endsection
+
+@section('content') {{-- Contenido principal para el @yield('content') --}}
+    {{-- El H1 anterior se elimina ya que @page_header lo maneja --}}
     <div class="card mt-3">
         <div class="card-body">
             <form action="{{ route('clients.store') }}" method="POST">

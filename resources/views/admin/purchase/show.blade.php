@@ -3,26 +3,19 @@
 
 @section('title', 'Detalles de Compra') {{-- Título de la página --}}
 
+@section('page_header')
+    Detalles de la Compra <span class="text-muted">#{{ $purchase->id }}</span>
+@endsection
+
+@section('breadcrumbs')
+    <li class="breadcrumb-item"><a href="{{ route('purchases.index') }}">Compras</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Detalle Compra #{{ $purchase->id }}</li>
+@endsection
+
 @section('content')
 <div class="content-wrapper">
-    <!-- Content Header (Page header) -->
-    <div class="content-header">
-        <div class="container-fluid">
-            <div class="row mb-2">
-                <div class="col-sm-6">
-                    <h1 class="m-0">Detalles de Compra</h1>
-                </div><!-- /.col -->
-                <div class="col-sm-6">
-                    <ol class="breadcrumb float-sm-right">
-                        <li class="breadcrumb-item"><a href="{{ route('home') }}">Inicio</a></li>
-                        <li class="breadcrumb-item"><a href="{{ route('purchases.index') }}">Compras</a></li>
-                        <li class="breadcrumb-item active">Detalle Compra #{{ $purchase->id }}</li>
-                    </ol>
-                </div><!-- /.col -->
-            </div><!-- /.row -->
-        </div><!-- /.container-fluid -->
-    </div>
-    <!-- /.content-header -->
+    {{-- La cabecera anterior con H1 y breadcrumbs se elimina,
+         ya que @page_header y @breadcrumbs del layout principal se encargarán de esto. --}}
 
     <!-- Main content -->
     <section class="content">

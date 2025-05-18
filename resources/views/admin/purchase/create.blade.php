@@ -1,8 +1,16 @@
 @extends('layouts.admin')
 
-@section('content')
-    <h1>Crear Nueva Compra</h1>
+@section('title', 'Registrar Nueva Compra')
 
+@section('page_header', 'Registrar Nueva Compra')
+
+@section('breadcrumbs')
+    <li class="breadcrumb-item"><a href="{{ route('purchases.index') }}">Compras</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Registrar Nueva</li>
+@endsection
+
+@section('content')
+    {{-- El H1 anterior se elimina ya que @page_header lo maneja --}}
     <div class="card mt-3">
         <div class="card-body">
             {{-- Mostrar errores de validación si los hubiera --}}

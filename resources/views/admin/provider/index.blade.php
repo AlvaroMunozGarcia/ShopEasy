@@ -6,9 +6,18 @@
 <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
 @endpush
 
+@section('title', 'Gestión de Proveedores')
+
+@section('page_header', 'Gestión de Proveedores')
+
+@section('breadcrumbs')
+    <li class="breadcrumb-item active" aria-current="page">Proveedores</li>
+@endsection
+
 @section('content')
 <div class="content-wrapper py-4">
     <div class="container-fluid">
+        {{-- El @page_header ya muestra el título principal de la página. --}}
 
         {{-- Mensajes Flash --}}
         @if (session('success'))
@@ -27,7 +36,7 @@
 
         {{-- Card Principal --}}
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center"> {{-- Este encabezado de tarjeta puede mantenerse --}}
                 <h5 class="mb-0">Lista de Proveedores</h5>
                 <div>
                     <button id="exportCsvButtonList" class="btn btn-outline-light btn-sm fw-semibold me-2">
