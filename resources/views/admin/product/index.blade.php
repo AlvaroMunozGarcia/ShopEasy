@@ -8,9 +8,19 @@
 
 @section('title', 'Gestión de Productos')
 
-@section('page_header', 'Gestión de Productos')
+{{-- Modificar el page_header si está filtrado --}}
+@section('page_header')
+    Gestión de Productos
+    @if(isset($filtered_provider_name) && $filtered_provider_name)
+        <small class="text-muted fs-5 fst-italic">- Mostrando productos de: {{ $filtered_provider_name }}</small>
+    @endif
+@endsection
 
 @section('breadcrumbs')
+    @if(isset($filtered_provider_name) && $filtered_provider_name && isset($provider_id_for_breadcrumb_link))
+        <li class="breadcrumb-item"><a href="{{ route('providers.index') }}">Proveedores</a></li>
+        <li class="breadcrumb-item"><a href="{{ route('providers.show', $provider_id_for_breadcrumb_link) }}">{{ $filtered_provider_name }}</a></li>
+    @endif
     <li class="breadcrumb-item active" aria-current="page">Productos</li>
 @endsection
 
@@ -36,9 +46,19 @@
 
         {{-- Card principal --}}
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center"> {{-- Este encabezado de tarjeta puede mantenerse --}}
-                <h5 class="mb-0">Lista de Productos</h5>
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    Lista de Productos
+                    @if(isset($filtered_provider_name) && $filtered_provider_name)
+                        <small class="text-white-50"> (Proveedor: {{ $filtered_provider_name }})</small>
+                    @endif
+                </h5>
                 <div>
+                    @if(isset($filtered_provider_name) && $filtered_provider_name)
+                        <a href="{{ route('products.index') }}" class="btn btn-outline-light btn-sm fw-semibold me-2" title="Quitar filtro de proveedor">
+                            <i class="bi bi-x-lg"></i> Quitar Filtro
+                        </a>
+                    @endif
                     <button id="exportCsvButtonList" class="btn btn-outline-light btn-sm fw-semibold me-2">
                         <i class="bi bi-filetype-csv me-1"></i> CSV
                     </button>
@@ -48,13 +68,23 @@
                     <button id="exportPdfButtonListTrigger" class="btn btn-info btn-sm fw-semibold me-2">
                         <i class="bi bi-file-earmark-pdf me-1"></i> PDF
                     </button>
-                    <a href="{{ route('products.create') }}" class="btn btn-light text-primary fw-semibold">
+                    {{-- El enlace para añadir producto ahora considera si hay un filtro de proveedor activo --}}
+                    <a href="{{ route('products.create', (isset($provider_id_for_create_link) && $provider_id_for_create_link ? ['provider_id' => $provider_id_for_create_link] : [])) }}" class="btn btn-light text-primary fw-semibold">
                         <i class="bi bi-plus-lg me-1"></i> Añadir Producto
                     </a>
                 </div>
             </div>
 
             <div class="card-body">
+                {{-- Mensaje alternativo de filtro (si prefieres no tenerlo en el título del card) --}}
+                {{-- @if(isset($filtered_provider_name) && $filtered_provider_name)
+                    <div class="alert alert-info d-flex justify-content-between align-items-center">
+                        <span>Mostrando productos del proveedor: <strong>{{ $filtered_provider_name }}</strong></span>
+                        <a href="{{ route('products.index') }}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-x-lg"></i> Quitar Filtro
+                        </a>
+                    </div>
+                @endif --}}
                 <div class="table-responsive">
                     <table id="productsTable" class="table table-bordered table-hover align-middle mb-0">
                         <thead class="table-dark text-center">
@@ -105,7 +135,13 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="9" class="text-center text-muted">No hay productos registrados.</td>
+                                    <td colspan="9" class="text-center text-muted">
+                                        @if(isset($filtered_provider_name) && $filtered_provider_name)
+                                            No hay productos registrados para el proveedor <strong>{{ $filtered_provider_name }}</strong>.
+                                        @else
+                                            No hay productos registrados.
+                                        @endif
+                                    </td>
                                 </tr>
                             @endforelse
                         </tbody>

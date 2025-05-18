@@ -14,10 +14,37 @@ use Milon\Barcode\DNS1D; // <-- Añadir esta línea
 class ProductController extends Controller
 {
 
-    public function index()
+    public function index(Request $request) // <-- Modificar para aceptar Request
     {
-        $products=Product::get();
-        return view('admin.product.index', compact('products'));
+        // Iniciar la consulta de productos con las relaciones necesarias
+        $query = Product::with(['category', 'provider'])->orderBy('id', 'desc');
+
+        $filtered_provider_name = null;
+        $provider_id_for_breadcrumb_link = null; // Para usar en breadcrumbs o enlaces
+        $provider_id_for_create_link = null; // Para el botón "Añadir Producto" en la vista index
+
+        // Verificar si se está filtrando por proveedor
+        if ($request->has('provider_id') && $request->provider_id) {
+            $provider_id = $request->provider_id;
+            $query->where('provider_id', $provider_id); // Aplicar el filtro
+
+            $provider = Provider::find($provider_id); // Obtener el proveedor para mostrar su nombre
+            if ($provider) {
+                $filtered_provider_name = $provider->name;
+                $provider_id_for_breadcrumb_link = $provider->id;
+                $provider_id_for_create_link = $provider->id; // Mantener el filtro al añadir nuevo
+            }
+        }
+
+        $products = $query->get(); // Ejecutar la consulta
+
+        // Pasar las variables a la vista
+        return view('admin.product.index', compact(
+            'products',
+            'filtered_provider_name', // Para mostrar que está filtrado
+            'provider_id_for_breadcrumb_link', // Para enlaces en la vista
+            'provider_id_for_create_link' // Para el botón de añadir
+        ));
     }
     public function create(Request $request) // <-- Modificar para aceptar Request
     {
