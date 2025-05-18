@@ -21,10 +21,13 @@ class UpdateRequest extends FormRequest
     {
         return [
             'name'=>'string|required|unique:products,name,'.$this->route('product')->id.'|max:255',
-            'image'=>'required|dimensions:min_width=100,min_height=200', 
+            'code'=>'string|required|unique:products,code,'.$this->route('product')->id,
+            'picture'=>'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048|dimensions:min_width=100,min_height=200',
             'sell_price'=>'required',
             'category_id' => 'required|exists:categories,id',
             'provider_id'=>'integer|required|exists:providers,id',
+            'stock' => 'required|integer|min:0',
+            'status' => 'required|string|in:ACTIVE,INACTIVE', // <-- AÑADIR ESTA LÍNEA
         ];
     }
 
@@ -36,8 +39,14 @@ class UpdateRequest extends FormRequest
             'name.unique'=>'El producto ya está registrado.',
             'name.max'=>'Solo es permite 255 caracteres.',
 
-            'image.required'=>'El campo es requerido.',
-            'image.dimensions'=>'Solo se permiten imagenes de 100x200 px.',
+            'code.string'=>'El valor para código no es correcto.',
+            'code.required'=>'El campo código es requerido.',
+            'code.unique'=>'El código ya está registrado.',
+
+            'picture.image'=>'El archivo debe ser una imagen válida (jpeg, png, jpg, gif, svg).',
+            'picture.mimes'=>'La imagen debe ser de tipo: jpeg, png, jpg, gif, svg.',
+            'picture.max'=>'La imagen no debe pesar más de 2MB.',
+            'picture.dimensions'=>'Las dimensiones mínimas de la imagen son 100x200 px.',
 
             'sell_price.required'=>'El campo es requerido.',
 
@@ -48,6 +57,15 @@ class UpdateRequest extends FormRequest
             'provider_id.integer'=>'El valor tiene que ser entero.',
             'provider_id.required'=>'El campo es requerido.',
             'provider_id.exists'=>'El proveedor no existe.',
+
+            'stock.required' => 'El campo stock es requerido.',
+            'stock.integer' => 'El stock debe ser un número entero.',
+            'stock.min' => 'El stock no puede ser un valor negativo.',
+
+            // Mensajes para el estado
+            'status.required' => 'El campo estado es requerido.',
+            'status.string' => 'El valor para estado no es correcto.',
+            'status.in' => 'El estado debe ser ACTIVO o INACTIVO.',
 
         ];        
 

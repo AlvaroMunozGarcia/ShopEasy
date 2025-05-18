@@ -98,9 +98,9 @@
 
                  <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label for="image" class="form-label">Imagen del Producto</label>
-                        <input class="form-control @error('image') is-invalid @enderror" type="file" id="image" name="image" accept="image/*">
-                         @error('image')
+                        <label for="picture" class="form-label">Imagen del Producto</label>
+                        <input class="form-control @error('picture') is-invalid @enderror" type="file" id="picture" name="picture" accept="image/*">
+                         @error('picture')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>

@@ -101,17 +101,17 @@
 
                  <div class="row align-items-end">
                     <div class="col-md-6 mb-3">
-                        <label for="image" class="form-label">Cambiar Imagen (Opcional)</label>
-                        <input class="form-control @error('image') is-invalid @enderror" type="file" id="image" name="image" accept="image/*">
+                        <label for="picture" class="form-label">Cambiar Imagen (Opcional)</label>
+                        <input class="form-control @error('picture') is-invalid @enderror" type="file" id="picture" name="picture" accept="image/*">
                         <small class="text-muted">Dejar en blanco para conservar la imagen actual.</small>
-                         @error('image')
+                         @error('picture')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
                      <div class="col-md-6 mb-3">
                         @if($product->image)
                             <label class="form-label">Imagen Actual:</label><br>
-                            <img src="{{ asset('storage/products/' . $product->image) }}" alt="{{ $product->name }}" class="img-fluid img-thumbnail" style="max-height: 100px;">
+                            <img src="{{ asset('image/' . $product->image) }}" alt="{{ $product->name }}" class="img-fluid img-thumbnail" style="max-height: 100px;">
                         @else
                             <p class="text-muted">Sin imagen actual.</p>
                         @endif

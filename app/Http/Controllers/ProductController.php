@@ -26,8 +26,21 @@ class ProductController extends Controller
     }
     public function store(StoreRequest $request)
     {
-        Product::create($request->all());
-        return redirect()->route('products.index');
+        $attributesToCreate = $request->validated(); // Obtener datos validados
+
+        if ($request->hasFile('picture')) {
+            $file = $request->file('picture');
+            $image_name = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path("/image/"), $image_name);
+            $attributesToCreate['image'] = $image_name; // Guardar el nombre de la imagen
+        } else {
+            $attributesToCreate['image'] = null; // Opcional: establecer a null o un valor por defecto si no se sube imagen
+        }
+
+        // Remover 'picture' del array si existe, ya que no es una columna de BD
+        unset($attributesToCreate['picture']);
+        Product::create($attributesToCreate);
+        return redirect()->route('products.index')->with('success', 'Producto creado correctamente.');
     }
     public function show(Product $product)
     {
@@ -48,15 +61,24 @@ class ProductController extends Controller
     }
     public function update(UpdateRequest $request, Product $product)
     {
-        if($request->hasFile('picture')){
-            $file=$request->file('picture');
-            $image_name=time().'_'.$file->getClientOriginalName();
-            $file->move(public_path("/image/"), $image_name);
-            $product->picture($image_name);
+        $attributesToUpdate = $request->validated(); // Obtener datos validados
 
+        if ($request->hasFile('picture')) {
+            $file = $request->file('picture');
+            $new_image_name = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path("/image/"), $new_image_name);
+
+            // Opcional: Eliminar la imagen anterior si existe
+            if ($product->image && file_exists(public_path('image/' . $product->image))) {
+                unlink(public_path('image/' . $product->image));
+            }
+            $attributesToUpdate['image'] = $new_image_name; // Establecer el nuevo nombre de imagen
         }
-        $product->update($request->all()+['image'=>$image_name,]);
-        return redirect()->route('products.index');
+
+        // Remover 'picture' del array si existe, ya que no es una columna de BD
+        unset($attributesToUpdate['picture']);
+        $product->update($attributesToUpdate);
+        return redirect()->route('products.index')->with('success', 'Producto actualizado correctamente.');
     }
     public function destroy(Product $product)
     {

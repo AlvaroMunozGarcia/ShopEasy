@@ -70,7 +70,7 @@
                     </div>
                     <div class="col-md-4 text-center">
                         @if($product->image)
-                            <img src="{{ asset('storage/products/' . $product->image) }}" alt="{{ $product->name }}" class="img-fluid img-thumbnail" style="max-height: 250px; object-fit: contain;" id="productImageElement">
+                            <img src="{{ asset('image/' . $product->image) }}" alt="{{ $product->name }}" class="img-fluid img-thumbnail" style="max-height: 250px; object-fit: contain;" id="productImageElement">
                         @else
                             <p class="text-muted text-center mt-5">Sin imagen</p>
                         @endif
