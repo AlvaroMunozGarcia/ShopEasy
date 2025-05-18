@@ -72,6 +72,60 @@
         </div>
     </div>
 
+    {{-- Nueva tarjeta para el Historial de Compras --}}
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0">Historial de Compras (Ventas)</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="clientSalesTable" class="table table-bordered table-striped table-hover align-middle mb-0">
+                    <thead class="table-light text-center">
+                        <tr>
+                            <th>ID Venta</th>
+                            <th>Fecha</th>
+                            <th>Total</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{-- Iterar sobre las ventas del cliente --}}
+                        @forelse ($client->sales as $sale)
+                            <tr>
+                                <td class="text-center">{{ $sale->id }}</td>
+                                <td>{{ $sale->sale_date ? $sale->sale_date->format('d/m/Y H:i') : 'N/A' }}</td>
+                                <td>S/ {{ number_format($sale->total, 2) }}</td>
+                                <td class="text-center">
+                                    @switch($sale->status)
+                                        @case('VALID')
+                                            <span class="badge bg-success">Válida</span>
+                                            @break
+                                        @case('CANCELLED')
+                                            <span class="badge bg-danger">Anulada</span>
+                                            @break
+                                        @default
+                                            <span class="badge bg-warning text-dark">{{ Str::title(str_replace('_', ' ', $sale->status)) }}</span>
+                                    @endswitch
+                                </td>
+                                <td class="text-center">
+                                    {{-- Enlace para ver los detalles de la venta --}}
+                                    <a href="{{ route('sales.show', $sale) }}" class="btn btn-sm btn-outline-info" title="Ver Detalles de Venta">
+                                        <i class="bi bi-eye-fill"></i> Ver Venta
+                                    </a>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">Este cliente aún no tiene ventas registradas.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     {{-- Modal for PDF Export Options --}}
     <div class="modal fade" id="pdfDetailExportModal" tabindex="-1" aria-labelledby="pdfDetailExportModalLabel" aria-hidden="true">
         <div class="modal-dialog">
