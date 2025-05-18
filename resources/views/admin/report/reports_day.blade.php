@@ -24,7 +24,9 @@
                         <button id="exportReportExcelButton" class="btn btn-sm btn-outline-success me-2">
                             <i class="bi bi-file-earmark-excel me-1"></i> Excel
                         </button>
-                        <button id="exportReportPdfButton" class="btn btn-sm btn-danger"><i class="bi bi-file-earmark-pdf me-1"></i> PDF</button>
+                        <button id="exportReportPdfButtonTrigger" class="btn btn-sm btn-danger">
+                            <i class="bi bi-file-earmark-pdf me-1"></i> PDF
+                        </button>
                     </div>
                 @endif
             </div>
@@ -137,6 +139,28 @@
             </div>
         </div>
     </div>
+
+    {{-- Modal for PDF Export Options --}}
+    <div class="modal fade" id="pdfReportExportModal" tabindex="-1" aria-labelledby="pdfReportExportModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="pdfReportExportModalLabel">Exportar Reporte a PDF</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="pdfReportFilenameInput" class="form-label">Nombre del archivo:</label>
+                        <input type="text" class="form-control" id="pdfReportFilenameInput" placeholder="nombre_archivo.pdf">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="confirmPdfReportExportBtn">Confirmar y Exportar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 @push('scripts')
@@ -212,19 +236,20 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // --- Exportación a PDF ---
-    const exportPdfButton = document.getElementById('exportReportPdfButton');
-    if (exportPdfButton) {
-        exportPdfButton.addEventListener('click', function () {
+    function exportReportToPdf(filename) {
+        try {
+            if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') { console.error("jsPDF no está cargado."); alert("Error: jsPDF no está cargado."); return; }
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             const todayDate = "{{ \Carbon\Carbon::today('America/Lima')->format('d/m/Y') }}";
             const title = `Reporte de Ventas del Día (${todayDate})`;
+            const finalFilename = filename || `reporte_ventas_dia_${todayDate.replace(/\//g, '-')}.pdf`;
 
             doc.setFontSize(18);
             doc.text(title, 14, 22);
 
             const { headers, body, footer } = getTableDataForExport(dataTableInstance || document.getElementById(tableIdToExport), true, true);
-            if (headers.length === 0) { alert("No hay datos para exportar."); return; }
+            if (headers.length === 0 && body.length === 0) { alert("No hay datos para exportar a PDF."); return; }
 
             doc.autoTable({
                 head: [headers],
@@ -235,8 +260,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 headStyles: { fillColor: [22, 160, 133], textColor: 255, fontStyle: 'bold' },
                 footStyles: { fillColor: [22, 160, 133], textColor: 255, fontStyle: 'bold' },
             });
-            doc.save(`reporte_ventas_dia_${todayDate.replace(/\//g, '-')}.pdf`);
-        });
+            doc.save(finalFilename);
+        } catch (error) {
+            console.error("Error al generar PDF del reporte diario:", error);
+            alert("Error al generar PDF del reporte diario. Verifique la consola para más detalles.");
+        }
     }
 
     // --- Funciones Comunes de Exportación (Adaptadas para DataTables) ---
@@ -451,10 +479,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const csvModal = csvModalEl ? new bootstrap.Modal(csvModalEl) : null;
     const excelModalEl = document.getElementById('excelExportModal');
     const excelModal = excelModalEl ? new bootstrap.Modal(excelModalEl) : null;
+    const pdfReportModalEl = document.getElementById('pdfReportExportModal');
+    const pdfReportModal = pdfReportModalEl ? new bootstrap.Modal(pdfReportModalEl) : null;
 
     const csvFilenameInput = document.getElementById('csvFilenameInput');
     const csvSeparatorSelect = document.getElementById('csvSeparatorSelect');
     const excelFilenameInput = document.getElementById('excelFilenameInput');
+    const pdfReportFilenameInput = document.getElementById('pdfReportFilenameInput');
 
     const todayForFilename = "{{ \Carbon\Carbon::today('America/Lima')->format('Ymd') }}";
     const baseFilename = `reporte_ventas_dia_${todayForFilename}`;
@@ -474,6 +505,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    document.getElementById('exportReportPdfButtonTrigger')?.addEventListener('click', () => {
+        if (pdfReportModal && pdfReportFilenameInput) {
+            pdfReportFilenameInput.value = `${baseFilename}.pdf`;
+            pdfReportModal.show();
+        }
+    });
+
     document.getElementById('confirmCsvExportBtn')?.addEventListener('click', () => {
         if (csvFilenameInput && csvSeparatorSelect) {
             const filename = csvFilenameInput.value.trim() || `${baseFilename}.csv`;
@@ -488,6 +526,14 @@ document.addEventListener('DOMContentLoaded', function () {
             const filename = excelFilenameInput.value.trim() || `${baseFilename}.xlsx`;
             exportDataToExcel(filename, 'Reporte Ventas Dia', dataTableInstance || document.getElementById(tableIdToExport));
             if(excelModal) excelModal.hide();
+        }
+    });
+
+    document.getElementById('confirmPdfReportExportBtn')?.addEventListener('click', () => {
+        if (pdfReportFilenameInput) {
+            const filename = pdfReportFilenameInput.value.trim() || `${baseFilename}.pdf`;
+            exportReportToPdf(filename);
+            if(pdfReportModal) pdfReportModal.hide();
         }
     });
 

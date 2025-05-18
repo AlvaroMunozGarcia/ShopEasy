@@ -9,7 +9,7 @@
         <div class="card-header d-flex justify-content-between align-items-center">
             <span>Información General</span>
             <div>
-                <button id="exportDetailPdfButton" class="btn btn-sm btn-info">
+                <button id="exportDetailPdfButtonTrigger" class="btn btn-sm btn-info">
                     <i class="bi bi-file-earmark-pdf"></i> Exportar a PDF
                 </button>
             </div>
@@ -73,9 +73,31 @@
              <a href="{{ route('sales.index') }}" class="btn btn-secondary">
                 <i class="bi bi-arrow-left"></i> Volver a la lista
             </a>
-            <button id="exportDetailPdfButtonFooter" class="btn btn-info float-end">
+            <button id="exportDetailPdfButtonFooterTrigger" class="btn btn-info float-end">
                 <i class="bi bi-file-earmark-pdf"></i> Exportar a PDF
             </button>
+        </div>
+    </div>
+
+    {{-- Modal for PDF Export Options --}}
+    <div class="modal fade" id="pdfDetailExportModal" tabindex="-1" aria-labelledby="pdfDetailExportModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="pdfDetailExportModalLabel">Exportar Detalles a PDF</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="pdfDetailFilenameInput" class="form-label">Nombre del archivo:</label>
+                        <input type="text" class="form-control" id="pdfDetailFilenameInput" placeholder="nombre_archivo.pdf">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="confirmPdfDetailExportBtn">Confirmar y Exportar</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -86,50 +108,72 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    function generatePdf() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        let yPos = 15;
+    const pdfDetailModalEl = document.getElementById('pdfDetailExportModal');
+    const pdfDetailModal = pdfDetailModalEl ? new bootstrap.Modal(pdfDetailModalEl) : null;
+    const pdfDetailFilenameInput = document.getElementById('pdfDetailFilenameInput');
 
-        doc.setFontSize(18);
-        doc.text("Detalles de Venta #{{ $sale->id }}", 14, yPos);
-        yPos += 10;
+    function exportSaleDetailsToPdf(filename) {
+        try {
+            if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') { console.error("jsPDF no está cargado."); alert("Error: jsPDF no está cargado."); return; }
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            let yPos = 15;
 
-        doc.setFontSize(12);
-        doc.text("Información General:", 14, yPos); yPos += 7;
-        doc.setFontSize(10);
-        doc.text("ID Venta: {{ $sale->id }}", 14, yPos); yPos += 6;
-        doc.text("Fecha: {{ $sale->sale_date->format('d/m/Y H:i') }}", 14, yPos); yPos += 6;
-        doc.text("Cliente: {{ $sale->client->name ?? 'N/A' }}", 14, yPos); yPos += 6;
-        doc.text("Vendedor: {{ $sale->user->name ?? 'N/A' }}", 14, yPos); yPos += 6;
-        doc.setFontSize(12);
-        doc.text("Total: {{ number_format($sale->total, 2, ',', '.') }} €", 14, yPos); yPos += 10;
+            const saleId = "{{ $sale->id }}";
+            const defaultFilename = `detalle_venta_${saleId}.pdf`;
+            const finalFilename = filename || defaultFilename;
 
-        doc.setFontSize(12);
-        doc.text("Productos Incluidos:", 14, yPos); yPos +=2;
+            doc.setFontSize(18);
+            doc.text(`Detalles de Venta #${saleId}`, 14, yPos);
+            yPos += 10;
 
-        doc.autoTable({
-            html: '#saleDetailsTable',
-            startY: yPos,
-            theme: 'grid',
-            headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
-            // Para la columna de código de barras, si es SVG, autoTable podría no renderizarlo bien.
-            // Se mostrará el contenido textual de la celda.
-            // Si necesitas imágenes de códigos de barras, sería un proceso más complejo:
-            // 1. Convertir el SVG/HTML del código de barras a una imagen (PNG/JPEG) en el cliente.
-            // 2. Añadir esa imagen a la celda del PDF usando doc.addImage() en los hooks de autoTable.
-            // Por simplicidad, aquí se asume que el contenido textual es suficiente.
-            columnStyles: {
-                5: { cellWidth: 'wrap' } // Para la columna de código de barras, intentar ajustar el ancho
-            }
-        });
-        doc.save('detalle_venta_{{ $sale->id }}.pdf');
+            doc.setFontSize(12);
+            doc.text("Información General:", 14, yPos); yPos += 7;
+            doc.setFontSize(10);
+            doc.text(`ID Venta: ${saleId}`, 14, yPos); yPos += 6;
+            doc.text("Fecha: {{ $sale->sale_date->format('d/m/Y H:i') }}", 14, yPos); yPos += 6;
+            doc.text("Cliente: {{ $sale->client->name ?? 'N/A' }}", 14, yPos); yPos += 6;
+            doc.text("Vendedor: {{ $sale->user->name ?? 'N/A' }}", 14, yPos); yPos += 6;
+            doc.setFontSize(12);
+            doc.text("Total: {{ number_format($sale->total, 2, ',', '.') }} €", 14, yPos); yPos += 10;
+
+            doc.setFontSize(12);
+            doc.text("Productos Incluidos:", 14, yPos); yPos +=2;
+
+            doc.autoTable({
+                html: '#saleDetailsTable',
+                startY: yPos,
+                theme: 'grid',
+                headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+                columnStyles: {
+                    5: { cellWidth: 'wrap' }
+                }
+            });
+            doc.save(finalFilename);
+        } catch (error) {
+            console.error("Error al generar PDF de detalles de venta:", error);
+            alert("Error al generar PDF de detalles de venta. Verifique la consola para más detalles.");
+        }
     }
-    const exportButtonHeader = document.getElementById('exportDetailPdfButton');
-    const exportButtonFooter = document.getElementById('exportDetailPdfButtonFooter');
 
-    if(exportButtonHeader) exportButtonHeader.addEventListener('click', generatePdf);
-    if(exportButtonFooter) exportButtonFooter.addEventListener('click', generatePdf);
+    function openPdfModal() {
+        if (pdfDetailModal && pdfDetailFilenameInput) {
+            const saleId = "{{ $sale->id }}";
+            const date = new Date();
+            const todayForFilename = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
+            pdfDetailFilenameInput.value = `detalle_venta_${saleId}_${todayForFilename}.pdf`;
+            pdfDetailModal.show();
+        }
+    }
+
+    document.getElementById('exportDetailPdfButtonTrigger')?.addEventListener('click', openPdfModal);
+    document.getElementById('exportDetailPdfButtonFooterTrigger')?.addEventListener('click', openPdfModal);
+
+    document.getElementById('confirmPdfDetailExportBtn')?.addEventListener('click', function () {
+        const filename = pdfDetailFilenameInput ? pdfDetailFilenameInput.value.trim() : null;
+        exportSaleDetailsToPdf(filename);
+        if(pdfDetailModal) pdfDetailModal.hide();
+    });
 });
 </script>
 @endpush

@@ -8,7 +8,7 @@
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Detalles del Proveedor: <span id="providerName">{{ $provider->name }}</span></h5>
                 <div>
-                    <button id="exportDetailPdfButton" class="btn btn-sm btn-info me-2">
+                    <button id="exportDetailPdfButtonTrigger" class="btn btn-sm btn-info me-2">
                         <i class="bi bi-file-earmark-pdf"></i> Exportar a PDF
                     </button>
                     <a href="{{ route('providers.index') }}" class="btn btn-light text-primary fw-semibold">
@@ -62,6 +62,28 @@
             </div>
         </div>
     </div>
+
+    {{-- Modal for PDF Export Options --}}
+    <div class="modal fade" id="pdfDetailExportModal" tabindex="-1" aria-labelledby="pdfDetailExportModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="pdfDetailExportModalLabel">Exportar Detalles a PDF</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="pdfDetailFilenameInput" class="form-label">Nombre del archivo:</label>
+                        <input type="text" class="form-control" id="pdfDetailFilenameInput" placeholder="nombre_archivo.pdf">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="confirmPdfDetailExportBtn">Confirmar y Exportar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection
 
@@ -70,15 +92,21 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const exportButton = document.getElementById('exportDetailPdfButton');
-    if (exportButton) {
-        exportButton.addEventListener('click', function () {
+    const pdfDetailModalEl = document.getElementById('pdfDetailExportModal');
+    const pdfDetailModal = pdfDetailModalEl ? new bootstrap.Modal(pdfDetailModalEl) : null;
+    const pdfDetailFilenameInput = document.getElementById('pdfDetailFilenameInput');
+
+    function exportProviderDetailsToPdf(filename) {
+        try {
             const { jsPDF } = window.jspdf;
+            if (!jsPDF) { console.error("jsPDF no está cargado."); alert("Error: jsPDF no está cargado."); return; }
             const doc = new jsPDF();
             let yPos = 15;
 
             const providerName = document.getElementById('providerName')?.innerText || 'Proveedor';
             const providerId = document.getElementById('providerId')?.innerText;
+            const defaultFilename = `detalle_proveedor_${(providerId || 'N_A').replace(/[^a-z0-9]/gi, '_')}.pdf`;
+            const finalFilename = filename || defaultFilename;
 
             doc.setFontSize(18);
             doc.text(`Detalles del Proveedor: ${providerName}`, 14, yPos); yPos += 10;
@@ -86,23 +114,44 @@ document.addEventListener('DOMContentLoaded', function () {
             doc.setFontSize(12);
             function addDetail(label, valueId) {
                 const valueElement = document.getElementById(valueId);
-                const value = valueElement ? valueElement.innerText : 'N/A';
+                const value = valueElement ? valueElement.innerText.trim() : 'N/A';
                 doc.text(`${label}: ${value}`, 14, yPos);
                 yPos += 7;
             }
 
             addDetail("ID", "providerId");
+            // El nombre ya está en el título, pero si quieres repetirlo:
+            // doc.text(`Nombre: ${providerName}`, 14, yPos); yPos += 7;
             addDetail("Email", "providerEmail");
             addDetail("Número RUC", "providerRucNumber");
             addDetail("Teléfono", "providerPhone");
             addDetail("Dirección", "providerAddress");
             addDetail("Sitio Web", "providerWebsite"); // Asegúrate que este ID exista si tienes el campo
-            addDetail("Creado", "providerCreatedAt");
-            addDetail("Actualizado", "providerUpdatedAt");
+            addDetail("Fecha de Creación", "providerCreatedAt");
+            addDetail("Última Actualización", "providerUpdatedAt");
 
-            doc.save(`detalle_proveedor_${providerId || 'N_A'}.pdf`);
-        });
+            doc.save(finalFilename);
+        } catch (error) {
+            console.error("Error al generar PDF de detalles del proveedor:", error);
+            alert("Error al generar PDF de detalles del proveedor. Verifique la consola para más detalles.");
+        }
     }
+
+    document.getElementById('exportDetailPdfButtonTrigger')?.addEventListener('click', function () {
+        if (pdfDetailModal && pdfDetailFilenameInput) {
+            const providerId = document.getElementById('providerId')?.innerText || 'N_A';
+            const date = new Date();
+            const todayForFilename = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
+            pdfDetailFilenameInput.value = `detalle_proveedor_${providerId.replace(/[^a-z0-9]/gi, '_')}_${todayForFilename}.pdf`;
+            pdfDetailModal.show();
+        }
+    });
+
+    document.getElementById('confirmPdfDetailExportBtn')?.addEventListener('click', function () {
+        const filename = pdfDetailFilenameInput ? pdfDetailFilenameInput.value.trim() : null;
+        exportProviderDetailsToPdf(filename);
+        if(pdfDetailModal) pdfDetailModal.hide();
+    });
 });
 </script>
 @endpush

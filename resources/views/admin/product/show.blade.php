@@ -8,7 +8,7 @@
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Detalles del Producto: <span id="productNameShow">{{ $product->name }}</span></h5>
                 <div>
-                    <button id="exportDetailPdfButton" class="btn btn-sm btn-info me-2">
+                    <button id="exportDetailPdfButtonTrigger" class="btn btn-sm btn-info me-2">
                         <i class="bi bi-file-earmark-pdf"></i> Exportar a PDF
                     </button>
                     <a href="{{ route('products.index') }}" class="btn btn-light text-primary fw-semibold">
@@ -68,9 +68,38 @@
             </div>
 
             <div class="card-footer text-end">
-                <a href="{{ route('products.edit', $product) }}" class="btn btn-warning fw-semibold">
+                <a href="{{ route('products.edit', $product) }}" class="btn btn-warning fw-semibold me-2">
                     <i class="bi bi-pencil"></i> Editar
                 </a>
+                <form action="{{ route('products.destroy', $product) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de que quieres eliminar este producto?');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-danger fw-semibold">
+                        <i class="bi bi-trash"></i> Eliminar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal for PDF Export Options --}}
+    <div class="modal fade" id="pdfDetailExportModal" tabindex="-1" aria-labelledby="pdfDetailExportModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="pdfDetailExportModalLabel">Exportar Detalles a PDF</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="pdfDetailFilenameInput" class="form-label">Nombre del archivo:</label>
+                        <input type="text" class="form-control" id="pdfDetailFilenameInput" placeholder="nombre_archivo.pdf">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="confirmPdfDetailExportBtn">Confirmar y Exportar</button>
+                </div>
             </div>
         </div>
     </div>
@@ -82,15 +111,22 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const exportButton = document.getElementById('exportDetailPdfButton');
-    if (exportButton) {
-        exportButton.addEventListener('click', function () {
+    const pdfDetailModalEl = document.getElementById('pdfDetailExportModal');
+    const pdfDetailModal = pdfDetailModalEl ? new bootstrap.Modal(pdfDetailModalEl) : null;
+    const pdfDetailFilenameInput = document.getElementById('pdfDetailFilenameInput');
+
+    function exportProductDetailsToPdf(filename) {
+        try {
             const { jsPDF } = window.jspdf;
+            if (!jsPDF) { console.error("jsPDF no está cargado."); alert("Error: jsPDF no está cargado."); return; }
+
             const doc = new jsPDF();
             let yPos = 15;
 
             const productName = document.getElementById('productNameShow')?.innerText || 'Producto';
             const productId = document.getElementById('productId')?.innerText;
+            const defaultFilename = `detalle_producto_${(productId || 'N_A').replace(/[^a-z0-9]/gi, '_')}.pdf`;
+            const finalFilename = filename || defaultFilename;
 
             doc.setFontSize(18);
             doc.text(`Detalles del Producto: ${productName}`, 14, yPos); yPos += 10;
@@ -98,48 +134,59 @@ document.addEventListener('DOMContentLoaded', function () {
             doc.setFontSize(12);
             function addDetail(label, valueId) {
                 const valueElement = document.getElementById(valueId);
-                // Para el código de barras, si es SVG, innerText podría ser vacío.
-                // Tomamos el texto o indicamos si es un elemento complejo.
                 let value = valueElement ? valueElement.innerText.trim() : 'N/A';
                 if (valueId === 'productBarcodeHtmlContainer' && valueElement && valueElement.querySelector('svg')) {
                     value = '[Código de Barras Gráfico]'; // Indicador para el PDF
+                }
+                if (valueId === 'productStatus' && valueElement && valueElement.querySelector('.badge')) {
+                    value = valueElement.querySelector('.badge').innerText.trim(); // Obtener texto del badge
                 }
                 doc.text(`${label}: ${value}`, 14, yPos);
                 yPos += 7;
             }
 
             addDetail("ID", "productId");
+            // El nombre ya está en el título
             addDetail("Código", "productCode");
             addDetail("Categoría", "productCategory");
             addDetail("Proveedor", "productProvider");
             addDetail("Stock", "productStock");
             addDetail("Precio Venta", "productSellPrice");
             addDetail("Estado", "productStatus");
-            addDetail("Código de Barras", "productBarcodeHtmlContainer");
+            addDetail("Código de Barras (Texto)", "productBarcodeHtmlContainer"); // Se indica que es texto
 
-            // Añadir la imagen al PDF es más complejo y requiere convertirla a dataURL.
-            // const imgElement = document.getElementById('productImageElement');
-            // if (imgElement && imgElement.complete && imgElement.naturalHeight !== 0) {
-            //     try {
-            //         const canvas = document.createElement('canvas');
-            //         canvas.width = imgElement.naturalWidth;
-            //         canvas.height = imgElement.naturalHeight;
-            //         const ctx = canvas.getContext('2d');
-            //         ctx.drawImage(imgElement, 0, 0);
-            //         const imgData = canvas.toDataURL('image/jpeg'); // o image/png
-            //         doc.addImage(imgData, 'JPEG', 150, 20, 50, 50); // Ajustar posición y tamaño
-            //         yPos = Math.max(yPos, 20 + 50 + 10); // Ajustar yPos si la imagen es alta
-            //     } catch (e) {
-            //         console.error("Error al añadir imagen al PDF:", e);
-            //         doc.text("Error al cargar imagen.", 150, 20);
-            //     }
-            // } else if (imgElement) {
-            //     doc.text("[Imagen no disponible para PDF]", 150, 20);
-            // }
+            // La lógica para añadir la imagen al PDF (comentada en el original) se mantiene comentada.
+            // Si se descomenta, asegurarse de que yPos se ajuste correctamente.
 
-            doc.save(`detalle_producto_${productId || 'N_A'}.pdf`);
-        });
+            doc.save(finalFilename);
+        } catch (error) {
+            console.error("Error al generar PDF de detalles del producto:", error);
+            alert("Error al generar PDF de detalles del producto. Verifique la consola para más detalles.");
+        }
     }
+
+    document.getElementById('exportDetailPdfButtonTrigger')?.addEventListener('click', function () {
+        if (pdfDetailModal && pdfDetailFilenameInput) {
+            const productId = document.getElementById('productId')?.innerText || 'N_A';
+            const productName = document.getElementById('productNameShow')?.innerText.replace(/[^a-z0-9]/gi, '_').substring(0,30) || 'producto';
+            const date = new Date();
+            const todayForFilename = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
+            
+            let defaultFilename = `detalle_${productName}_${productId}_${todayForFilename}.pdf`;
+            // Reemplazar caracteres no válidos para nombres de archivo
+            defaultFilename = defaultFilename.replace(/[^a-z0-9_.-]/gi, '_').replace(/__+/g, '_');
+
+            pdfDetailFilenameInput.value = defaultFilename;
+            pdfDetailModal.show();
+        }
+    });
+
+    document.getElementById('confirmPdfDetailExportBtn')?.addEventListener('click', function () {
+        const filename = pdfDetailFilenameInput ? pdfDetailFilenameInput.value.trim() : null;
+        exportProductDetailsToPdf(filename);
+        if(pdfDetailModal) pdfDetailModal.hide();
+    });
+
 });
 </script>
 @endpush

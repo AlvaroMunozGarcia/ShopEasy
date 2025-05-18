@@ -25,8 +25,8 @@
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Gestión de Roles</h5>
                 <div>
-                    <button id="exportPdfButtonList" class="btn btn-info btn-sm fw-semibold me-2">
-                        <i class="bi bi-file-earmark-pdf me-1"></i> Exportar Lista a PDF
+                    <button id="exportPdfButtonListTrigger" class="btn btn-info btn-sm fw-semibold me-2">
+                        <i class="bi bi-file-earmark-pdf me-1"></i> PDF
                     </button>
                     {{-- Descomenta si habilitas la creación de roles --}}
                     {{-- 
@@ -98,6 +98,27 @@
 
         </div>
 
+        {{-- Modal for PDF Export Options --}}
+        <div class="modal fade" id="pdfExportModal" tabindex="-1" aria-labelledby="pdfExportModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="pdfExportModalLabel">Exportar Listado a PDF</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="pdfFilenameInput" class="form-label">Nombre del archivo:</label>
+                            <input type="text" class="form-control" id="pdfFilenameInput" placeholder="nombre_archivo.pdf">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary" id="confirmPdfExportBtn">Confirmar y Exportar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 @endsection
@@ -107,21 +128,52 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const exportButton = document.getElementById('exportPdfButtonList');
-    if (exportButton) {
-        exportButton.addEventListener('click', function () {
+    const pdfModalEl = document.getElementById('pdfExportModal');
+    const pdfModal = pdfModalEl ? new bootstrap.Modal(pdfModalEl) : null;
+    const pdfFilenameInput = document.getElementById('pdfFilenameInput');
+
+    function exportListToPdf(filename = 'listado_roles.pdf') {
+        try {
+            if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
+                console.error("jsPDF no está cargado.");
+                alert("Error: La librería jsPDF no está cargada.");
+                return;
+            }
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
 
             doc.setFontSize(18);
             doc.text("Listado de Roles", 14, 22);
             doc.autoTable({
-                html: '#rolesTable',
+                html: '#rolesTable', // Asegúrate que tu tabla tenga este ID
                 startY: 30,
+                theme: 'grid',
+                headStyles: { fillColor: [22, 160, 133], textColor: 255, fontStyle: 'bold' },
+                // Puedes añadir más opciones de autoTable aquí si es necesario
             });
-            doc.save('listado_roles.pdf');
-        });
+            doc.save(filename);
+        } catch (error) {
+            console.error("Error al generar PDF del listado de roles:", error);
+            alert("Error al generar PDF del listado de roles. Verifique la consola para más detalles.");
+        }
     }
+
+    document.getElementById('exportPdfButtonListTrigger')?.addEventListener('click', () => {
+        if (pdfModal && pdfFilenameInput) {
+            const date = new Date();
+            const todayForFilename = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
+            pdfFilenameInput.value = `listado_roles_${todayForFilename}.pdf`;
+            pdfModal.show();
+        }
+    });
+
+    document.getElementById('confirmPdfExportBtn')?.addEventListener('click', () => {
+        if (pdfFilenameInput) {
+            const filename = pdfFilenameInput.value.trim() || `listado_roles_${new Date().toISOString().slice(0,10)}.pdf`;
+            exportListToPdf(filename);
+            if(pdfModal) pdfModal.hide();
+        }
+    });
 });
 </script>
 @endpush

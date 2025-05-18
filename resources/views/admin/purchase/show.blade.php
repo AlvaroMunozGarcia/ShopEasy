@@ -33,7 +33,7 @@
                         <div class="card-header">
                             <h3 class="card-title">Información de la Compra #{{ $purchase->id }}</h3>
                             <div class="card-tools">
-                                <button id="exportDetailPdfButton" class="btn btn-sm btn-info">
+                                <button id="exportDetailPdfButtonTrigger" class="btn btn-sm btn-info">
                                     <i class="bi bi-file-earmark-pdf"></i> Exportar a PDF
                                 </button>
                                 <a href="{{ route('purchases.index') }}" class="btn btn-sm btn-secondary">
@@ -107,7 +107,7 @@
                         <!-- /.card-body -->
                         <div class="card-footer">
                             <a href="{{ route('purchases.index') }}" class="btn btn-secondary">Volver al Listado</a>
-                            <button id="exportDetailPdfButtonFooter" class="btn btn-info float-right">
+                            <button id="exportDetailPdfButtonFooterTrigger" class="btn btn-info float-right">
                                 <i class="bi bi-file-earmark-pdf"></i> Exportar a PDF
                             </button>
                         </div>
@@ -115,6 +115,29 @@
                     <!-- /.card -->
                 </div>
                 <!-- /.col -->
+            </div>
+            <!-- /.row -->
+
+            {{-- Modal for PDF Export Options --}}
+            <div class="modal fade" id="pdfDetailExportModal" tabindex="-1" aria-labelledby="pdfDetailExportModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="pdfDetailExportModalLabel">Exportar Detalles a PDF</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="pdfDetailFilenameInput" class="form-label">Nombre del archivo:</label>
+                                <input type="text" class="form-control" id="pdfDetailFilenameInput" placeholder="nombre_archivo.pdf">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="button" class="btn btn-primary" id="confirmPdfDetailExportBtn">Confirmar y Exportar</button>
+                        </div>
+                    </div>
+                </div>
             </div>
             <!-- /.row -->
         </div><!-- /.container-fluid -->
@@ -128,63 +151,72 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    function generatePdf() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        let yPos = 15; // Posición Y inicial para el texto
+    const pdfDetailModalEl = document.getElementById('pdfDetailExportModal');
+    const pdfDetailModal = pdfDetailModalEl ? new bootstrap.Modal(pdfDetailModalEl) : null;
+    const pdfDetailFilenameInput = document.getElementById('pdfDetailFilenameInput');
 
-        // Título del Documento
-        doc.setFontSize(18);
-        doc.text("Detalles de Compra #{{ $purchase->id }}", 14, yPos);
-        yPos += 10; // Espacio después del título
+    function exportPurchaseDetailsToPdf(filename) {
+        try {
+            if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') { console.error("jsPDF no está cargado."); alert("Error: jsPDF no está cargado."); return; }
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            let yPos = 15;
 
-        // Información General de la Compra
-        doc.setFontSize(12);
-        doc.text("Información General:", 14, yPos);
-        yPos += 7; // Espacio
-        doc.setFontSize(10);
-        doc.text(`Proveedor: {{ $purchase->provider->name ?? 'N/A' }}`, 14, yPos);
-        yPos += 6;
-        doc.text(`Email Proveedor: {{ $purchase->provider->email ?? 'N/A' }}`, 14, yPos);
-        yPos += 6;
-        doc.text(`Teléfono Proveedor: {{ $purchase->provider->phone ?? 'N/A' }}`, 14, yPos);
-        yPos += 6;
-        doc.text(`Fecha de Compra: {{ $purchase->purchase_date->format('d/m/Y H:i') }}`, 14, yPos);
-        yPos += 6;
-        doc.text(`Usuario Registrador: {{ $purchase->user->name ?? 'N/A' }}`, 14, yPos);
-        yPos += 6;
-        doc.text(`Impuesto (%): {{ $purchase->tax }}%`, 14, yPos);
-        yPos += 6;
-        doc.setFontSize(12); // Resaltar el total
-        doc.text(`Total Pagado: S/ {{ number_format($purchase->total, 2) }}`, 14, yPos);
-        yPos += 10; // Espacio antes de la tabla
+            const purchaseId = "{{ $purchase->id }}";
+            const defaultFilename = `detalle_compra_${purchaseId}.pdf`;
+            const finalFilename = filename || defaultFilename;
 
-        // Título para la tabla de detalles
-        doc.setFontSize(12);
-        doc.text("Detalles de la Compra:", 14, yPos);
-        yPos += 2; // Pequeño ajuste para que autoTable no sobreescriba el título
+            doc.setFontSize(18);
+            doc.text(`Detalles de Compra #${purchaseId}`, 14, yPos);
+            yPos += 10;
 
-        // Tabla de Detalles de la Compra
-        doc.autoTable({
-            html: '#purchaseDetailsTable',
-            startY: yPos,
-            theme: 'grid', // 'striped', 'grid', 'plain'
-            headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' }, // Azul oscuro para cabecera
-            // footStyles: { fillColor: [211, 211, 211], textColor: 0, fontStyle: 'bold' }, // Estilo para el pie de tabla si se usa
-            // didDrawPage: function (data) { // Opcional: para añadir pie de página en cada página
-            //     doc.setFontSize(10);
-            //     doc.text('Página ' + doc.internal.getNumberOfPages(), data.settings.margin.left, doc.internal.pageSize.height - 10);
-            // }
-        });
+            doc.setFontSize(12);
+            doc.text("Información General:", 14, yPos); yPos += 7;
+            doc.setFontSize(10);
+            doc.text(`Proveedor: {{ $purchase->provider->name ?? 'N/A' }}`, 14, yPos); yPos += 6;
+            doc.text(`Email Proveedor: {{ $purchase->provider->email ?? 'N/A' }}`, 14, yPos); yPos += 6;
+            doc.text(`Teléfono Proveedor: {{ $purchase->provider->phone ?? 'N/A' }}`, 14, yPos); yPos += 6;
+            doc.text(`Fecha de Compra: {{ $purchase->purchase_date->format('d/m/Y H:i') }}`, 14, yPos); yPos += 6;
+            doc.text(`Usuario Registrador: {{ $purchase->user->name ?? 'N/A' }}`, 14, yPos); yPos += 6;
+            doc.text(`Impuesto (%): {{ $purchase->tax }}%`, 14, yPos); yPos += 6;
+            doc.setFontSize(12);
+            doc.text(`Total Pagado: S/ {{ number_format($purchase->total, 2) }}`, 14, yPos); yPos += 10;
 
-        doc.save('detalle_compra_{{ $purchase->id }}.pdf');
+            doc.setFontSize(12);
+            doc.text("Detalles de la Compra:", 14, yPos); yPos += 2;
+
+            doc.autoTable({
+                html: '#purchaseDetailsTable',
+                startY: yPos,
+                theme: 'grid',
+                headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+            });
+
+            doc.save(finalFilename);
+        } catch (error) {
+            console.error("Error al generar PDF de detalles de compra:", error);
+            alert("Error al generar PDF de detalles de compra. Verifique la consola para más detalles.");
+        }
     }
 
-    const exportButtonHeader = document.getElementById('exportDetailPdfButton');
-    const exportButtonFooter = document.getElementById('exportDetailPdfButtonFooter');
+    function openPdfModal() {
+        if (pdfDetailModal && pdfDetailFilenameInput) {
+            const purchaseId = "{{ $purchase->id }}";
+            const date = new Date();
+            const todayForFilename = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
+            pdfDetailFilenameInput.value = `detalle_compra_${purchaseId}_${todayForFilename}.pdf`;
+            pdfDetailModal.show();
+        }
+    }
 
-    if (exportButtonHeader) exportButtonHeader.addEventListener('click', generatePdf);
-    if (exportButtonFooter) exportButtonFooter.addEventListener('click', generatePdf);
+    document.getElementById('exportDetailPdfButtonTrigger')?.addEventListener('click', openPdfModal);
+    document.getElementById('exportDetailPdfButtonFooterTrigger')?.addEventListener('click', openPdfModal);
+
+    document.getElementById('confirmPdfDetailExportBtn')?.addEventListener('click', function () {
+        const filename = pdfDetailFilenameInput ? pdfDetailFilenameInput.value.trim() : null;
+        exportPurchaseDetailsToPdf(filename);
+        if(pdfDetailModal) pdfDetailModal.hide();
+    });
 });
 </script>
 @endpush

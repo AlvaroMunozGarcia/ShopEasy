@@ -29,7 +29,7 @@
                     <button id="exportExcelButtonList" class="btn btn-outline-light btn-sm fw-semibold me-2">
                         <i class="bi bi-file-earmark-excel me-1"></i> Excel
                     </button>
-                    <button id="exportPdfButtonList" class="btn btn-info btn-sm fw-semibold me-2">
+                    <button id="exportPdfButtonListTrigger" class="btn btn-info btn-sm fw-semibold me-2">
                         <i class="bi bi-file-earmark-pdf me-1"></i> PDF
                     </button>
                     <a href="{{ route('categories.create') }}" class="btn btn-light text-primary fw-semibold">
@@ -140,6 +140,28 @@
             </div>
         </div>
     </div>
+
+    {{-- Modal for PDF Export Options --}}
+    <div class="modal fade" id="pdfExportModal" tabindex="-1" aria-labelledby="pdfExportModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="pdfExportModalLabel">Exportar Listado a PDF</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="pdfFilenameInput" class="form-label">Nombre del archivo:</label>
+                        <input type="text" class="form-control" id="pdfFilenameInput" placeholder="nombre_archivo.pdf">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="confirmPdfExportBtn">Confirmar y Exportar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection
 
@@ -185,13 +207,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // --- Exportación a PDF ---
-    const exportPdfButton = document.getElementById('exportPdfButtonList');
-    if (exportPdfButton) {
-        exportPdfButton.addEventListener('click', function () {
-            if (!dataTableInstance) {
-                alert("La tabla de datos no está inicializada.");
-                return;
-            }
+    function exportListToPdf(filename = 'listado_categorias.pdf') {
+        if (!dataTableInstance) {
+            alert("La tabla de datos no está inicializada.");
+            return;
+        }
+        try {
+            if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') { console.error("jsPDF no está cargado."); alert("Error: jsPDF no está cargado."); return; }
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             doc.setFontSize(18);
@@ -207,10 +229,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 theme: 'grid',
                 headStyles: { fillColor: [22, 160, 133], textColor: 255, fontStyle: 'bold' },
             });
-            doc.save('listado_categorias.pdf');
-        });
+            doc.save(filename);
+        } catch (error) {
+            console.error("Error al generar PDF del listado de categorías:", error);
+            alert("Error al generar PDF del listado de categorías. Verifique la consola para más detalles.");
+        }
     }
-
+    
     // --- Funciones Comunes de Exportación (Adaptadas para DataTables) ---
     function escapeCsvCell(cellData) {
         if (cellData == null) return '';
@@ -336,10 +361,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const csvModal = csvModalEl ? new bootstrap.Modal(csvModalEl) : null;
     const excelModalEl = document.getElementById('excelExportModal');
     const excelModal = excelModalEl ? new bootstrap.Modal(excelModalEl) : null;
+    const pdfModalEl = document.getElementById('pdfExportModal');
+    const pdfModal = pdfModalEl ? new bootstrap.Modal(pdfModalEl) : null;
 
     const csvFilenameInput = document.getElementById('csvFilenameInput');
     const csvSeparatorSelect = document.getElementById('csvSeparatorSelect');
     const excelFilenameInput = document.getElementById('excelFilenameInput');
+    const pdfFilenameInput = document.getElementById('pdfFilenameInput');
 
     const date = new Date();
     const todayForFilename = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
@@ -360,6 +388,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    document.getElementById('exportPdfButtonListTrigger')?.addEventListener('click', () => {
+        if (pdfModal && pdfFilenameInput) {
+            pdfFilenameInput.value = `${baseFilename}.pdf`;
+            pdfModal.show();
+        }
+    });
+
     document.getElementById('confirmCsvExportBtn')?.addEventListener('click', () => {
         if (csvFilenameInput && csvSeparatorSelect && dataTableInstance) {
             const filename = csvFilenameInput.value.trim() || `${baseFilename}.csv`;
@@ -374,6 +409,14 @@ document.addEventListener('DOMContentLoaded', function () {
             const filename = excelFilenameInput.value.trim() || `${baseFilename}.xlsx`;
             exportDataToExcel(filename, 'Categorias', dataTableInstance);
             if(excelModal) excelModal.hide();
+        }
+    });
+
+    document.getElementById('confirmPdfExportBtn')?.addEventListener('click', () => {
+        if (pdfFilenameInput && dataTableInstance) {
+            const filename = pdfFilenameInput.value.trim() || `${baseFilename}.pdf`;
+            exportListToPdf(filename);
+            if(pdfModal) pdfModal.hide();
         }
     });
 
