@@ -49,7 +49,25 @@ class RoleController extends Controller
     public function create()
     {
         $permissions = Permission::orderBy('name')->get();
-        return view('admin.roles.create', compact('permissions'));
+        $predefinedRolesData = [];
+
+        // Obtener datos para roles predefinidos que queramos ofrecer como plantilla
+        $adminRole = Role::where('name', 'Admin')->with('permissions')->first();
+        if ($adminRole) {
+            $predefinedRolesData['Admin'] = [
+                'name' => $adminRole->name, // Podrías añadir un sufijo como ' (Copia)' si quieres
+                'permissions' => $adminRole->permissions->pluck('id')->toArray()
+            ];
+        }
+
+        $sellerRole = Role::where('name', 'Vendedor')->with('permissions')->first();
+        if ($sellerRole) {
+            $predefinedRolesData['Vendedor'] = [
+                'name' => $sellerRole->name, // Podrías añadir un sufijo
+                'permissions' => $sellerRole->permissions->pluck('id')->toArray()
+            ];
+        }
+        return view('admin.roles.create', compact('permissions', 'predefinedRolesData'));
     }
 
     /**

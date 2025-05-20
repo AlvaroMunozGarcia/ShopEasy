@@ -32,6 +32,18 @@
                     @endif
 
                     <div class="mb-3">
+                        <label for="predefined_role_template" class="form-label">Cargar desde Plantilla de Rol (Opcional)</label>
+                        <select class="form-select" id="predefined_role_template">
+                            <option value="">-- Seleccionar una plantilla --</option>
+                            @if(isset($predefinedRolesData) && !empty($predefinedRolesData))
+                                @foreach($predefinedRolesData as $roleKey => $data)
+                                    <option value="{{ $roleKey }}">{{ $roleKey }}</option>
+                                @endforeach
+                            @endif
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
                         <label for="name" class="form-label">Nombre del Rol <span class="text-danger">*</span></label>
                         <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name') }}" required>
                         @error('name')
@@ -108,4 +120,43 @@
         display: block !important;
     }
 </style>
+@endpush
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const predefinedRoleSelect = document.getElementById('predefined_role_template');
+    const roleNameInput = document.getElementById('name');
+    const permissionCheckboxes = document.querySelectorAll('input[name="permissions[]"]');
+
+    // Convertimos los datos de PHP a un objeto JS
+    const predefinedRolesData = @json(isset($predefinedRolesData) ? $predefinedRolesData : []);
+
+    predefinedRoleSelect.addEventListener('change', function() {
+        const selectedRoleKey = this.value;
+
+        // Resetear campos si no se selecciona nada o la plantilla no existe
+        if (!selectedRoleKey || !predefinedRolesData[selectedRoleKey]) {
+            roleNameInput.value = ''; // Limpiar nombre
+            permissionCheckboxes.forEach(checkbox => {
+                checkbox.checked = false; // Desmarcar todos los permisos
+            });
+            return;
+        }
+
+        const roleData = predefinedRolesData[selectedRoleKey];
+
+        // Rellenar el nombre del rol. Considera añadir un sufijo.
+        // Por ejemplo: roleNameInput.value = roleData.name + ' (Copia)';
+        // O simplemente el nombre original, dejando que la validación unique actúe si ya existe:
+        roleNameInput.value = roleData.name;
+
+
+        // Marcar/desmarcar los checkboxes de permisos
+        permissionCheckboxes.forEach(checkbox => {
+            checkbox.checked = roleData.permissions.includes(parseInt(checkbox.value));
+        });
+    });
+});
+</script>
 @endpush
