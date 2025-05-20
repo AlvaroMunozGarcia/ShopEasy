@@ -3,8 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Spatie\Permission\Models\Role; // Importa el modelo Role de Spatie
-use Illuminate\Http\Request; // Aunque no se usa directamente en index/show, es bueno tenerlo por si se expande
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
+use Illuminate\Http\Request;
 
 class RoleController extends Controller
 {
@@ -41,9 +42,80 @@ class RoleController extends Controller
         return view('admin.roles.show', compact('role'));
     }
 
-    // --- Métodos Create, Store, Edit, Update, Destroy OMITIDOS intencionalmente ---
-    // Como discutimos, generalmente no son necesarios o deseables para roles
-    // que se manejan principalmente a través de seeders/migrations.
-    // Se pueden añadir en el futuro si la lógica de negocio lo requiere explícitamente.
+    /**
+     * Muestra el formulario para crear un nuevo rol.
+     * GET /admin/roles/create
+     */
+    public function create()
+    {
+        $permissions = Permission::orderBy('name')->get();
+        return view('admin.roles.create', compact('permissions'));
+    }
 
+    /**
+     * Almacena un nuevo rol en la base de datos.
+     * POST /admin/roles
+     *
+     * @param  \Illuminate\Http\Request  $request
+     */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:roles,name',
+            'permissions' => 'nullable|array',
+            'permissions.*' => 'exists:permissions,id', // Valida que cada ID de permiso exista
+        ]);
+
+        $role = Role::create(['name' => $request->name]); // El guard_name se tomará por defecto
+
+        if ($request->has('permissions')) {
+            $permissionIds = $request->input('permissions');
+            $permissions = Permission::whereIn('id', $permissionIds)->get();
+            $role->syncPermissions($permissions);
+        }
+
+        return redirect()->route('admin.roles.index')
+                         ->with('success', 'Rol creado exitosamente.');
+    }
+
+    /**
+     * Muestra el formulario para editar un rol existente.
+     * GET /admin/roles/{role}/edit
+     *
+     * @param  \Spatie\Permission\Models\Role  $role
+     */
+    public function edit(Role $role)
+    {
+        $permissions = Permission::orderBy('name')->get();
+        $rolePermissions = $role->permissions->pluck('id')->toArray();
+        return view('admin.roles.edit', compact('role', 'permissions', 'rolePermissions'));
+    }
+
+    /**
+     * Actualiza un rol existente en la base de datos.
+     * PUT/PATCH /admin/roles/{role}
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Spatie\Permission\Models\Role  $role
+     */
+    public function update(Request $request, Role $role)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:roles,name,' . $role->id,
+            'permissions' => 'nullable|array',
+            'permissions.*' => 'exists:permissions,id',
+        ]);
+
+        $role->name = $request->name;
+        $role->save();
+        if ($request->has('permissions')) {
+            $permissionModels = Permission::whereIn('id', $request->input('permissions'))->get();
+            $role->syncPermissions($permissionModels);
+        } else {
+            $role->syncPermissions([]); // Si no se envían permisos, se quitan todos los asignados previamente.
+        }
+
+        return redirect()->route('admin.roles.index')
+                         ->with('success', 'Rol actualizado exitosamente.');
+    }
 }
