@@ -75,7 +75,13 @@ class PurchaseController extends Controller
     
         // Crear detalles
         $purchase->purchaseDetails()->createMany($details);
-    
+
+        // 7. Actualizar el stock de los productos comprados
+        foreach ($details as $detailItem) {
+            $product = Product::findOrFail($detailItem['product_id']);
+            $product->increment('stock', $detailItem['quantity']);
+        }
+
         return redirect()->route('purchases.index')->with('success', 'Compra registrada correctamente.');
     }
     
