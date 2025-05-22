@@ -72,6 +72,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('reports_day', [ReportController::class,'reports_day'])->name('reports.day');
         Route::get('reports_date', [ReportController::class,'reports_date'])->name('reports.date');
         Route::post('report_results', [ReportController::class,'report_results'])->name('report.results');
+        Route::get('reports/sales-by-category', [ReportController::class, 'salesByCategoryForm'])->name('reports.sales_by_category_form');
+        Route::post('reports/sales-by-category/results', [ReportController::class, 'salesByCategoryResults'])->name('reports.sales_by_category_results');
     });
 
    

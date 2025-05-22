@@ -212,6 +212,9 @@
         <a href="{{ route('reports.date') }}" class="{{ request()->routeIs('reports.date') || request()->routeIs('report.results') ? 'active' : '' }}">
             <i class="bi bi-calendar-range"></i><span>Reporte por Fechas</span> {{-- Usar icono Bootstrap --}}
         </a>
+        <a href="{{ route('reports.sales_by_category_form') }}" class="{{ request()->routeIs('reports.sales_by_category_form') || request()->routeIs('reports.sales_by_category_results') ? 'active' : '' }}">
+            <i class="bi bi-pie-chart-fill"></i><span>Ventas por Categoría</span>
+        </a>
         @endcan
         {{-- === FIN: ENLACES DE REPORTES === --}}
 
