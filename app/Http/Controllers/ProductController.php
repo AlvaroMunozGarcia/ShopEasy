@@ -108,8 +108,6 @@ class ProductController extends Controller
             $file = $request->file('picture');
             $new_image_name = time() . '_' . $file->getClientOriginalName();
             $file->move(public_path("/image/"), $new_image_name);
-
-            // Opcional: Eliminar la imagen anterior si existe
             if ($product->image && file_exists(public_path('image/' . $product->image))) {
                 unlink(public_path('image/' . $product->image));
             }
@@ -118,6 +116,10 @@ class ProductController extends Controller
 
         // Remover 'picture' del array si existe, ya que no es una columna de BD
         unset($attributesToUpdate['picture']);
+        // --- DEBUG 2: Ver los atributos que se van a actualizar DESPUÉS de la validación ---
+        // Para la segunda prueba, comenta DEBUG 1 y DESCOMENTA esta línea:
+        // // dd($attributesToUpdate);
+        // --- FIN DEBUG 2 ---
         $product->update($attributesToUpdate);
         return redirect()->route('products.index')->with('success', 'Producto actualizado correctamente.');
     }

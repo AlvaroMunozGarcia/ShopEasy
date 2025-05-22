@@ -44,6 +44,22 @@
             </div>
         @endif
 
+        {{-- INICIO: Mostrar Alertas de Stock Bajo (generadas por ventas) --}}
+        @if (session()->has('low_stock_alerts') && is_array(session('low_stock_alerts')) && count(session('low_stock_alerts')) > 0)
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                <strong><i class="bi bi-exclamation-triangle-fill me-2"></i>¡Atención! Productos con stock bajo (detectado en transacciones recientes):</strong>
+                <ul class="mb-0 mt-2">
+                    @foreach (session('low_stock_alerts') as $alert_message)
+                        <li>{{ $alert_message }}</li>
+                    @endforeach
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {{-- Limpiar las alertas de la sesión después de mostrarlas en esta página --}}
+            @php session()->forget('low_stock_alerts'); @endphp
+        @endif
+        {{-- FIN: Mostrar Alertas de Stock Bajo --}}
+
         {{-- Card principal --}}
         <div class="card shadow-sm border-0">
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">

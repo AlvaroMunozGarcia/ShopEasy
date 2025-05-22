@@ -19,19 +19,21 @@
     <div class="container-fluid">
         {{-- El @page_header ya muestra el título principal de la página. --}}
 
-        {{-- Mensajes flash --}}
-        @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        {{-- INICIO: Mostrar Alertas de Stock Bajo (generadas por ventas/transacciones) --}}
+        @if (session()->has('low_stock_alerts') && is_array(session('low_stock_alerts')) && count(session('low_stock_alerts')) > 0)
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                <strong><i class="bi bi-exclamation-triangle-fill me-2"></i>¡Atención! Productos con stock bajo (detectado en transacciones recientes):</strong>
+                <ul class="mb-0 mt-2">
+                    @foreach (session('low_stock_alerts') as $alert_message)
+                        <li>{{ $alert_message }}</li>
+                    @endforeach
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
+            {{-- Limpiar las alertas de la sesión después de mostrarlas en esta página --}}
+            @php session()->forget('low_stock_alerts'); @endphp
         @endif
-        @if(session('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                {{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
-            </div>
-        @endif
+        {{-- FIN: Mostrar Alertas de Stock Bajo --}}
 
         {{-- Tarjeta principal --}}
         <div class="card shadow-sm border-0">

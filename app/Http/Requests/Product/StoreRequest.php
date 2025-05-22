@@ -27,6 +27,8 @@ class StoreRequest extends FormRequest
             'category_id' => 'required|exists:categories,id',
             'provider_id'=>'integer|required|exists:providers,id',
             'stock' => 'required|integer|min:0',
+            'min_stock' => 'nullable|integer|min:0',
+
 
         ];
     }
@@ -42,7 +44,8 @@ class StoreRequest extends FormRequest
             'code.string'=>'El valor para código no es correcto.',
             'code.required'=>'El campo código es requerido.',
             'code.unique'=>'El código ya está registrado.',
-
+            'min_stock.integer' => 'El stock mínimo debe ser un número entero.',
+            'min_stock.min' => 'El stock mínimo no puede ser negativo.',
             'picture.required'=>'El campo imagen es requerido.',
             'picture.image'=>'El archivo debe ser una imagen válida (jpeg, png, jpg, gif, svg).',
             'picture.mimes'=>'La imagen debe ser de tipo: jpeg, png, jpg, gif, svg.',

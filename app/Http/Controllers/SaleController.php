@@ -79,12 +79,18 @@ class SaleController extends Controller
 
         // 5. Guardar los detalles
         $sale->saleDetails()->createMany($detailsData);
-
-        // 6. Actualizar el stock de los productos vendidos
         foreach ($detailsData as $detail) {
-            // Usamos findOrFail para seguridad, aunque StoreRequest ya validó la existencia
             $product = Product::findOrFail($detail['product_id']);
             $product->decrement('stock', $detail['quantity']);
+            if (isset($product->min_stock) && $product->min_stock > 0 && $product->stock <= $product->min_stock) {
+                session()->push('low_stock_alerts', "¡Alerta! El producto '{$product->name}' (ID: {$product->id}) ha alcanzado o está por debajo del stock mínimo. Stock actual: {$product->stock}, Mínimo: {$product->min_stock}.");
+
+            }
+
+
+
+
+
         }
 
         return redirect()->route('sales.index')->with('success', 'Venta registrada correctamente.');

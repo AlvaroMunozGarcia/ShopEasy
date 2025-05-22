@@ -99,6 +99,15 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
+                    {{-- NUEVO CAMPO PARA STOCK MÍNIMO --}}
+                    <div class="col-md-6 mb-3">
+                        <label for="min_stock" class="form-label">Stock Mínimo para Alerta</label>
+                        <input type="number" min="0" class="form-control @error('min_stock') is-invalid @enderror" id="min_stock" name="min_stock" value="{{ old('min_stock', 5) }}" placeholder="Ej: 5">
+                        <small class="form-text text-muted">Alerta cuando el stock sea igual o menor a este valor.</small>
+                        @error('min_stock')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
                 </div>
 
                  <div class="row">
