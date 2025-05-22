@@ -191,6 +191,70 @@
       </div>
       <!-- /.row -->
 
+      <!-- NUEVO: Informe de Productos con Stock Bajo o Agotados -->
+      <div class="row mt-4">
+          <div class="col-12">
+              <div class="card card-warning card-outline"> {{-- Usamos card-warning para destacar --}}
+                  <div class="card-header">
+                      <h3 class="card-title"><i class="fas fa-exclamation-triangle mr-1"></i>Productos con Stock Bajo o Agotados</h3>
+                  </div>
+                  <div class="card-body p-0"> {{-- p-0 para que la tabla ocupe todo el espacio --}}
+                      @if(isset($lowStockProducts) && $lowStockProducts->isNotEmpty())
+                          <div class="table-responsive">
+                              <table class="table table-hover table-striped mb-0">
+                                  <thead>
+                                      <tr>
+                                          <th>Producto</th>
+                                          <th class="text-center">Stock Actual</th>
+                                          <th class="text-center">Stock Mínimo</th>
+                                          <th>Estado</th>
+                                          <th>Acciones</th>
+                                      </tr>
+                                  </thead>
+                                  <tbody>
+                                      @foreach($lowStockProducts as $product)
+                                          <tr>
+                                              <td>
+                                                  {{ $product->name }}
+                                                  @if($product->code)
+                                                      <br><small class="text-muted">Código: {{ $product->code }}</small>
+                                                  @endif
+                                              </td>
+                                              <td class="text-center {{ $product->stock == 0 ? 'text-danger font-weight-bold' : '' }}">{{ $product->stock }}</td>
+                                              <td class="text-center">{{ $product->min_stock > 0 ? $product->min_stock : 'N/A' }}</td>
+                                              <td>
+                                                  @if($product->stock == 0)
+                                                      <span class="badge bg-danger">Agotado</span>
+                                                  @elseif($product->min_stock > 0 && $product->stock <= $product->min_stock)
+                                                      <span class="badge bg-warning">Stock Bajo</span>
+                                                  @else
+                                                      {{-- Este caso no debería ocurrir con la consulta actual si min_stock es 0 y stock > 0 --}}
+                                                      <span class="badge bg-secondary">Revisar</span>
+                                                  @endif
+                                              </td>
+                                              <td>
+                                                  <a href="{{ route('products.edit', $product) }}" class="btn btn-xs btn-info" title="Editar Producto"><i class="fas fa-edit"></i></a>
+                                                  {{-- Podrías añadir un botón para ir a registrar una compra de este producto --}}
+                                              </td>
+                                          </tr>
+                                      @endforeach
+                                  </tbody>
+                              </table>
+                          </div>
+                      @else
+                          <div class="p-3 text-center">
+                              <p class="mb-0 text-success"><i class="fas fa-check-circle mr-1"></i>¡Excelente! No hay productos por debajo del stock mínimo o agotados en este momento.</p>
+                          </div>
+                      @endif
+                  </div>
+                  <div class="card-footer text-muted small">
+                      Este informe muestra productos cuyo stock actual es igual o inferior a su stock mínimo configurado (y el mínimo es > 0), o productos con stock cero.
+                  </div>
+              </div>
+          </div>
+      </div>
+      <!-- FIN NUEVO INFORME -->
+
     </div><!--/. container-fluid -->
   </section>
   <!-- /.content -->
