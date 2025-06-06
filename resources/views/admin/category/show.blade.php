@@ -66,28 +66,6 @@
             </div>
         </div>
     </div>
-
-    {{-- Modal for PDF Export Options --}}
-    <div class="modal fade" id="pdfDetailExportModal" tabindex="-1" aria-labelledby="pdfDetailExportModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="pdfDetailExportModalLabel">Exportar Detalles a PDF</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="pdfDetailFilenameInput" class="form-label">Nombre del archivo:</label>
-                        <input type="text" class="form-control" id="pdfDetailFilenameInput" placeholder="nombre_archivo.pdf">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="confirmPdfDetailExportBtn">Confirmar y Exportar</button>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 @endsection
 
@@ -95,68 +73,66 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const pdfDetailModalEl = document.getElementById('pdfDetailExportModal');
-    const pdfDetailModal = pdfDetailModalEl ? new bootstrap.Modal(pdfDetailModalEl) : null;
-    const pdfDetailFilenameInput = document.getElementById('pdfDetailFilenameInput');
+    // Función para obtener el nombre de archivo personalizado
+    function getCustomFilename(baseName, extension) {
+        const now = new Date();
+        // Formato de fecha YYYY-MM-DD
+        const datePart = now.toISOString().slice(0, 10);
+        const defaultName = `${baseName}_${datePart}`;
 
-    function exportCategoryDetailsToPdf(filename) {
-        try {
-            if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') { console.error("jsPDF no está cargado."); alert("Error: jsPDF no está cargado."); return; }
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            let yPos = 15;
-            // Intentar obtener el nombre de la categoría de varias fuentes
-            const categoryName = document.getElementById('categoryNameHeader')?.innerText || // Del nuevo @page_header
-                                 document.getElementById('categoryNameCardHeader')?.innerText.match(/\(([^)]+)\)/)?.[1] || // Del card-header (extraer de paréntesis)
-                                 '{{ $category->name }}'; // Fallback directo
-            const categoryId = document.getElementById('categoryId')?.innerText;
-            const defaultFilename = `detalle_categoria_${(categoryName || 'Categoria').replace(/[^a-z0-9]/gi, '_')}_${(categoryId || 'N_A').replace(/[^a-z0-9]/gi, '_')}.pdf`;
-            const finalFilename = filename || defaultFilename;
+        // Mostrar prompt al usuario
+        let userFilename = prompt("Introduce el nombre del archivo:", defaultName);
 
-            doc.setFontSize(18);
-            doc.text(`Detalles de Categoría: ${categoryName}`, 14, yPos);
-            yPos += 10;
-
-            doc.setFontSize(12);
-            function addDetail(label, valueId) {
-                const element = document.getElementById(valueId);
-                const value = element ? element.innerText.trim() : 'N/A';
-                doc.text(`${label}: ${value}`, 14, yPos);
-                yPos += 7;
-            }
-
-            addDetail("ID", "categoryId");
-            // El nombre ya está en el título
-            addDetail("Descripción", "categoryDescription");
-            addDetail("Fecha de Creación", "categoryCreatedAt");
-            addDetail("Última Actualización", "categoryUpdatedAt");
-
-            doc.save(finalFilename);
-        } catch (error) {
-            console.error("Error al generar PDF de detalles de categoría:", error);
-            alert("Error al generar PDF de detalles de categoría. Verifique la consola para más detalles.");
+        // Si el usuario cancela, devuelve null
+        if (userFilename === null) {
+            return null;
         }
+
+        // Usar el nombre del usuario si no está vacío, de lo contrario usar el por defecto
+        let finalFilename = userFilename.trim() === '' ? defaultName : userFilename.trim();
+
+        // Asegurarse de que la extensión esté presente
+        if (!finalFilename.toLowerCase().endsWith(`.${extension}`)) {
+            finalFilename += `.${extension}`;
+        }
+
+        return finalFilename;
     }
 
-    document.getElementById('exportDetailPdfButtonTrigger')?.addEventListener('click', function () {
-        if (pdfDetailModal && pdfDetailFilenameInput) {
-            const categoryId = document.getElementById('categoryId')?.innerText || 'N_A';
-            const categoryName = (document.getElementById('categoryNameHeader')?.innerText || // Del nuevo @page_header
-                                  document.getElementById('categoryNameCardHeader')?.innerText.match(/\(([^)]+)\)/)?.[1] || // Del card-header
-                                  '{{ $category->name }}').replace(/[^a-z0-9]/gi, '_').substring(0,30) || 'categoria';
-            const date = new Date();
-            const todayForFilename = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
-            pdfDetailFilenameInput.value = `detalle_${categoryName}_${categoryId}_${todayForFilename}.pdf`.replace(/[^a-z0-9_.-]/gi, '_').replace(/__+/g, '_');
-            pdfDetailModal.show();
-        }
-    });
-
-    document.getElementById('confirmPdfDetailExportBtn')?.addEventListener('click', function () {
-        const filename = pdfDetailFilenameInput ? pdfDetailFilenameInput.value.trim() : null;
-        exportCategoryDetailsToPdf(filename);
-        if(pdfDetailModal) pdfDetailModal.hide();
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('exportDetailPdfButtonTrigger').addEventListener('click', function () {
+        exportCategoryDetailsToPDF();
     });
 });
+
+function exportCategoryDetailsToPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    const categoryData = [
+        ['ID', document.getElementById('categoryId').innerText],
+        ['Nombre', document.getElementById('categoryNameHeader').innerText],
+        ['Descripción', document.getElementById('categoryDescription').innerText],
+        ['Fecha de Creación', document.getElementById('categoryCreatedAt').innerText],
+        ['Última Actualización', document.getElementById('categoryUpdatedAt').innerText]
+    ];
+
+    doc.setFontSize(14);
+    doc.text('Detalles de la Categoría', 14, 20);
+
+    doc.autoTable({
+        startY: 30,
+        head: [['Campo', 'Valor']],
+        body: categoryData,
+        styles: { fontSize: 11 },
+        headStyles: { fillColor: [41, 128, 185] }
+    });
+
+    const categoryName = document.getElementById('categoryNameHeader')?.innerText ?? 'Categoria';
+    const filename = getCustomFilename(`categoria_${categoryName.replace(/\s+/g, '_')}`, 'pdf');
+    if (filename) {
+        doc.save(filename);
+    }
+}
 </script>
 @endpush

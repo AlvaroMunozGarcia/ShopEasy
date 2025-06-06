@@ -62,15 +62,12 @@
                                 @endif
                             </dd>
 
-                            <dt class="col-sm-4 mt-3">Código de Barras</dt>
-                            <dd class="col-sm-8 mt-3" id="productBarcodeHtmlContainer">
-                                {!! $barcodeHtml !!} {{-- Se mostrará en HTML, pero en PDF será texto o nada si es SVG puro --}}
-                            </dd>
                         </dl>
                     </div>
                     <div class="col-md-4 text-center">
                         @if($product->image)
-                            <img src="{{ asset('image/' . $product->image) }}" alt="{{ $product->name }}" class="img-fluid img-thumbnail" style="max-height: 250px; object-fit: contain;" id="productImageElement">
+                            {{-- Corregido para usar el storage link --}}
+                            <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="img-fluid img-thumbnail" style="max-height: 250px; object-fit: contain;" id="productImageElement">
                         @else
                             <p class="text-muted text-center mt-5">Sin imagen</p>
                         @endif
@@ -92,28 +89,6 @@
             </div>
         </div>
     </div>
-
-    {{-- Modal for PDF Export Options --}}
-    <div class="modal fade" id="pdfDetailExportModal" tabindex="-1" aria-labelledby="pdfDetailExportModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="pdfDetailExportModalLabel">Exportar Detalles a PDF</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="pdfDetailFilenameInput" class="form-label">Nombre del archivo:</label>
-                        <input type="text" class="form-control" id="pdfDetailFilenameInput" placeholder="nombre_archivo.pdf">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="confirmPdfDetailExportBtn">Confirmar y Exportar</button>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 @endsection
 
@@ -121,85 +96,97 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const pdfDetailModalEl = document.getElementById('pdfDetailExportModal');
-    const pdfDetailModal = pdfDetailModalEl ? new bootstrap.Modal(pdfDetailModalEl) : null;
-    const pdfDetailFilenameInput = document.getElementById('pdfDetailFilenameInput');
+    // Función para obtener el nombre de archivo personalizado
+    // MOVIDA FUERA DEL LISTENER DOMContentLoaded para que sea accesible globalmente
+    function getCustomFilename(baseName, extension) {
+        const now = new Date();
+        // Formato de fecha YYYY-MM-DD
+        const datePart = now.toISOString().slice(0, 10);
+        const defaultName = `${baseName}_${datePart}`;
 
-    function exportProductDetailsToPdf(filename) {
-        try {
-            const { jsPDF } = window.jspdf;
-            if (!jsPDF) { console.error("jsPDF no está cargado."); alert("Error: jsPDF no está cargado."); return; }
+        // Mostrar prompt al usuario
+        let userFilename = prompt("Introduce el nombre del archivo:", defaultName);
 
-            const doc = new jsPDF();
-            let yPos = 15;
-
-            const productName = document.getElementById('productNameHeader')?.innerText || // Del nuevo @page_header
-                                document.getElementById('productNameShowCardHeader')?.innerText.match(/\(([^)]+)\)/)?.[1] || // Del card-header (extraer de paréntesis)
-                                '{{ $product->name }}'; // Fallback directo
-            const productId = document.getElementById('productId')?.innerText;
-            const defaultFilename = `detalle_producto_${(productName || 'Producto').replace(/[^a-z0-9]/gi, '_')}_${(productId || 'N_A').replace(/[^a-z0-9]/gi, '_')}.pdf`;
-            const finalFilename = filename || defaultFilename;
-
-            doc.setFontSize(18);
-            doc.text(`Detalles del Producto: ${productName}`, 14, yPos); yPos += 10;
-
-            doc.setFontSize(12);
-            function addDetail(label, valueId) {
-                const valueElement = document.getElementById(valueId);
-                let value = valueElement ? valueElement.innerText.trim() : 'N/A';
-                if (valueId === 'productBarcodeHtmlContainer' && valueElement && valueElement.querySelector('svg')) {
-                    value = '[Código de Barras Gráfico]'; // Indicador para el PDF
-                }
-                if (valueId === 'productStatus' && valueElement && valueElement.querySelector('.badge')) {
-                    value = valueElement.querySelector('.badge').innerText.trim(); // Obtener texto del badge
-                }
-                doc.text(`${label}: ${value}`, 14, yPos);
-                yPos += 7;
-            }
-
-            addDetail("ID", "productId");
-            // El nombre ya está en el título
-            addDetail("Código", "productCode");
-            addDetail("Categoría", "productCategory");
-            addDetail("Proveedor", "productProvider");
-            addDetail("Stock", "productStock");
-            addDetail("Precio Venta", "productSellPrice");
-            addDetail("Estado", "productStatus");
-            addDetail("Código de Barras (Texto)", "productBarcodeHtmlContainer"); // Se indica que es texto
-
-            // La lógica para añadir la imagen al PDF (comentada en el original) se mantiene comentada.
-            // Si se descomenta, asegurarse de que yPos se ajuste correctamente.
-
-            doc.save(finalFilename);
-        } catch (error) {
-            console.error("Error al generar PDF de detalles del producto:", error);
-            alert("Error al generar PDF de detalles del producto. Verifique la consola para más detalles.");
+        // Si el usuario cancela, devuelve null
+        if (userFilename === null) {
+            return null;
         }
+
+        // Usar el nombre del usuario si no está vacío, de lo contrario usar el por defecto
+        let finalFilename = userFilename.trim() === '' ? defaultName : userFilename.trim();
+
+        // Asegurarse de que la extensión esté presente
+        if (!finalFilename.toLowerCase().endsWith(`.${extension}`)) {
+            finalFilename += `.${extension}`;
+        }
+        return finalFilename;
     }
 
-    document.getElementById('exportDetailPdfButtonTrigger')?.addEventListener('click', function () {
-        if (pdfDetailModal && pdfDetailFilenameInput) {
-            const productId = document.getElementById('productId')?.innerText || 'N_A';
-            const productName = (document.getElementById('productNameHeader')?.innerText || '{{ $product->name }}').replace(/[^a-z0-9]/gi, '_').substring(0,30) || 'producto';
-            const date = new Date();
-            const todayForFilename = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
-            
-            let defaultFilename = `detalle_${productName}_${productId}_${todayForFilename}.pdf`;
-            // Reemplazar caracteres no válidos para nombres de archivo
-            defaultFilename = defaultFilename.replace(/[^a-z0-9_.-]/gi, '_').replace(/__+/g, '_');
+document.addEventListener('DOMContentLoaded', function () {
+    // Función para obtener el nombre de archivo personalizado
 
-            pdfDetailFilenameInput.value = defaultFilename;
-            pdfDetailModal.show();
-        }
+    document.getElementById('exportDetailPdfButtonTrigger').addEventListener('click', function () {
+        exportProductDetailsToPDF();
     });
-
-    document.getElementById('confirmPdfDetailExportBtn')?.addEventListener('click', function () {
-        const filename = pdfDetailFilenameInput ? pdfDetailFilenameInput.value.trim() : null;
-        exportProductDetailsToPdf(filename);
-        if(pdfDetailModal) pdfDetailModal.hide();
-    });
-
 });
+
+function exportProductDetailsToPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    // Obtener los datos del producto
+    const productName = document.getElementById('productNameHeader').innerText;
+    const productData = [
+        ['ID', document.getElementById('productId').innerText],
+        ['Nombre', productName],
+        ['Código', document.getElementById('productCode').innerText],
+        ['Categoría', document.getElementById('productCategory').innerText],
+        ['Proveedor', document.getElementById('productProvider').innerText],
+        ['Stock', document.getElementById('productStock').innerText],
+        ['Precio Venta', document.getElementById('productSellPrice').innerText],
+        ['Estado', document.getElementById('productStatus').innerText.trim()] // .trim() para quitar espacios extra si el badge los añade
+    ];
+
+    doc.setFontSize(14);
+    doc.text(`Detalles del Producto: ${productName}`, 14, 20);
+
+    doc.autoTable({
+        startY: 30,
+        head: [['Campo', 'Valor']],
+        body: productData,
+        styles: { fontSize: 11 },
+        headStyles: { fillColor: [41, 128, 185] }
+    });
+
+     // Intentar añadir la imagen del producto si existe
+     const productImageElement = document.getElementById('productImageElement');
+     if (productImageElement && productImageElement.src && !productImageElement.src.endsWith('Sin%20imagen') && !productImageElement.src.includes('placeholder')) { // Evitar añadir si es placeholder
+         try {
+            const imgData = productImageElement.src; // jsPDF puede manejar URLs de imágenes directamente en muchos casos
+            // Calcular la posición y tamaño de la imagen
+            // Esto es un ejemplo, podrías necesitar ajustar las dimensiones y posición
+            const imgProps = doc.getImageProperties(imgData);
+            const imgWidth = 50; // Ancho deseado para la imagen en el PDF
+            const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+            const xPosition = (doc.internal.pageSize.getWidth() - imgWidth) / 2; // Centrar imagen
+            let yPosition = doc.lastAutoTable.finalY + 10; // Debajo de la tabla
+
+            if (yPosition + imgHeight > doc.internal.pageSize.getHeight() - 10) { // Si no cabe, añadir nueva página
+                doc.addPage();
+                yPosition = 20;
+            }
+             // Añadir la imagen. Asegúrate de que el tipo de imagen sea correcto (JPEG, PNG, etc.)
+             const imgType = imgData.toLowerCase().endsWith('.png') ? 'PNG' : 'JPEG'; // Simple guess based on extension
+             doc.addImage(imgData, imgType, xPosition, yPosition, imgWidth, imgHeight);
+         } catch (e) {
+            console.error("Error al añadir la imagen al PDF:", e);
+            // Podrías añadir un texto al PDF indicando que la imagen no se pudo cargar
+         }
+     }
+    const filename = getCustomFilename(`producto_${productName.replace(/\s+/g, '_')}`, 'pdf');
+    if (filename) {
+        doc.save(filename);
+    } // Asegúrate de que esta llave de cierre esté presente
+}
 </script>
 @endpush

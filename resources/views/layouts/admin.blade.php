@@ -105,6 +105,19 @@
       right: 0;
       left: auto;
     }
+
+    /* Estilos para el contenedor de breadcrumbs personalizado */
+    .breadcrumb-wrapper {
+      background-color: #e9ecef; /* Un color de fondo gris claro, similar a Bootstrap */
+      padding: 0.75rem 1rem;    /* Espaciado interno */
+      border-radius: 0.375rem; /* Bordes redondeados estándar de Bootstrap */
+    }
+
+    .breadcrumb-wrapper .breadcrumb {
+      margin-bottom: 0; /* Elimina el margen inferior por defecto de la lista de breadcrumbs */
+      background-color: transparent; /* Asegura que la lista <ol> en sí no tenga otro fondo */
+      padding: 0; /* El padding lo maneja el wrapper, reseteamos el de <ol> */
+    }
   </style>
   {{-- AQUÍ SE INSERTARÁN LOS ESTILOS ESPECÍFICOS DE CADA VISTA --}}
   @stack('styles')
@@ -114,7 +127,23 @@
   <div class="header">
     <div class="d-flex align-items-center">
       <i class="bi bi-list menu-toggle" onclick="toggleSidebar()"></i>
-      <strong>{{ config('app.name', 'Panel') }}</strong> {{-- Nombre de la app --}}
+      @php
+          $business_logo_path = null;
+          $display_name_admin = config('app.name', 'Panel'); // Fallback inicial
+          if (Schema::hasTable('businesses')) {
+              $business = \App\Models\Business::first(); // Asume que solo hay un registro de negocio
+              if ($business && $business->logo) {
+                  $business_logo_path = Illuminate\Support\Facades\Storage::disk('public')->url($business->logo);
+              }
+              if ($business && $business->name) {
+                  $display_name_admin = $business->name;
+              }
+          }
+      @endphp
+      @if($business_logo_path)
+          <img src="{{ $business_logo_path }}" alt="Logo" style="height: 30px; margin-right: 10px;">
+      @endif
+      <strong>{{ $display_name_admin }}</strong> {{-- Nombre del negocio o app --}}
     </div>
     {{-- Verifica si el usuario está autenticado --}}
     @auth
@@ -151,69 +180,59 @@
 
         {{-- Adapta las rutas a las tuyas --}}
         <h6>ADMINISTRACIÓN</h6>
+        @can('ver clientes')
         <a href="{{ route('clients.index') }}" class="{{ request()->routeIs('clients.*') ? 'active' : '' }}">
           <i class="bi bi-people-fill"></i><span>Clientes</span>
         </a>
+        @endcan
+        @can('ver proveedores')
         <a href="{{ route('providers.index') }}" class="{{ request()->routeIs('providers.*') ? 'active' : '' }}">
           <i class="bi bi-person-vcard"></i><span>Proveedores</span>
         </a>
+        @endcan
+        @can('ver productos')
          <a href="{{ route('products.index') }}" class="{{ request()->routeIs('products.*') ? 'active' : '' }}">
           <i class="bi bi-box-seam"></i><span>Productos</span>
         </a>
+        @endcan
+        @can('ver categorías')
          <a href="{{ route('categories.index') }}" class="{{ request()->routeIs('categories.*') ? 'active' : '' }}">
           <i class="bi bi-tag-fill"></i><span>Categorías</span>
         </a>
+        @endcan
 
+        {{-- Opciones solo para Admin --}}
         @role('Admin')
-        <a href="{{ route('admin.printer.index') }}" class="{{ request()->routeIs('admin.printer.*') ? 'active' : '' }}">
-          <i class="bi bi-printer-fill"></i><span>Impresora</span>
-      </a>
-        @endrole
-
-
-
-        
-        @role('Admin') {{-- Solo el Admin ve este enlace --}}
         <a href="{{ route('admin.business.index') }}" class="{{ request()->routeIs('admin.business.*') ? 'active' : '' }}">
           <i class="bi bi-briefcase-fill"></i><span>Negocio</span> {{-- Icono para negocio/empresa --}}
         </a>
-        @endrole
-        
-        
-        @role('Admin')
         <a href="{{ route('admin.users.index') }}" class="{{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
           <i class="bi bi-person-gear"></i><span>Usuarios</span> {{-- Icono de gestión de usuarios --}}
         </a>
         @endrole
 
 
-        @role('Admin')
-        <a href="{{ route('admin.roles.index') }}" class="{{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
-          <i class="bi bi-shield-lock-fill"></i><span>Roles</span> {{-- Icono para roles/permisos --}}
-        </a>
-        @endrole
-
-
 
         <h6>TRANSACCIONES</h6>
+        @can('ver compras')
          <a href="{{ route('purchases.index') }}" class="{{ request()->routeIs('purchases.*') ? 'active' : '' }}">
           <i class="bi bi-cart-plus-fill"></i><span>Compras</span>
         </a>
+        @endcan
+        @can('ver ventas')
          <a href="{{ route('sales.index') }}" class="{{ request()->routeIs('sales.*') ? 'active' : '' }}">
           <i class="bi bi-receipt"></i><span>Ventas</span>
         </a>
+        @endcan
 
         {{-- === INICIO: ENLACES DE REPORTES === --}}
-        @can('view reports') {{-- Verifica el permiso --}}
+        @can('ver reportes') {{-- Corregido: usa el nombre de permiso de UserSeeder.php --}}
         <h6>REPORTES</h6>
         <a href="{{ route('reports.day') }}" class="{{ request()->routeIs('reports.day') ? 'active' : '' }}">
             <i class="bi bi-calendar-day"></i><span>Reporte del Día</span> {{-- Usar icono Bootstrap --}}
         </a>
         <a href="{{ route('reports.date') }}" class="{{ request()->routeIs('reports.date') || request()->routeIs('report.results') ? 'active' : '' }}">
             <i class="bi bi-calendar-range"></i><span>Reporte por Fechas</span> {{-- Usar icono Bootstrap --}}
-        </a>
-        <a href="{{ route('reports.sales_by_category_form') }}" class="{{ request()->routeIs('reports.sales_by_category_form') || request()->routeIs('reports.sales_by_category_results') ? 'active' : '' }}">
-            <i class="bi bi-pie-chart-fill"></i><span>Ventas por Categoría</span>
         </a>
         @endcan
         {{-- === FIN: ENLACES DE REPORTES === --}}
@@ -239,21 +258,27 @@
     <div class="main-content">
       {{-- INICIO: Cabecera de Página con Título y Breadcrumbs --}}
       <div class="page-header mb-3">
-        <div class="row align-items-center">
+        {{-- Título principal de la página --}}
+        <div class="row">
           <div class="col">
-            {{-- Título principal de la página --}}
-            <h1 class="h3 page-main-title mb-0">@yield('page_header', 'Panel')</h1>
+            <h1 class="h3 page-main-title mb-2">@yield('page_header', 'Panel')</h1> {{-- Añadido mb-2 para espacio debajo del título --}}
           </div>
-          <div class="col-auto">
-            {{-- Breadcrumbs --}}
-            <nav aria-label="breadcrumb">
-              <ol class="breadcrumb bg-transparent p-0 m-0">
+        </div>
+
+        {{-- Breadcrumbs con fondo, debajo del título --}}
+        {{-- Solo se muestra si hay breadcrumbs definidos por la vista hija --}}
+        @hasSection('breadcrumbs')
+        <div class="row">
+          <div class="col">
+            <nav aria-label="breadcrumb" class="breadcrumb-wrapper">
+              <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="{{ route('home') }}">Inicio</a></li>
                 @yield('breadcrumbs') {{-- Las vistas hijas deben proporcionar los <li> adicionales --}}
               </ol>
             </nav>
           </div>
         </div>
+        @endif
       </div>
       {{-- FIN: Cabecera de Página --}}
 

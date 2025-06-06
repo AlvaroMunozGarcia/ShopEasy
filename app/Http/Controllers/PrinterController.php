@@ -14,7 +14,6 @@ class PrinterController extends Controller
     public function __construct()
     {
         // Asegura que solo los administradores puedan acceder a estos métodos
-        $this->middleware('role:Admin');
     }
 
     /**

@@ -8,11 +8,9 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>{{ config('app.name', 'Laravel') }}</title>
-
     <!-- Fonts -->
     <link rel="dns-prefetch" href="//fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">
-
     <!-- Scripts -->
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
 </head>
@@ -20,8 +18,23 @@
     <div id="app">
         <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm">
             <div class="container">
-                <a class="navbar-brand" href="{{ url('/') }}">
-                    {{ config('app.name', 'Laravel') }}
+                {{-- Inyectamos código PHP para obtener el logo --}}
+                @php
+                    $business_logo_path = null;
+                    if (Schema::hasTable('businesses')) {
+                        $business = \App\Models\Business::first();
+                        if ($business && $business->logo) {
+                            $business_logo_path = Illuminate\Support\Facades\Storage::disk('public')->url($business->logo);
+                        }
+                        $display_name = $business && $business->name ? $business->name : config('app.name', 'ShopEasy');
+
+                    }
+                @endphp
+                <a class="navbar-brand d-flex align-items-center" href="{{ url('/') }}">
+                    @if($business_logo_path)
+                        <img src="{{ $business_logo_path }}" alt="Logo" style="height: 30px; margin-right: 10px;">
+                    @endif
+                    {{ $display_name ?? config('app.name', 'ShopEasy') }}
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="{{ __('Toggle navigation') }}">
                     <span class="navbar-toggler-icon"></span>

@@ -15,7 +15,6 @@ class UserController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('role:Admin');
     }
 
     public function index()
@@ -99,10 +98,8 @@ class UserController extends Controller
              return redirect()->route('admin.users.index')
                          ->with('error', 'No puedes eliminar tu propia cuenta.');
         }
-
         $user->delete();
-
         return redirect()->route('admin.users.index')
-                         ->with('success', 'Usuario eliminado exitosamente.');
+                         ->with('success', 'Usuario archivado exitosamente.');
     }
 }

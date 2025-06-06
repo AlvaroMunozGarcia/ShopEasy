@@ -5,10 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+use Illuminate\Database\Eloquent\SoftDeletes; 
+
 
 class Product extends Model
 {
-
+    use HasFactory, SoftDeletes; 
     protected $fillable =[
         'code',
         'name',
@@ -19,7 +21,6 @@ class Product extends Model
         'status',
         'category_id',
         'provider_id',
-
     ];
 
     public function category(){
@@ -28,6 +29,4 @@ class Product extends Model
     public function provider(){
         return $this->belongsTo(Provider::class);
     }
-    /** @use HasFactory<\Database\Factories\ProductFactory> */
-    use HasFactory;
 }

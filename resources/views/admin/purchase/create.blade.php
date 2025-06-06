@@ -127,9 +127,9 @@
                             <tr>
                                 <th style="width: 5%;" class="text-center">Eliminar</th>
                                 <th>Producto</th>
-                                <th style="width: 15%;" class="text-end">Precio Unit. (PEN)</th>
+                                <th style="width: 15%;" class="text-end">Precio Unit. (€)</th>
                                 <th style="width: 10%;" class="text-end">Cantidad</th>
-                                <th style="width: 20%;" class="text-end">SubTotal (PEN)</th>
+                                <th style="width: 20%;" class="text-end">SubTotal (€)</th>
                             </tr>
                         </thead>
                         {{-- Asegúrate que este ID es 'purchase-details-body' --}}
@@ -148,7 +148,7 @@
                                     <td class="text-end"><strong>TOTAL:</strong></td>
                                     <td class="text-end" style="width: 40%;">
                                         {{-- Asegúrate que este ID es 'total' --}}
-                                        <strong id="total">PEN 0.00</strong>
+                                        <strong id="total">0.00 €</strong>
                                     </td>
                                 </tr>
                                 <tr>
@@ -158,14 +158,14 @@
                                     </td>
                                     <td class="text-end">
                                          {{-- Asegúrate que este ID es 'total_impuesto' --}}
-                                        <strong id="total_impuesto">PEN 0.00</strong>
+                                        <strong id="total_impuesto">0.00 €</strong>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="text-end"><strong>TOTAL A PAGAR:</strong></td>
                                     <td class="text-end">
                                          {{-- Asegúrate que este ID es 'total_pagar_html' --}}
-                                        <strong id="total_pagar_html">PEN 0.00</strong>
+                                        <strong id="total_pagar_html">0.00 €</strong>
                                     </td>
                                 </tr>
                             </tbody>
@@ -235,8 +235,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function formatCurrency(value) {
         const numberValue = parseFloat(value);
         if (isNaN(numberValue)) { return 'PEN 0.00'; }
-        // Asegúrate que la moneda (PEN) y el formato sean los correctos para tu aplicación
-        return `PEN ${numberValue.toFixed(2)}`;
+        return `${numberValue.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
     }
 
     function calculateAndUpdateTotals() {

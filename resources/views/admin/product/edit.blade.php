@@ -120,7 +120,8 @@
                      <div class="col-md-6 mb-3">
                         @if($product->image)
                             <label class="form-label">Imagen Actual:</label><br>
-                            <img src="{{ asset('image/' . $product->image) }}" alt="{{ $product->name }}" class="img-fluid img-thumbnail" style="max-height: 100px;">
+                            {{-- Corregido para usar el storage link --}}
+                            <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="img-fluid img-thumbnail" style="max-height: 100px;">
                         @else
                             <p class="text-muted">Sin imagen actual.</p>
                         @endif

@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('ruc_number');
             $table->string('address')->nullable();
             $table->string('phone');
-
+            $table->softDeletes(); 
             $table->timestamps();
         });
     }

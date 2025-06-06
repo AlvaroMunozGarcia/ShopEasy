@@ -27,8 +27,8 @@ class StoreRequest extends FormRequest
             'category_id' => 'required|exists:categories,id',
             'provider_id'=>'integer|required|exists:providers,id',
             'stock' => 'required|integer|min:0',
-            'min_stock' => 'nullable|integer|min:0',
-
+            'min_stock' => 'nullable|integer|min:0', 
+            'status' => 'required|string|in:ACTIVE,INACTIVE', 
 
         ];
     }
@@ -65,6 +65,10 @@ class StoreRequest extends FormRequest
             'stock.required' => 'El campo stock es requerido.',
             'stock.integer' => 'El stock debe ser un número entero.',
             'stock.min' => 'El stock no puede ser un valor negativo.',
+
+            'status.required' => 'El campo estado es requerido.',
+            'status.string' => 'El valor para estado no es correcto.',
+            'status.in' => 'El estado debe ser ACTIVO o INACTIVO.',
 
         ];        
 

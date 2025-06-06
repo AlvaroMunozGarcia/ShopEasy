@@ -87,28 +87,6 @@
             </div>
         </div>
     </div>
-
-    {{-- Modal for PDF Export Options --}}
-    <div class="modal fade" id="pdfDetailExportModal" tabindex="-1" aria-labelledby="pdfDetailExportModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="pdfDetailExportModalLabel">Exportar Detalles a PDF</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="pdfDetailFilenameInput" class="form-label">Nombre del archivo:</label>
-                        <input type="text" class="form-control" id="pdfDetailFilenameInput" placeholder="nombre_archivo.pdf">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="confirmPdfDetailExportBtn">Confirmar y Exportar</button>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 @endsection
 
@@ -116,69 +94,72 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const pdfDetailModalEl = document.getElementById('pdfDetailExportModal');
-    const pdfDetailModal = pdfDetailModalEl ? new bootstrap.Modal(pdfDetailModalEl) : null;
-    const pdfDetailFilenameInput = document.getElementById('pdfDetailFilenameInput');
+    // Función para obtener el nombre de archivo personalizado
+    function getCustomFilename(baseName, extension) {
+        const now = new Date();
+        // Formato de fecha YYYY-MM-DD
+        const datePart = now.toISOString().slice(0, 10);
+        const defaultName = `${baseName}_${datePart}`;
 
-    function exportProviderDetailsToPdf(filename) {
-        try {
-            const { jsPDF } = window.jspdf;
-            if (!jsPDF) { console.error("jsPDF no está cargado."); alert("Error: jsPDF no está cargado."); return; }
-            const doc = new jsPDF();
-            let yPos = 15;
-            // Intentar obtener el nombre del proveedor de varias fuentes
-            const providerName = document.getElementById('providerNameHeader')?.innerText || // Nuevo ID en page_header
-                                 document.getElementById('providerNameCardHeader')?.innerText.match(/\(([^)]+)\)/)?.[1] || // Del card-header (extraer de paréntesis)
-                                 '{{ $provider->name }}'; // Fallback directo
-            const providerId = document.getElementById('providerId')?.innerText;
-            const defaultFilename = `detalle_proveedor_${(providerId || 'N_A').replace(/[^a-z0-9]/gi, '_')}.pdf`;
-            const finalFilename = filename || defaultFilename;
+        // Mostrar prompt al usuario
+        let userFilename = prompt("Introduce el nombre del archivo:", defaultName);
 
-            doc.setFontSize(18);
-            doc.text(`Detalles del Proveedor: ${providerName}`, 14, yPos); yPos += 10;
-
-            doc.setFontSize(12);
-            function addDetail(label, valueId) {
-                const valueElement = document.getElementById(valueId);
-                const value = valueElement ? valueElement.innerText.trim() : 'N/A';
-                doc.text(`${label}: ${value}`, 14, yPos);
-                yPos += 7;
-            }
-
-            addDetail("ID", "providerId");
-            // El nombre ya está en el título, pero si quieres repetirlo:
-            // doc.text(`Nombre: ${providerName}`, 14, yPos); yPos += 7;
-            addDetail("Email", "providerEmail");
-            addDetail("Número RUC", "providerRucNumber");
-            addDetail("Teléfono", "providerPhone");
-            addDetail("Dirección", "providerAddress");
-            addDetail("Sitio Web", "providerWebsite"); // Asegúrate que este ID exista si tienes el campo
-            addDetail("Fecha de Creación", "providerCreatedAt");
-            addDetail("Última Actualización", "providerUpdatedAt");
-
-            doc.save(finalFilename);
-        } catch (error) {
-            console.error("Error al generar PDF de detalles del proveedor:", error);
-            alert("Error al generar PDF de detalles del proveedor. Verifique la consola para más detalles.");
+        // Si el usuario cancela, devuelve null
+        if (userFilename === null) {
+            return null;
         }
+
+        // Usar el nombre del usuario si no está vacío, de lo contrario usar el por defecto
+        let finalFilename = userFilename.trim() === '' ? defaultName : userFilename.trim();
+
+        // Asegurarse de que la extensión esté presente
+        if (!finalFilename.toLowerCase().endsWith(`.${extension}`)) {
+            finalFilename += `.${extension}`;
+        }
+
+        return finalFilename;
     }
 
-    document.getElementById('exportDetailPdfButtonTrigger')?.addEventListener('click', function () {
-        if (pdfDetailModal && pdfDetailFilenameInput) {
-            const providerId = document.getElementById('providerId')?.innerText || 'N_A';
-            const date = new Date();
-            const todayForFilename = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
-            pdfDetailFilenameInput.value = `detalle_proveedor_${providerId.replace(/[^a-z0-9]/gi, '_')}_${todayForFilename}.pdf`;
-            pdfDetailModal.show();
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('exportDetailPdfButtonTrigger').addEventListener('click', exportProviderDetailsToPDF);
+});
+
+function exportProviderDetailsToPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    const providerData = [
+        ['ID', '{{ $provider->id }}'],
+        ['Nombre', '{{ $provider->name }}'],
+        ['Email', '{{ $provider->email ?? "N/A" }}'],
+        ['Número RUC', '{{ $provider->ruc_number ?? "N/A" }}'],
+        ['Teléfono', '{{ $provider->phone ?? "N/A" }}'],
+        ['Dirección', `{!! str_replace(["\n", "\r"], ['\\n', ''], e($provider->address ?? "N/A")) !!}`],
+        ['Sitio Web', '{{ $provider->website ?? "N/A" }}'],
+        ['Creado', '{{ $provider->created_at->format("d/m/Y H:i:s") }}'],
+        ['Actualizado', '{{ $provider->updated_at->format("d/m/Y H:i:s") }}']
+    ];
+
+    doc.setFontSize(14);
+    doc.text('Detalles del Proveedor', 14, 20);
+
+    doc.autoTable({
+        startY: 30,
+        head: [['Campo', 'Valor']],
+        body: providerData,
+        styles: { fontSize: 11 },
+        headStyles: { fillColor: [41, 128, 185] },
+        columnStyles: {
+            0: { fontStyle: 'bold', cellWidth: 50 },
+            1: { cellWidth: 130 }
         }
     });
 
-    document.getElementById('confirmPdfDetailExportBtn')?.addEventListener('click', function () {
-        const filename = pdfDetailFilenameInput ? pdfDetailFilenameInput.value.trim() : null;
-        exportProviderDetailsToPdf(filename);
-        if(pdfDetailModal) pdfDetailModal.hide();
-    });
-});
+    const providerName = document.getElementById('providerNameHeader')?.innerText ?? 'Proveedor';
+    const filename = getCustomFilename(`proveedor_${providerName.replace(/\s+/g, '_')}`, 'pdf');
+    if (filename) {
+        doc.save(filename);
+    }
+}
 </script>
 @endpush

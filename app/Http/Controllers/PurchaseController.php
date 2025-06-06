@@ -7,11 +7,9 @@ use App\Models\Provider;
 use App\Http\Requests\Purchase\StoreRequest;
 use App\Http\Requests\Purchase\UpdateRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade as PDF;
-use Barryvdh\DomPDF\PDF as DomPDFPDF;
-
-use function Ramsey\Uuid\v1;
 
 class PurchaseController extends Controller
 {
@@ -29,72 +27,68 @@ class PurchaseController extends Controller
     }
     public function store(StoreRequest $request)
     {
-        // Verifica que el array 'details' exista
-        if (!isset($request->details) || !is_array($request->details)) {
-            return redirect()->back()->withErrors(['details' => 'Debe agregar al menos un producto.']);
-        }
-    
-        $total = 0;
-        $details = [];
-    
-        foreach ($request->details as $detail) {
-            // Validación defensiva para cada item
-            if (
-                !isset($detail['product_id']) ||
-                !isset($detail['quantity']) ||
-                !isset($detail['price']) ||
-                !is_numeric($detail['quantity']) ||
-                !is_numeric($detail['price'])
-            ) {
-                continue; // Opcional: podrías lanzar un error si algún detalle está incompleto
+
+        DB::beginTransaction();
+        try {
+            $subtotal_details = 0;
+            $purchase_details_data = [];
+
+            foreach ($request->details as $detail) {
+                $line_subtotal = $detail['quantity'] * $detail['price'];
+                $subtotal_details += $line_subtotal;
+
+                $purchase_details_data[] = [
+                    'product_id' => $detail['product_id'],
+                    'quantity' => $detail['quantity'],
+                    'price' => $detail['price'],
+                ];
             }
-    
-            $subtotal = $detail['quantity'] * $detail['price'];
-            $total += $subtotal;
-    
-            $details[] = [
-                'product_id' => $detail['product_id'],
-                'quantity' => $detail['quantity'],
-                'price' => $detail['price'],
-            ];
-        }
-    
-        // Si no hay detalles válidos
-        if (empty($details)) {
-            return redirect()->back()->withErrors(['details' => 'Todos los detalles están vacíos o mal formateados.']);
-        }
-    
-        // Crear la compra
-        $purchase = Purchase::create([
-            'provider_id' => $request->provider_id,
-            'purchase_date' => Carbon::now('America/Lima'),
-            'tax' => $request->tax,
-            'total' => $total,
-            'user_id' => Auth::id(),
-        ]);
-    
-        // Crear detalles
-        $purchase->purchaseDetails()->createMany($details);
+            if (empty($purchase_details_data)) {
+                DB::rollBack();
+                return redirect()->back()->withInput()->withErrors(['details' => 'Debe agregar al menos un producto válido a la compra.']);
+            }
 
-        // 7. Actualizar el stock de los productos comprados
-        foreach ($details as $detailItem) {
-            $product = Product::findOrFail($detailItem['product_id']);
-            $product->increment('stock', $detailItem['quantity']);
-        }
+            $tax_rate = $request->tax; 
+            $grand_total_purchase = $subtotal_details * (1 + ($tax_rate / 100));
 
-        return redirect()->route('purchases.index')->with('success', 'Compra registrada correctamente.');
+            $purchase = Purchase::create([
+                'provider_id' => $request->provider_id,
+                'user_id' => Auth::id(),
+                'purchase_date' => Carbon::now('America/Lima'), 
+                'tax' => $tax_rate,
+                'total' => $grand_total_purchase, 
+                'status' => 'VALID', 
+            ]);
+
+            $purchase->purchaseDetails()->createMany($purchase_details_data);
+
+            foreach ($purchase_details_data as $detailItem) {
+                $product = Product::findOrFail($detailItem['product_id']);
+                $product->increment('stock', $detailItem['quantity']);
+            }
+
+            DB::commit();
+            return redirect()->route('purchases.index')->with('success', 'Compra registrada correctamente.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->withInput()->with('error', 'Error al registrar la compra. Por favor, inténtelo de nuevo.');
+        }
     }
     
 
     public function show(Purchase $purchase)
     {
+        $purchase->load(['provider', 'user', 'purchaseDetails.product']);
         return view('admin.purchase.show',compact('purchase'));
     }
 
     public function edit(Purchase $purchase)
     {
         $providers=Provider::get();
-        return view('admin.purchase.show', compact('purchase'));
+        $products=Product::get(); 
+        $purchase->load('purchaseDetails.product'); 
+        return view('admin.purchase.edit', compact('purchase', 'providers', 'products'));
     }
 
     public function update(UpdateRequest $request, Purchase $purchase)
@@ -105,7 +99,6 @@ class PurchaseController extends Controller
 
     public function destroy(Purchase $purchase)
     {
-       //$purchase->delete();
        //return redirect()->route('purchases.index'); 
     }
 
@@ -113,25 +106,17 @@ class PurchaseController extends Controller
 
 
 
-    // En e:\ProyectoDAW\ShopEasy\app\Http\Controllers\PurchaseController.php
-
-// ... (otros métodos) ...
 
 /**
  * Muestra una vista optimizada para impresión.
  */
 public function printView(Purchase $purchase)
 {
-    // Carga las relaciones necesarias si no lo hiciste antes
-    $purchase->load(['provider', 'user', 'purchaseDetails.product']);
-
-    // Puedes calcular el subtotal aquí o dentro de la vista si prefieres
+    $purchase->loadMissing(['provider', 'user', 'purchaseDetails.product']);
     $subtotal = 0;
     foreach ($purchase->purchaseDetails as $detail) {
         $subtotal += ($detail->quantity * $detail->price);
     }
-
-    // Devuelve la vista específica para impresión
     return view('admin.purchase.print', compact('purchase', 'subtotal'));
 }
 

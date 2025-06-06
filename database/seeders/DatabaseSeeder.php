@@ -13,21 +13,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call(BusinessSeeder::class); // <-- Esta línea ya está
-        $this->call(PrinterSeeder::class); // <<<--- Añade esta línea
-        // Llama al Seeder de Roles y Permisos PRIMERO
+        $this->call(BusinessSeeder::class); 
+        $this->call(PrinterSeeder::class); 
         $this->call([
-            RolesAndPermissionsSeeder::class,
-            // Aquí puedes añadir llamadas a otros Seeders si los tienes
-            // CategorySeeder::class,
-            // ProductSeeder::class,
-            // etc.
+            UserSeeder::class
         ]);
-
-        // Ya no es necesario crear el usuario aquí si lo haces en RolesAndPermissionsSeeder
-        // User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
     }
 }

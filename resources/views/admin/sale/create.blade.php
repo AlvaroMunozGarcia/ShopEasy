@@ -95,13 +95,13 @@
                                      <div class="col-md-2">
                                         <div class="form-group">
                                             <label for="quantity_input">Cantidad</label>
-                                            <input type="number" id="quantity_input" class="form-control" placeholder="Cantidad" min="1">
+                                            <input type="number" id="quantity_input" class="form-control" placeholder="Cantidad" min="1" step="1">
                                         </div>
                                     </div>
                                     <div class="col-md-2">
                                         <div class="form-group">
-                                            <label for="price_input">Precio (S/)</label>
-                                            <input type="number" id="price_input" class="form-control" placeholder="Precio" min="0" step="0.01">
+                                            <label for="price_input">Precio (€)</label>
+                                            <input type="number" id="price_input" class="form-control" placeholder="Precio (€)" min="0" step="0.01">
                                         </div>
                                     </div>
                                     <div class="col-md-2">
@@ -122,10 +122,10 @@
                                         <thead class="table-light">
                                             <tr>
                                                 <th>Producto</th>
-                                                <th>Cantidad</th>
-                                                <th>Precio (S/)</th>
-                                                <th>Desc. (%)</th>
-                                                <th>Subtotal (S/)</th>
+                                                <th class="text-center">Cantidad</th>
+                                                <th class="text-end">Precio (€)</th>
+                                                <th class="text-center">Desc. (%)</th>
+                                                <th class="text-end">Subtotal (€)</th>
                                                 <th>Acción</th>
                                             </tr>
                                         </thead>
@@ -135,17 +135,17 @@
                                         <tfoot>
                                             <tr>
                                                 <td colspan="4" class="text-right"><strong>Subtotal:</strong></td>
-                                                <td id="table_subtotal">S/ 0.00</td>
+                                                <td id="table_subtotal" class="text-end">0.00 €</td>
                                                 <td></td>
                                             </tr>
                                             <tr>
-                                                <td colspan="4" class="text-right"><strong>Impuesto (<span id="tax_percentage_label">18</span>%):</strong></td>
-                                                <td id="table_tax">S/ 0.00</td>
+                                                <td colspan="4" class="text-right"><strong>Impuesto (<span id="tax_percentage_label">{{ old('tax', 18) }}</span>%):</strong></td>
+                                                <td id="table_tax" class="text-end">0.00 €</td>
                                                 <td></td>
                                             </tr>
                                             <tr>
                                                 <td colspan="4" class="text-right"><strong>TOTAL:</strong></td>
-                                                <td id="table_total"><strong>S/ 0.00</strong></td>
+                                                <td id="table_total" class="text-end"><strong>0.00 €</strong></td>
                                                 <td></td>
                                             </tr>
                                         </tfoot>
@@ -187,116 +187,162 @@
             $('.select2').select2({
                  theme: 'bootstrap4'
             });
+
+            // Actualizar el precio en el input cuando se selecciona un producto
+            $('#product_id_select').on('change', function() {
+                const selectedOption = $(this).find('option:selected');
+                const price = selectedOption.data('price');
+                if (price) {
+                    $('#price_input').val(parseFloat(price).toFixed(2));
+                } else {
+                    $('#price_input').val('');
+                }
+            });
         });
     </script>
-    {{-- TU JAVASCRIPT AQUÍ para: --}}
-    {{-- 1. Capturar datos del producto seleccionado (precio, stock). --}}
-    {{-- 2. Validar cantidad (no exceder stock). --}}
-    {{-- 3. Botón "Añadir": Crear inputs hidden (details[index][product_id], etc.) y añadir fila a la tabla. --}}
-    {{-- 4. Botón "Quitar" en cada fila: Eliminar fila y inputs hidden correspondientes. --}}
-    {{-- 5. Calcular subtotal de fila (precio * cantidad * (1 - descuento/100)). --}}
-    {{-- 6. Recalcular totales (Subtotal general, Impuesto, Total) cada vez que se añade/quita/modifica una fila o cambia el input de impuesto. --}}
-    {{-- 7. Actualizar los valores en el tfoot de la tabla. --}}
-    {{-- 8. (Opcional) Actualizar el input hidden 'total' si tu controlador lo necesita. --}}
     <script>
-        // Ejemplo básico de inicialización (necesitas implementar la lógica completa)
         $(document).ready(function() {
-            let detailIndex = 0; // Contador para los índices del array 'details'
+            let detailIndex = 0; 
 
             $('#add_product_button').on('click', function() {
-                // --- Obtener datos del producto seleccionado ---
                 const selectedOption = $('#product_id_select').find('option:selected');
                 const productId = selectedOption.val();
-                const productName = selectedOption.text().split(' (Stock:')[0]; // Extraer nombre
-                const price = parseFloat($('#price_input').val() || selectedOption.data('price') || 0);
+                const productName = selectedOption.text().split(' (Stock:')[0]; 
+                let price = parseFloat($('#price_input').val()); // Tomar el precio del input
                 const stock = parseInt(selectedOption.data('stock') || 0);
                 const quantity = parseInt($('#quantity_input').val() || 0);
                 const discount = parseFloat($('#discount_input').val() || 0);
 
-                // --- Validaciones básicas ---
                 if (!productId) { alert('Seleccione un producto.'); return; }
-                if (quantity <= 0) { alert('Ingrese una cantidad válida.'); return; }
-                if (price <= 0) { alert('Ingrese un precio válido.'); return; }
-                if (discount < 0 || discount > 100) { alert('El descuento debe estar entre 0 y 100.'); return; }
-                // Aquí deberías validar si el producto ya está en la tabla
-                // Aquí deberías validar el stock disponible
+                if (isNaN(quantity) || quantity <= 0) { alert('Ingrese una cantidad válida.'); return; }
+                if (isNaN(price) || price <= 0) {
+                    // Si el precio no es válido en el input, intentar tomar el data-price
+                    const dataPrice = parseFloat(selectedOption.data('price'));
+                    if (isNaN(dataPrice) || dataPrice <= 0) {
+                        alert('Ingrese un precio válido para el producto.'); return;
+                    }
+                    price = dataPrice;
+                    $('#price_input').val(price.toFixed(2)); // Actualizar el input con el precio del data-attribute
+                }
+                if (isNaN(discount) || discount < 0 || discount > 100) { alert('El descuento debe estar entre 0 y 100.'); return; }
+                
+                // Validar stock
+                let currentQuantityInTable = 0;
+                $(`#sale_details_table tbody tr[data-id="${productId}"] input[name="quantity[]"]`).each(function() {
+                    currentQuantityInTable += parseInt($(this).val());
+                });
 
-                // --- Calcular subtotal de la línea ---
-                const subtotal = (quantity * price) * (1 - discount / 100);
+                if (quantity + currentQuantityInTable > stock) {
+                    alert(`No hay suficiente stock para "${productName}". Stock disponible: ${stock - currentQuantityInTable}.`);
+                    return;
+                }
+                
+                // Verificar si el producto ya está en la tabla para actualizarlo en lugar de añadirlo
+                const existingRow = $(`#sale_details_table tbody tr[data-id="${productId}"]`);
+                if (existingRow.length > 0) {
+                    // Actualizar cantidad, precio y descuento del producto existente
+                    const existingQuantity = parseInt(existingRow.find('input[name="quantity[]"]').val());
+                    const newQuantity = existingQuantity + quantity;
 
-                // --- Crear la fila HTML ---
-                const newRow = `
-                    <tr data-id="${productId}">
-                        <td>
-                            <input type="hidden" name="product_id[]" value="${productId}">
-                            ${productName}
-                        </td>
-                        <td>
-                            <input type="hidden" name="quantity[]" value="${quantity}">
-                            ${quantity}
-                        </td>
-                        <td>
-                            <input type="hidden" name="price[]" value="${price.toFixed(2)}">
-                            ${price.toFixed(2)}
-                        </td>
-                        <td>
-                            <input type="hidden" name="discount[]" value="${discount.toFixed(2)}">
-                            ${discount.toFixed(2)}%
-                        </td>
-                        <td class="row-subtotal">${subtotal.toFixed(2)}</td>
-                        <td>
-                            <button type="button" class="btn btn-danger btn-sm remove-product-button">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
+                    // Actualizar inputs ocultos y texto visible
+                    existingRow.find('input[name="quantity[]"]').val(newQuantity);
+                    existingRow.find('td:nth-child(2)').text(newQuantity); // Actualiza la cantidad visible
 
-                // --- Añadir la fila a la tabla ---
-                $('#sale_details_table tbody').append(newRow);
-                detailIndex++; // Incrementar índice para el próximo producto
+                    existingRow.find('input[name="price[]"]').val(price.toFixed(2));
+                    existingRow.find('td:nth-child(3)').text(price.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
 
-                // --- Limpiar inputs ---
+                    existingRow.find('input[name="discount[]"]').val(discount.toFixed(2));
+                    existingRow.find('td:nth-child(4)').text(discount.toFixed(2) + '%');
+                    
+                    const newSubtotal = (newQuantity * price) * (1 - discount / 100);
+                    existingRow.find('.row-subtotal').text(newSubtotal.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+
+                } else {
+                    // Añadir nueva fila si el producto no existe
+                    const subtotal = (quantity * price) * (1 - discount / 100);
+                    const newRowHTML = `
+                        <tr data-id="${productId}">
+                            <td>
+                                <input type="hidden" name="product_id[]" value="${productId}">
+                                ${productName}
+                            </td>
+                            <td class="text-center">
+                                <input type="hidden" name="quantity[]" value="${quantity}">
+                                ${quantity}
+                            </td>
+                            <td class="text-end">
+                                <input type="hidden" name="price[]" value="${price.toFixed(2)}">
+                                ${price.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </td>
+                            <td class="text-center">
+                                <input type="hidden" name="discount[]" value="${discount.toFixed(2)}">
+                                ${discount.toFixed(2)}%
+                            </td>
+                            <td class="row-subtotal text-end">${subtotal.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                            <td>
+                                <button type="button" class="btn btn-danger btn-sm remove-product-button">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    $('#sale_details_table tbody').append(newRowHTML);
+                    detailIndex++;
+                }
+
+
                 $('#product_id_select').val('').trigger('change');
                 $('#quantity_input').val('');
                 $('#price_input').val('');
                 $('#discount_input').val('0');
 
-                // --- Recalcular totales ---
                 calculateTotals();
             });
 
-            // --- Evento para quitar producto ---
             $('#sale_details_table tbody').on('click', '.remove-product-button', function() {
                 $(this).closest('tr').remove();
-                calculateTotals(); // Recalcular al quitar
+                calculateTotals(); 
             });
 
-             // --- Evento para recalcular si cambia el impuesto ---
             $('#tax').on('input', function() {
+                 const taxValue = parseFloat($(this).val());
+                 if (isNaN(taxValue) || taxValue < 0) {
+                     $('#tax_percentage_label').text('0');
+                 } else {
+                     $('#tax_percentage_label').text(taxValue);
+                 }
                  calculateTotals();
-                 $('#tax_percentage_label').text($(this).val() || 0); // Actualizar etiqueta
             });
 
-            // --- Función para calcular totales ---
             function calculateTotals() {
                 let subtotalGeneral = 0;
                 $('#sale_details_table tbody tr').each(function() {
-                    subtotalGeneral += parseFloat($(this).find('.row-subtotal').text()) || 0;
+                    // Extraer el valor numérico del subtotal de la fila
+                    const subtotalText = $(this).find('.row-subtotal').text().replace('€', '').trim();
+                    // Convertir de formato europeo (1.234,56) a número estándar (1234.56)
+                    const numericSubtotal = parseFloat(subtotalText.replace(/\./g, '').replace(',', '.'));
+                    if (!isNaN(numericSubtotal)) {
+                        subtotalGeneral += numericSubtotal;
+                    }
                 });
 
                 const taxPercentage = parseFloat($('#tax').val() || 0);
                 const taxAmount = subtotalGeneral * (taxPercentage / 100);
                 const total = subtotalGeneral + taxAmount;
 
-                $('#table_subtotal').text('S/ ' + subtotalGeneral.toFixed(2));
-                $('#table_tax').text('S/ ' + taxAmount.toFixed(2));
-                $('#table_total').html('<strong>S/ ' + total.toFixed(2) + '</strong>');
-                // $('#hidden_total').val(total.toFixed(2)); // Actualizar input hidden si es necesario
+                $('#table_subtotal').text(subtotalGeneral.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €');
+                $('#table_tax').text(taxAmount.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €');
+                $('#table_total').html('<strong>' + total.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €</strong>');
             }
-
-             // Calcular totales al cargar la página (por si hay datos old())
-             // calculateTotals(); // Necesitarías reconstruir la tabla si hay datos old()
+            
+            // Para inicializar la etiqueta del impuesto al cargar la página
+            const initialTax = parseFloat($('#tax').val());
+            if (!isNaN(initialTax) && initialTax >= 0) {
+                $('#tax_percentage_label').text(initialTax);
+            } else {
+                 $('#tax_percentage_label').text('18'); // O el valor por defecto que tengas
+            }
+             calculateTotals(); 
         });
     </script>
 @endpush

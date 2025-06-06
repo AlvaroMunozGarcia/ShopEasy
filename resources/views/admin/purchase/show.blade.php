@@ -46,7 +46,7 @@
                                     <p><strong>Fecha de Compra:</strong> {{ $purchase->purchase_date->format('d/m/Y H:i') }}</p>
                                     <p><strong>Usuario Registrador:</strong> {{ $purchase->user->name ?? 'N/A' }}</p>
                                     <p><strong>Impuesto (%):</strong> {{ $purchase->tax }}%</p>
-                                    <h4><strong>Total Pagado:</strong> S/ {{ number_format($purchase->total, 2) }}</h4>
+                                    <h4><strong>Total Pagado:</strong> {{ number_format($purchase->total, 2, ',', '.') }} €</h4>
                                 </div>
                             </div>
 
@@ -57,19 +57,19 @@
                                 <table id="purchaseDetailsTable" class="table table-bordered table-striped">
                                     <thead>
                                         <tr>
-                                            <th>Producto</th>
-                                            <th>Cantidad</th>
-                                            <th>Precio Unitario (S/)</th>
-                                            <th>Subtotal (S/)</th>
+                                            <th style="width: 40%;">Producto</th>
+                                            <th class="text-center" style="width: 15%;">Cantidad</th>
+                                            <th class="text-end" style="width: 20%;">Precio Unitario (€)</th>
+                                            <th class="text-end" style="width: 25%;">Subtotal (€)</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @forelse ($purchase->purchaseDetails as $detail)
                                             <tr>
                                                 <td>{{ $detail->product->name ?? 'Producto no encontrado' }}</td>
-                                                <td>{{ $detail->quantity }}</td>
-                                                <td>{{ number_format($detail->price, 2) }}</td>
-                                                <td>{{ number_format($detail->quantity * $detail->price, 2) }}</td>
+                                                <td class="text-center">{{ $detail->quantity }}</td>
+                                                <td class="text-end">{{ number_format($detail->price, 2, ',', '.') }} €</td>
+                                                <td class="text-end">{{ number_format($detail->quantity * $detail->price, 2, ',', '.') }} €</td>
                                             </tr>
                                         @empty
                                             <tr>
@@ -83,59 +83,27 @@
                                             @php
                                                 $subtotalGeneral = $purchase->total / (1 + ($purchase->tax / 100));
                                             @endphp
-                                            <td>S/ {{ number_format($subtotalGeneral, 2) }}</td>
+                                            <td class="text-end">{{ number_format($subtotalGeneral, 2, ',', '.') }} €</td>
                                         </tr>
                                         <tr>
                                             <td colspan="3" class="text-right"><strong>Impuesto ({{ $purchase->tax }}%):</strong></td>
-                                            <td>S/ {{ number_format($purchase->total - $subtotalGeneral, 2) }}</td>
+                                            <td class="text-end">{{ number_format($purchase->total - $subtotalGeneral, 2, ',', '.') }} €</td>
                                         </tr>
                                         <tr>
                                             <td colspan="3" class="text-right"><strong>TOTAL:</strong></td>
-                                            <td><strong>S/ {{ number_format($purchase->total, 2) }}</strong></td>
+                                            <td class="text-end"><strong>{{ number_format($purchase->total, 2, ',', '.') }} €</strong></td>
                                         </tr>
                                     </tfoot>
                                 </table>
                             </div>
                         </div>
-                        <!-- /.card-body -->
                         <div class="card-footer">
-                            <a href="{{ route('purchases.index') }}" class="btn btn-secondary">Volver al Listado</a>
-                            <button id="exportDetailPdfButtonFooterTrigger" class="btn btn-info float-right">
-                                <i class="bi bi-file-earmark-pdf"></i> Exportar a PDF
-                            </button>
-                        </div>
-                    </div>
-                    <!-- /.card -->
-                </div>
-                <!-- /.col -->
-            </div>
-            <!-- /.row -->
-
-            {{-- Modal for PDF Export Options --}}
-            <div class="modal fade" id="pdfDetailExportModal" tabindex="-1" aria-labelledby="pdfDetailExportModalLabel" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="pdfDetailExportModalLabel">Exportar Detalles a PDF</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="mb-3">
-                                <label for="pdfDetailFilenameInput" class="form-label">Nombre del archivo:</label>
-                                <input type="text" class="form-control" id="pdfDetailFilenameInput" placeholder="nombre_archivo.pdf">
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="button" class="btn btn-primary" id="confirmPdfDetailExportBtn">Confirmar y Exportar</button>
                         </div>
                     </div>
                 </div>
             </div>
-            <!-- /.row -->
-        </div><!-- /.container-fluid -->
+        </div>
     </section>
-    <!-- /.content -->
 </div>
 @endsection
 
@@ -143,73 +111,114 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 <script>
+    // Función para obtener el nombre de archivo personalizado
+    function getCustomFilename(baseName, extension) {
+        const now = new Date();
+        // Formato de fecha YYYY-MM-DD
+        const datePart = now.toISOString().slice(0, 10);
+        const defaultName = `${baseName}_${datePart}`;
+
+        // Mostrar prompt al usuario
+        let userFilename = prompt("Introduce el nombre del archivo:", defaultName);
+
+        // Si el usuario cancela, devuelve null
+        if (userFilename === null) {
+            return null;
+        }
+
+        // Usar el nombre del usuario si no está vacío, de lo contrario usar el por defecto
+        let finalFilename = userFilename.trim() === '' ? defaultName : userFilename.trim();
+
+        // Asegurarse de que la extensión esté presente
+        if (!finalFilename.toLowerCase().endsWith(`.${extension}`)) {
+            finalFilename += `.${extension}`;
+        }
+
+        return finalFilename;
+    }
+
 document.addEventListener('DOMContentLoaded', function () {
-    const pdfDetailModalEl = document.getElementById('pdfDetailExportModal');
-    const pdfDetailModal = pdfDetailModalEl ? new bootstrap.Modal(pdfDetailModalEl) : null;
-    const pdfDetailFilenameInput = document.getElementById('pdfDetailFilenameInput');
-
-    function exportPurchaseDetailsToPdf(filename) {
-        try {
-            if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') { console.error("jsPDF no está cargado."); alert("Error: jsPDF no está cargado."); return; }
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            let yPos = 15;
-
-            const purchaseId = "{{ $purchase->id }}";
-            const defaultFilename = `detalle_compra_${purchaseId}.pdf`;
-            const finalFilename = filename || defaultFilename;
-
-            doc.setFontSize(18);
-            doc.text(`Detalles de Compra #${purchaseId}`, 14, yPos);
-            yPos += 10;
-
-            doc.setFontSize(12);
-            doc.text("Información General:", 14, yPos); yPos += 7;
-            doc.setFontSize(10);
-            doc.text(`Proveedor: {{ $purchase->provider->name ?? 'N/A' }}`, 14, yPos); yPos += 6;
-            doc.text(`Email Proveedor: {{ $purchase->provider->email ?? 'N/A' }}`, 14, yPos); yPos += 6;
-            doc.text(`Teléfono Proveedor: {{ $purchase->provider->phone ?? 'N/A' }}`, 14, yPos); yPos += 6;
-            doc.text(`Fecha de Compra: {{ $purchase->purchase_date->format('d/m/Y H:i') }}`, 14, yPos); yPos += 6;
-            doc.text(`Usuario Registrador: {{ $purchase->user->name ?? 'N/A' }}`, 14, yPos); yPos += 6;
-            doc.text(`Impuesto (%): {{ $purchase->tax }}%`, 14, yPos); yPos += 6;
-            doc.setFontSize(12);
-            doc.text(`Total Pagado: S/ {{ number_format($purchase->total, 2) }}`, 14, yPos); yPos += 10;
-
-            doc.setFontSize(12);
-            doc.text("Detalles de la Compra:", 14, yPos); yPos += 2;
-
-            doc.autoTable({
-                html: '#purchaseDetailsTable',
-                startY: yPos,
-                theme: 'grid',
-                headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
-            });
-
-            doc.save(finalFilename);
-        } catch (error) {
-            console.error("Error al generar PDF de detalles de compra:", error);
-            alert("Error al generar PDF de detalles de compra. Verifique la consola para más detalles.");
-        }
-    }
-
-    function openPdfModal() {
-        if (pdfDetailModal && pdfDetailFilenameInput) {
-            const purchaseId = "{{ $purchase->id }}";
-            const date = new Date();
-            const todayForFilename = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
-            pdfDetailFilenameInput.value = `detalle_compra_${purchaseId}_${todayForFilename}.pdf`;
-            pdfDetailModal.show();
-        }
-    }
-
-    document.getElementById('exportDetailPdfButtonTrigger')?.addEventListener('click', openPdfModal);
-    document.getElementById('exportDetailPdfButtonFooterTrigger')?.addEventListener('click', openPdfModal);
-
-    document.getElementById('confirmPdfDetailExportBtn')?.addEventListener('click', function () {
-        const filename = pdfDetailFilenameInput ? pdfDetailFilenameInput.value.trim() : null;
-        exportPurchaseDetailsToPdf(filename);
-        if(pdfDetailModal) pdfDetailModal.hide();
-    });
+    document.getElementById('exportDetailPdfButtonTrigger').addEventListener('click', exportPurchaseDetailsToPDF);
 });
+
+function exportPurchaseDetailsToPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    // Información general de la compra
+    const generalData = [
+        ['ID Compra', '{{ $purchase->id }}'],
+        ['Proveedor', '{{ $purchase->provider->name ?? "N/A" }}'],
+        ['Email Proveedor', '{{ $purchase->provider->email ?? "N/A" }}'],
+        ['Teléfono Proveedor', '{{ $purchase->provider->phone ?? "N/A" }}'],
+        ['Fecha de Compra', '{{ $purchase->purchase_date->format("d/m/Y H:i") }}'],
+        ['Usuario Registrador', '{{ $purchase->user->name ?? "N/A" }}'],
+        ['Impuesto (%)', '{{ $purchase->tax }}%'],
+        ['Total Pagado', '{{ number_format($purchase->total, 2, ",", ".") }} €']
+    ];
+
+    doc.setFontSize(14);
+    doc.text('Detalles de la Compra', 14, 20);
+
+    doc.autoTable({
+        startY: 30,
+        head: [['Campo', 'Valor']],
+        body: generalData,
+        styles: { fontSize: 11 },
+        headStyles: { fillColor: [41, 128, 185] },
+        columnStyles: {
+            0: { fontStyle: 'bold', cellWidth: 60 },
+            1: { cellWidth: 120 }
+        }
+    });
+
+    // Tabla de productos
+    const productData = [
+        @foreach ($purchase->purchaseDetails as $detail)
+            [
+                '{{ $detail->product->name ?? "Producto no encontrado" }}',
+                '{{ $detail->quantity }}',
+                '{{ number_format($detail->price, 2, ",", ".") }} €',
+                '{{ number_format($detail->quantity * $detail->price, 2, ",", ".") }} €'
+            ],
+        @endforeach
+    ];
+
+    doc.text('Productos Incluidos en la Compra', 14, doc.lastAutoTable.finalY + 10);
+    doc.autoTable({
+        startY: doc.lastAutoTable.finalY + 15,
+        head: [['Producto', 'Cantidad', 'Precio Unitario (€)', 'Subtotal (€)']],
+        body: productData,
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [52, 152, 219] },
+        theme: 'striped'
+    });
+
+    // Totales al final
+    const subtotal = {{ number_format($subtotalGeneral, 2, '.', '') }};
+    const impuesto = {{ number_format($purchase->total - $subtotalGeneral, 2, '.', '') }};
+    const total = {{ number_format($purchase->total, 2, '.', '') }};
+
+    doc.autoTable({
+        startY: doc.lastAutoTable.finalY + 10,
+        body: [
+            [{ content: 'Subtotal', styles: { halign: 'right', fontStyle: 'bold' } }, '{{ number_format($subtotalGeneral, 2, ",", ".") }} €'],
+            [{ content: 'Impuesto ({{ $purchase->tax }}%)', styles: { halign: 'right', fontStyle: 'bold' } }, '{{ number_format($purchase->total - $subtotalGeneral, 2, ",", ".") }} €'],
+            [{ content: 'TOTAL', styles: { halign: 'right', fontStyle: 'bold', fillColor: [52, 152, 219], textColor: [255, 255, 255] } }, '{{ number_format($purchase->total, 2, ",", ".") }} €']
+        ],
+        theme: 'plain',
+        styles: { fontSize: 11 },
+        columnStyles: {
+            0: { cellWidth: 130 },
+            1: { cellWidth: 50, halign: 'right' }
+        }
+    });
+    // Usar el ID de la compra para el nombre base y llamar a getCustomFilename
+    const baseFilename = `compra_{{ $purchase->id }}`;
+    const filename = getCustomFilename(baseFilename, 'pdf');
+    if (filename) {
+        doc.save(filename);
+    }
+}
 </script>
 @endpush

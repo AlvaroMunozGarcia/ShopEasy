@@ -71,82 +71,6 @@
             </div>
         </div>
     </div>
-
-    {{-- Nueva tarjeta para el Historial de Compras --}}
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-secondary text-white">
-            <h5 class="mb-0">Historial de Compras (Ventas)</h5>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table id="clientSalesTable" class="table table-bordered table-striped table-hover align-middle mb-0">
-                    <thead class="table-light text-center">
-                        <tr>
-                            <th>ID Venta</th>
-                            <th>Fecha</th>
-                            <th>Total</th>
-                            <th>Estado</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {{-- Iterar sobre las ventas del cliente --}}
-                        @forelse ($client->sales as $sale)
-                            <tr>
-                                <td class="text-center">{{ $sale->id }}</td>
-                                <td>{{ $sale->sale_date ? $sale->sale_date->format('d/m/Y H:i') : 'N/A' }}</td>
-                                <td>S/ {{ number_format($sale->total, 2) }}</td>
-                                <td class="text-center">
-                                    @switch($sale->status)
-                                        @case('VALID')
-                                            <span class="badge bg-success">Válida</span>
-                                            @break
-                                        @case('CANCELLED')
-                                            <span class="badge bg-danger">Anulada</span>
-                                            @break
-                                        @default
-                                            <span class="badge bg-warning text-dark">{{ Str::title(str_replace('_', ' ', $sale->status)) }}</span>
-                                    @endswitch
-                                </td>
-                                <td class="text-center">
-                                    {{-- Enlace para ver los detalles de la venta --}}
-                                    <a href="{{ route('sales.show', $sale) }}" class="btn btn-sm btn-outline-info" title="Ver Detalles de Venta">
-                                        <i class="bi bi-eye-fill"></i> Ver Venta
-                                    </a>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5" class="text-center text-muted">Este cliente aún no tiene ventas registradas.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    {{-- Modal for PDF Export Options --}}
-    <div class="modal fade" id="pdfDetailExportModal" tabindex="-1" aria-labelledby="pdfDetailExportModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="pdfDetailExportModalLabel">Exportar Detalles a PDF</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="pdfDetailFilenameInput" class="form-label">Nombre del archivo:</label>
-                        <input type="text" class="form-control" id="pdfDetailFilenameInput" placeholder="nombre_archivo.pdf">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="confirmPdfDetailExportBtn">Confirmar y Exportar</button>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 @endsection
 
@@ -154,65 +78,70 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const pdfDetailModalEl = document.getElementById('pdfDetailExportModal');
-    const pdfDetailModal = pdfDetailModalEl ? new bootstrap.Modal(pdfDetailModalEl) : null;
-    const pdfDetailFilenameInput = document.getElementById('pdfDetailFilenameInput');
+    // Función para obtener el nombre de archivo personalizado
+    function getCustomFilename(baseName, extension) {
+        const now = new Date();
+        // Formato de fecha YYYY-MM-DD
+        const datePart = now.toISOString().slice(0, 10);
+        const defaultName = `${baseName}_${datePart}`;
 
-    function exportClientDetailsToPdf(filename) {
-        const { jsPDF } = window.jspdf;
-        try {
-            const doc = new jsPDF();
-            let yPos = 15;
+        // Mostrar prompt al usuario
+        let userFilename = prompt("Introduce el nombre del archivo:", defaultName);
 
-            const clientName = document.getElementById('clientName')?.innerText || 'Cliente';
-            const clientId = document.getElementById('clientId')?.innerText;
-            const defaultFilename = `detalle_cliente_${(clientId || 'N_A').replace(/[^a-z0-9]/gi, '_')}.pdf`;
-            const finalFilename = filename || defaultFilename;
-
-            doc.setFontSize(18);
-            doc.text(`Detalles del Cliente: ${clientName}`, 14, yPos); yPos += 10;
-
-            doc.setFontSize(12);
-            function addDetail(label, valueId) {
-                const element = document.getElementById(valueId);
-                const value = element ? element.innerText.trim() : 'N/A';
-                doc.text(`${label}: ${value}`, 14, yPos);
-                yPos += 7;
-            }
-
-            addDetail("ID", "clientId");
-            // El nombre ya está en el título, pero si quieres repetirlo:
-            // doc.text(`Nombre: ${clientName}`, 14, yPos); yPos += 7;
-            addDetail("DNI", "clientDni");
-            addDetail("RUC", "clientRuc");
-            addDetail("Dirección", "clientAddress");
-            addDetail("Teléfono", "clientPhone");
-            addDetail("Email", "clientEmail");
-            addDetail("Fecha de Creación", "clientCreatedAt");
-            addDetail("Última Actualización", "clientUpdatedAt");
-            doc.save(finalFilename);
-        } catch (error) {
-            console.error("Error al generar PDF de detalles:", error);
-            alert("Error al generar PDF de detalles. Verifique la consola para más detalles.");
+        // Si el usuario cancela, devuelve null
+        if (userFilename === null) {
+            return null;
         }
+
+        // Usar el nombre del usuario si no está vacío, de lo contrario usar el por defecto
+        let finalFilename = userFilename.trim() === '' ? defaultName : userFilename.trim();
+
+        // Asegurarse de que la extensión esté presente
+        if (!finalFilename.toLowerCase().endsWith(`.${extension}`)) {
+            finalFilename += `.${extension}`;
+        }
+
+        return finalFilename;
     }
 
-    document.getElementById('exportDetailPdfButtonTrigger')?.addEventListener('click', function () {
-        if (pdfDetailModal && pdfDetailFilenameInput) {
-            const clientId = document.getElementById('clientId')?.innerText || 'N_A';
-            const date = new Date();
-            const todayForFilename = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
-            pdfDetailFilenameInput.value = `detalle_cliente_${clientId.replace(/[^a-z0-9]/gi, '_')}_${todayForFilename}.pdf`;
-            pdfDetailModal.show();
-        }
-    });
-
-    document.getElementById('confirmPdfDetailExportBtn')?.addEventListener('click', function () {
-        const filename = pdfDetailFilenameInput ? pdfDetailFilenameInput.value.trim() : null;
-        exportClientDetailsToPdf(filename);
-        if(pdfDetailModal) pdfDetailModal.hide();
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('exportDetailPdfButtonTrigger').addEventListener('click', function () {
+        exportClientDetailsToPDF();
     });
 });
+
+function exportClientDetailsToPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    const clientData = [
+        ['ID', document.getElementById('clientId').innerText],
+        ['Nombre', document.getElementById('clientNameHeader').innerText],
+        ['DNI', document.getElementById('clientDni').innerText],
+        ['RUC', document.getElementById('clientRuc').innerText],
+        ['Dirección', document.getElementById('clientAddress').innerText],
+        ['Teléfono', document.getElementById('clientPhone').innerText],
+        ['Email', document.getElementById('clientEmail').innerText],
+        ['Fecha de Creación', document.getElementById('clientCreatedAt').innerText],
+        ['Última Actualización', document.getElementById('clientUpdatedAt').innerText]
+    ];
+
+    doc.setFontSize(14);
+    doc.text('Detalles del Cliente', 14, 20);
+
+    doc.autoTable({
+        startY: 30,
+        head: [['Campo', 'Valor']],
+        body: clientData,
+        styles: { fontSize: 11 },
+        headStyles: { fillColor: [41, 128, 185] }
+    });
+
+    const clientName = document.getElementById('clientNameHeader')?.innerText ?? 'Cliente';
+    const filename = getCustomFilename(`cliente_${clientName.replace(/\s+/g, '_')}`, 'pdf');
+    if (filename) {
+        doc.save(filename);
+    }
+}
 </script>
 @endpush

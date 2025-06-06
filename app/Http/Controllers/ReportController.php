@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Sale;
 use Carbon\Carbon;
 use App\Models\SaleDetail;
-use Illuminate\Support\Facades\DB; // <-- AÑADIR ESTA LÍNEA
+use Illuminate\Support\Facades\DB; 
 
 class ReportController extends Controller
 {
@@ -18,7 +18,6 @@ class ReportController extends Controller
     }
     public function reports_date()
     {
-       // Definimos fechas por defecto (por ejemplo, hoy) para la carga inicial
        $fecha_ini = Carbon::today('America/Lima');
        $fecha_fin = Carbon::today('America/Lima');
        return view('admin.report.reports_date', compact('fecha_ini', 'fecha_fin'));
@@ -48,7 +47,6 @@ class ReportController extends Controller
         return view('admin.report.sales_by_category');
     }
 
-    // Método para procesar y mostrar los resultados del reporte de ventas por categoría
     public function salesByCategoryResults(Request $request)
     {
         $request->validate([

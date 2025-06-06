@@ -29,14 +29,6 @@
     <div class="container-fluid">
         {{-- El @page_header ya muestra el título principal de la página. --}}
 
-        {{-- Mensajes flash --}}
-        @if (session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
-            </div>
-        @endif
-
         @if (session('error'))
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
                 {{ session('error') }}
@@ -75,9 +67,6 @@
                             <i class="bi bi-x-lg"></i> Quitar Filtro
                         </a>
                     @endif
-                    <button id="exportCsvButtonList" class="btn btn-outline-light btn-sm fw-semibold me-2">
-                        <i class="bi bi-filetype-csv me-1"></i> CSV
-                    </button>
                     <button id="exportExcelButtonList" class="btn btn-outline-light btn-sm fw-semibold me-2">
                         <i class="bi bi-file-earmark-excel me-1"></i> Excel
                     </button>
@@ -174,409 +163,157 @@
         </div>
     </div>
 
-    {{-- Modal for CSV Export Options --}}
-    <div class="modal fade" id="csvExportModal" tabindex="-1" aria-labelledby="csvExportModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="csvExportModalLabel">Exportar a CSV</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="csvFilenameInput" class="form-label">Nombre del archivo:</label>
-                        <input type="text" class="form-control" id="csvFilenameInput" placeholder="nombre_archivo.csv">
-                    </div>
-                    <div class="mb-3">
-                        <label for="csvSeparatorSelect" class="form-label">Separador:</label>
-                        <select id="csvSeparatorSelect" class="form-select">
-                            <option value=";" selected>Punto y coma (;)</option>
-                            <option value=",">Coma (,)</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="confirmCsvExportBtn">Confirmar y Exportar</button>
-                </div>
-            </div>
-        </div>
     </div>
-
-    {{-- Modal for Excel Export Options --}}
-    <div class="modal fade" id="excelExportModal" tabindex="-1" aria-labelledby="excelExportModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="excelExportModalLabel">Exportar a Excel</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="excelFilenameInput" class="form-label">Nombre del archivo:</label>
-                        <input type="text" class="form-control" id="excelFilenameInput" placeholder="nombre_archivo.xlsx">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="confirmExcelExportBtn">Confirmar y Exportar</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- Modal for PDF Export Options --}}
-    <div class="modal fade" id="pdfExportModal" tabindex="-1" aria-labelledby="pdfExportModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="pdfExportModalLabel">Exportar Listado a PDF</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="pdfFilenameInput" class="form-label">Nombre del archivo:</label>
-                        <input type="text" class="form-control" id="pdfFilenameInput" placeholder="nombre_archivo.pdf">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="confirmPdfExportBtn">Confirmar y Exportar</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 @endsection
 
 @push('scripts')
-{{-- jQuery (necesario para DataTables) --}}
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
-{{-- DataTables JS --}}
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-{{-- DataTables Bootstrap 5 JS --}}
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
-
-{{-- Librerías para exportación --}}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const tableIdToExport = 'productsTable';
-    let dataTableInstance; // Para acceder a la instancia de DataTables
+    // Función para obtener el nombre de archivo personalizado
+    function getCustomFilename(baseName, extension) {
+        const now = new Date();
+        // Formato de fecha YYYY-MM-DD
+        const datePart = now.toISOString().slice(0, 10);
+        const defaultName = `${baseName}_${datePart}`;
 
-    // Inicializar DataTables
-    if (typeof $ !== 'undefined' && typeof $.fn.DataTable !== 'undefined' && $(`#${tableIdToExport}`).length > 0) {
-        try {
-            dataTableInstance = $(`#${tableIdToExport}`).DataTable({
-                "pageLength": 10,
-                "language": {
-                    "url": "//cdn.datatables.net/plug-ins/1.10.19/i18n/Spanish.json"
+        // Mostrar prompt al usuario
+        let userFilename = prompt("Introduce el nombre del archivo:", defaultName);
+
+        // Si el usuario cancela, devuelve null
+        if (userFilename === null) {
+            return null;
+        }
+
+        // Usar el nombre del usuario si no está vacío, de lo contrario usar el por defecto
+        let finalFilename = userFilename.trim() === '' ? defaultName : userFilename.trim();
+
+        // Asegurarse de que la extensión esté presente
+        if (!finalFilename.toLowerCase().endsWith(`.${extension}`)) {
+            finalFilename += `.${extension}`;
+        }
+
+        return finalFilename;
+    }
+
+
+ $(document).ready(function () {
+        $('#productsTable').DataTable({
+            language: {
+                processing:"Procesando...",
+                search:"Buscar",
+                 lengthMenu: "Mostrar <select class='form-select form-select-sm'>"+
+                            "<option value='10'>10</option>"+
+                            "<option value='25'>25</option>"+
+                            "<option value='50'>50</option>"+
+                            "<option value='100'>100</option>"+
+                            "<option value='-1'>Todos</option>"+
+                            "</select> registros",
+                info:"Mostrando desde _START_ hasta _END_ de _TOTAL_ registros",
+                infoEmpty:"Mostrando ningún registro",
+                infoFiltered:"(filtrado de _MAX_ registros totales)",
+                infoPostFix:"",
+                loadingRecords:"Cargando registros...",
+                zeroRecords:"No se encontraron registros",
+                emptyTable:"No hay datos disponibles en la tabla",
+                paginate:{
+                    first:"Primero",
+                    previous:"Anterior",
+                    next:"Siguiente",
+                    last:"Último"
                 },
-                "responsive": true,
-                "autoWidth": false,
-                "columnDefs": [
-                    { "orderable": false, "searchable": false, "targets": -1 }, // Última columna (Acciones)
-                    { "type": "num", "targets": [0, 5] }, // ID y Stock son numéricos para ordenación
-                    { "type": "num-fmt", "targets": [6] } // Precio Venta (para ordenación con formato)
-                ]
-            });
-            console.log(`DataTables inicializado para #${tableIdToExport}`);
-        } catch (e) {
-            console.error(`Error inicializando DataTables para #${tableIdToExport}:`, e);
+                aria:{
+                    sortAscending:"Ordenar columna de manera ascendente",
+                    sortDescending:"Ordenar columna de manera descendente"
+                },
+
+            }
+        });
+    });
+
+
+
+document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('exportPdfButtonListTrigger').addEventListener('click', function () {
+            pdfExport();
+        });
+    });
+
+
+
+
+
+   function pdfExport() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const table = document.getElementById('productsTable');
+    const headers = [];
+    const rows = [];
+    const ths = table.querySelectorAll('thead th');
+    ths.forEach((th, index) => {
+        if (index < ths.length - 1) { 
+            headers.push(th.innerText.trim());
         }
-    }
+    });
+    table.querySelectorAll('tbody tr').forEach(tr => {
+        const tds = tr.querySelectorAll('td');
+        const row = [];
 
-    function exportListToPdf(filename = 'listado_productos.pdf') {
-        if (!dataTableInstance) {
-            alert("La tabla de datos no está inicializada.");
-            return;
-        }
-        try {
-            const { jsPDF } = window.jspdf;
-            if (!jsPDF) { console.error("jsPDF no está cargado."); alert("Error: jsPDF no está cargado."); return; }
-
-            const doc = new jsPDF();
-            doc.setFontSize(18);
-            doc.text("Listado de Productos", 14, 22);
-
-            const head = [];
-            const body = [];
-            let actionsColumnOriginalIndex = -1;
-
-            // Obtener cabeceras de DataTables (respetando visibilidad y orden)
-            const headerCells = dataTableInstance.table().header().querySelectorAll('th');
-            const currentHead = [];
-            headerCells.forEach((th, index) => {
-                if (th.offsetParent !== null) { // Solo columnas visibles
-                    if (th.innerText.trim().toLowerCase() === 'acciones') {
-                        actionsColumnOriginalIndex = $(th).index(); // Índice original en el DOM
-                    } else {
-                        currentHead.push(th.innerText.trim());
-                    }
-                }
-            });
-            head.push(currentHead);
-
-            // Obtener datos de DataTables (respetando filtro y orden)
-            dataTableInstance.rows({ search: 'applied' }).data().each(function(rowDataArray) {
-                const filteredRow = [];
-                rowDataArray.forEach((cellData, cellIndex) => {
-                    if (cellIndex !== actionsColumnOriginalIndex) {
-                        // Limpiar HTML de badges para el PDF, si es necesario
-                        let cleanData = cellData;
-                        if (typeof cellData === 'string' && cellData.includes('<span class="badge')) {
-                            cleanData = $(cellData).text(); // Extraer solo el texto del badge
-                        }
-                        filteredRow.push(cleanData);
-                    }
-                });
-                if (filteredRow.length > 0) body.push(filteredRow);
-            });
-
-            doc.autoTable({
-                head: head,
-                body: body,
-                startY: 30,
-            });
-            doc.save(filename);
-        } catch (error) {
-            console.error("Error al generar PDF del listado de productos:", error);
-            alert("Error al generar PDF del listado de productos. Verifique la consola para más detalles.");
-        }
-    }
-    
-    // --- Funciones Comunes de Exportación (Adaptadas para DataTables) ---
-    function escapeCsvCell(cellData) {
-        if (cellData == null) return '';
-        let dataString = String(cellData).replace(/"/g, '""');
-        if (dataString.search(/("|,|;|\n)/g) >= 0) dataString = '"' + dataString + '"';
-        return dataString;
-    }
-
-    function getTableDataForExport(dtInstance, excludeActions = true) {
-        const headers = [];
-        const body = [];
-        let actionsColOriginalIndex = -1;
-
-        // Cabeceras
-        const headerCells = dtInstance.table().header().querySelectorAll('th');
-        headerCells.forEach((th) => {
-            if (th.offsetParent !== null) { // Solo columnas visibles
-                if (excludeActions && th.innerText.trim().toLowerCase() === 'acciones') {
-                    actionsColOriginalIndex = $(th).index();
-                } else {
-                    headers.push(th.innerText.trim());
-                }
+        tds.forEach((td, index) => {
+            if (index < tds.length - 1) { 
+                row.push(td.innerText.trim());
             }
         });
 
-        // Cuerpo
-        dtInstance.rows({ search: 'applied' }).data().each(function(rowDataArray) {
-            const filteredRow = [];
-            rowDataArray.forEach((cellData, cellIndex) => {
-                if (cellIndex !== actionsColOriginalIndex) {
-                    let cleanData = cellData;
-                    if (typeof cellData === 'string' && cellData.includes('<span class="badge')) {
-                        cleanData = $(cellData).text();
-                    }
-                    filteredRow.push(cleanData);
-                }
-            });
-            if (filteredRow.length > 0) body.push(filteredRow);
+        if (row.length > 0) rows.push(row);
+    });
+    doc.autoTable({
+        head: [headers],
+        body: rows,
+        startY: 20,
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [41, 128, 185] }
+    });
+
+    const filename = getCustomFilename('productos', 'pdf');
+    if (filename) {
+    doc.save(filename);
+}}
+
+
+
+
+document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('exportExcelButtonList').addEventListener('click', function () {
+            excelExport();
         });
-        return { headers, body };
-    }
-
-    function exportDataToCSV(filename = 'export.csv', separator = ',', dtInstance) {
-        if (!dtInstance) { alert("La tabla de datos no está inicializada."); return; }
-        const { headers, body: dataRows } = getTableDataForExport(dtInstance);
-        if (headers.length === 0) { alert("No hay datos para exportar."); return; }
-
-        let csv = ['\uFEFF']; // BOM for UTF-8
-        csv.push(headers.map(header => escapeCsvCell(header)).join(separator));
-        dataRows.forEach(rowArray => {
-            csv.push(rowArray.map(cell => escapeCsvCell(cell)).join(separator));
-        });
-
-        const blob = new Blob([csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = filename;
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(link.href);
-    }
-
-    function parseNumericValue(text) {
-        if (text == null) return text; // Handles null or undefined
-        let cleanText = String(text).trim().replace(/^(S\/\s*|\$\s*|€\s*)/, '').replace(/\s*€$/, ''); // Remove currency symbols
-        if (cleanText.includes(',') && cleanText.includes('.')) {
-            if (cleanText.lastIndexOf(',') > cleanText.lastIndexOf('.')) { // European: 1.234,56
-                cleanText = cleanText.replace(/\./g, '').replace(/,/g, '.');
-            } else { // "1,234.56"
-                cleanText = cleanText.replace(/,/g, '');
-            }
-        } else if (cleanText.includes(',')) { // Handles "123,45"
-            cleanText = cleanText.replace(/,/g, '.');
-        }
-        // Check if it's an integer after cleaning
-        if (!cleanText.includes('.') && /^\d+$/.test(cleanText)) {
-            const intVal = parseInt(cleanText, 10);
-            if (!isNaN(intVal) && String(intVal) === cleanText) return intVal;
-        }
-        const num = parseFloat(cleanText);
-        return isNaN(num) ? String(text).trim() : num; // Return original trimmed string if not a valid number
-    }
-
-    function exportDataToExcel(filename = 'export.xlsx', sheetName = 'Datos', dtInstance) {
-        if (!dtInstance) { alert("La tabla de datos no está inicializada."); return; }
-        if (typeof XLSX === 'undefined') { alert("Error: Librería XLSX no cargada."); return; }
-
-        const { headers, body: dataRows } = getTableDataForExport(dtInstance);
-        if (headers.length === 0) { alert("No hay datos para exportar."); return; }
-
-        const aoaData = [headers];
-        dataRows.forEach(rowArray => {
-            const processedRow = rowArray.map((cell, colIndex) => {
-                // Column names for numeric parsing (case-insensitive)
-                const numericHeaders = ['id', 'stock', 'precio venta'];
-                if (headers[colIndex] && numericHeaders.includes(headers[colIndex].toLowerCase())) {
-                    return parseNumericValue(cell);
-                }
-                return cell; // Keep as string otherwise
-            });
-            aoaData.push(processedRow);
-        });
-
-        const ws = XLSX.utils.aoa_to_sheet(aoaData);
-
-        // Apply styles and number formats
-        const range = XLSX.utils.decode_range(ws['!ref']);
-        for (let R = range.s.r; R <= range.e.r; ++R) {
-            for (let C = range.s.c; C <= range.e.c; ++C) {
-                const cell_ref = XLSX.utils.encode_cell({ r: R, c: C });
-                if (!ws[cell_ref]) continue;
-                if (!ws[cell_ref].s) ws[cell_ref].s = {};
-
-                // Header style
-                if (R === 0) { // Header row
-                    ws[cell_ref].s.font = { bold: true };
-                    ws[cell_ref].s.fill = { patternType: "solid", fgColor: { rgb: "FFD9D9D9" } }; // Light grey
-                    ws[cell_ref].s.alignment = { horizontal: "center", vertical: "center" };
-                }
-
-                // Number formatting for specific columns
-                const headerName = headers[C] ? headers[C].toLowerCase() : '';
-                if (ws[cell_ref].t === 'n') { // If it's a number type
-                    if (headerName === 'id' || headerName === 'stock') {
-                        ws[cell_ref].s.numFmt = "0"; // Integer
-                    } else if (headerName === 'precio venta') {
-                        ws[cell_ref].s.numFmt = "#,##0.00 €"; // Currency
-                    }
-                    ws[cell_ref].s.alignment = { horizontal: "right" };
-                } else if (headerName === 'estado' || headerName === 'id' || headerName === 'stock') {
-                     ws[cell_ref].s.alignment = { horizontal: "center" };
-                }
-            }
-        }
-
-        // Auto-adjust column widths
-        const colWidths = [];
-        for (let C = range.s.c; C <= range.e.c; ++C) {
-            let maxLen = 0;
-            for (let R = range.s.r; R <= range.e.r; ++R) {
-                const cell_ref = XLSX.utils.encode_cell({ c: C, r: R });
-                if (ws[cell_ref]) {
-                    let cellText = ws[cell_ref].v !== null && ws[cell_ref].v !== undefined ? String(ws[cell_ref].v) : "";
-                    if (ws[cell_ref].t === 'n' && ws[cell_ref].s && ws[cell_ref].s.numFmt) {
-                        try { // Attempt to format for width calculation
-                            cellText = XLSX.SSF.format(ws[cell_ref].s.numFmt, ws[cell_ref].v);
-                        } catch(e) {
-                            // fallback
-                        }
-                    }
-                    maxLen = Math.max(maxLen, cellText.length);
-                }
-            }
-            colWidths[C] = { wch: Math.max(10, maxLen + 2) };
-        }
-        ws['!cols'] = colWidths;
-
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, sheetName);
-        XLSX.writeFile(wb, filename);
-    }
-
-    // --- Modal Instances & Export Button Event Listeners ---
-    const csvModalEl = document.getElementById('csvExportModal');
-    const csvModal = csvModalEl ? new bootstrap.Modal(csvModalEl) : null;
-    const excelModalEl = document.getElementById('excelExportModal');
-    const excelModal = excelModalEl ? new bootstrap.Modal(excelModalEl) : null;
-    const pdfModalEl = document.getElementById('pdfExportModal');
-    const pdfModal = pdfModalEl ? new bootstrap.Modal(pdfModalEl) : null;
-
-    const csvFilenameInput = document.getElementById('csvFilenameInput');
-    const csvSeparatorSelect = document.getElementById('csvSeparatorSelect');
-    const excelFilenameInput = document.getElementById('excelFilenameInput');
-    const pdfFilenameInput = document.getElementById('pdfFilenameInput');
-
-    const date = new Date();
-    const todayForFilename = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
-    const baseFilename = `listado_productos_${todayForFilename}`;
-
-    document.getElementById('exportCsvButtonList')?.addEventListener('click', () => {
-        if (csvModal && csvFilenameInput && csvSeparatorSelect) {
-            csvFilenameInput.value = `${baseFilename}.csv`;
-            csvSeparatorSelect.value = ';'; // Default
-            csvModal.show();
-        }
     });
 
-    document.getElementById('exportExcelButtonList')?.addEventListener('click', () => {
-        if (excelModal && excelFilenameInput) {
-            excelFilenameInput.value = `${baseFilename}.xlsx`;
-            excelModal.show();
-        }
+
+
+
+
+function excelExport() {
+    const table = document.getElementById('productsTable');
+    const wb = XLSX.utils.book_new();
+
+    const ws = XLSX.utils.table_to_sheet(table, {
+        sheet: "Productos",
+        raw: true,
+       
     });
 
-    document.getElementById('exportPdfButtonListTrigger')?.addEventListener('click', () => {
-        if (pdfModal && pdfFilenameInput) {
-            pdfFilenameInput.value = `${baseFilename}.pdf`;
-            pdfModal.show();
-        }
-    });
-
-    document.getElementById('confirmCsvExportBtn')?.addEventListener('click', () => {
-        if (csvFilenameInput && csvSeparatorSelect && dataTableInstance) {
-            const filename = csvFilenameInput.value.trim() || `${baseFilename}.csv`;
-            const separator = csvSeparatorSelect.value;
-            exportDataToCSV(filename, separator, dataTableInstance);
-            if(csvModal) csvModal.hide();
-        }
-    });
-
-    document.getElementById('confirmExcelExportBtn')?.addEventListener('click', () => {
-        if (excelFilenameInput && dataTableInstance) {
-            const filename = excelFilenameInput.value.trim() || `${baseFilename}.xlsx`;
-            exportDataToExcel(filename, 'Listado Productos', dataTableInstance);
-            if(excelModal) excelModal.hide();
-        }
-    });
-
-    document.getElementById('confirmPdfExportBtn')?.addEventListener('click', () => {
-        if (pdfFilenameInput && dataTableInstance) {
-            const filename = pdfFilenameInput.value.trim() || `${baseFilename}.pdf`;
-            exportListToPdf(filename);
-            if(pdfModal) pdfModal.hide();
-        }
-    });
-
-});
+    XLSX.utils.book_append_sheet(wb, ws, "Productos");
+    const filename = getCustomFilename('productos', 'xlsx');
+    if (filename) {
+    XLSX.writeFile(wb, filename);
+}
+}
 </script>
 @endpush

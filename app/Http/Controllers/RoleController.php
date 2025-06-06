@@ -15,7 +15,6 @@ class RoleController extends Controller
     public function __construct()
     {
         // Asegura que solo usuarios con el rol 'Admin' puedan acceder a estos métodos
-        $this->middleware('role:Admin');
     }
 
     /**

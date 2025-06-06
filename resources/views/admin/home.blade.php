@@ -56,7 +56,7 @@
                 <div>
                   <h5 class="card-title text-success mb-1">Ingresos Totales</h5>
                    {{-- Ajusta el símbolo de moneda y formato si es necesario --}}
-                  <h2 class="mb-0">S/ {{ number_format($totalRevenue ?? 0, 2) }}</h2>
+                  <h2 class="mb-0">$/ {{ number_format($totalRevenue ?? 0, 2) }}</h2>
                 </div>
                 <div class="text-success opacity-50">
                   <i class="fas fa-dollar-sign fa-3x"></i>

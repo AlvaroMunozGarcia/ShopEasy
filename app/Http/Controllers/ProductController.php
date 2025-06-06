@@ -6,126 +6,107 @@ use App\Models\Product;
 use App\Http\Requests\Product\StoreRequest;
 use App\Http\Requests\Product\UpdateRequest;
 use App\Models\Category;
-use App\Models\Provider;
-use Illuminate\Http\Request; // <-- Añadir esta línea
-use Milon\Barcode\DNS1D; // <-- Añadir esta línea
+use App\Models\Provider; 
+use Illuminate\Http\Request;
+use Milon\Barcode\DNS1D; 
 
 
 class ProductController extends Controller
 {
 
-    public function index(Request $request) // <-- Modificar para aceptar Request
+    public function index(Request $request) 
     {
-        // Iniciar la consulta de productos con las relaciones necesarias
         $query = Product::with(['category', 'provider'])->orderBy('id', 'desc');
 
         $filtered_provider_name = null;
-        $provider_id_for_breadcrumb_link = null; // Para usar en breadcrumbs o enlaces
-        $provider_id_for_create_link = null; // Para el botón "Añadir Producto" en la vista index
+        $provider_id_for_breadcrumb_link = null; 
+        $provider_id_for_create_link = null; 
 
-        // Verificar si se está filtrando por proveedor
         if ($request->has('provider_id') && $request->provider_id) {
             $provider_id = $request->provider_id;
-            $query->where('provider_id', $provider_id); // Aplicar el filtro
+            $query->where('provider_id', $provider_id); 
 
-            $provider = Provider::find($provider_id); // Obtener el proveedor para mostrar su nombre
+            $provider = Provider::find($provider_id); 
             if ($provider) {
                 $filtered_provider_name = $provider->name;
                 $provider_id_for_breadcrumb_link = $provider->id;
-                $provider_id_for_create_link = $provider->id; // Mantener el filtro al añadir nuevo
+                $provider_id_for_create_link = $provider->id; 
             }
         }
 
-        $products = $query->get(); // Ejecutar la consulta
-
-        // Pasar las variables a la vista
+        $products = $query->get(); 
         return view('admin.product.index', compact(
             'products',
-            'filtered_provider_name', // Para mostrar que está filtrado
-            'provider_id_for_breadcrumb_link', // Para enlaces en la vista
-            'provider_id_for_create_link' // Para el botón de añadir
+            'filtered_provider_name', 
+            'provider_id_for_breadcrumb_link', 
+            'provider_id_for_create_link' 
         ));
     }
-    public function create(Request $request) // <-- Modificar para aceptar Request
+    public function create(Request $request) 
     {
         $categories=Category::get();
         $providers=Provider::get();
-
-        // Obtener el provider_id de la query string, si existe
         $selected_provider_id = $request->query('provider_id', null);
-
-        // Opcional: Validar que el provider_id es válido si quieres ser extra seguro
         if ($selected_provider_id && !Provider::find($selected_provider_id)) {
-            $selected_provider_id = null; // Si no es válido, no preseleccionar nada
+            $selected_provider_id = null; 
         }
 
         return view('admin.product.create', compact(
             'categories',
             'providers',
-            'selected_provider_id' // <-- Pasar la variable a la vista
-        ));
+            'selected_provider_id' 
+             ));
     }
     public function store(StoreRequest $request)
     {
-        $attributesToCreate = $request->validated(); // Obtener datos validados
+        $attributesToCreate = $request->validated(); 
 
         if ($request->hasFile('picture')) {
             $file = $request->file('picture');
-            $image_name = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path("/image/"), $image_name);
-            $attributesToCreate['image'] = $image_name; // Guardar el nombre de la imagen
+        $path = $file->store('products', 'public'); 
+        $attributesToCreate['image'] = $path; 
         } else {
-            $attributesToCreate['image'] = null; // Opcional: establecer a null o un valor por defecto si no se sube imagen
+            $attributesToCreate['image'] = null;
         }
 
-        // Remover 'picture' del array si existe, ya que no es una columna de BD
         unset($attributesToCreate['picture']);
         Product::create($attributesToCreate);
         return redirect()->route('products.index')->with('success', 'Producto creado correctamente.');
     }
     public function show(Product $product)
     {
-        // Generar el código de barras HTML usando el campo 'code'
-        // 'C128' es un tipo común, puedes cambiarlo (ej: 'EAN13' si tus códigos son EAN)
-        // Los parámetros son: valor, tipo, altura (px), ancho_factor (1, 2, 3...), color, mostrar_valor_abajo (bool)
-        $barcodeGenerator = new DNS1D();
-        $barcodeHtml = $barcodeGenerator->getBarcodeHTML($product->code, 'C128', 2, 33, 'black', true);
-
-        return view('admin.product.show', compact('product', 'barcodeHtml')); // <-- Pasar el HTML a la vista
+       
+        return view('admin.product.show', compact('product')); 
     }
     public function edit(Product $product)
     {
         $categories=Category::get();
         $providers=Provider::get();
-        return view('admin.product.edit', compact('product', 'categories', 'providers')); // <-- Vista correcta
+        return view('admin.product.edit', compact('product', 'categories', 'providers')); 
 
     }
     public function update(UpdateRequest $request, Product $product)
     {
-        $attributesToUpdate = $request->validated(); // Obtener datos validados
+        $attributesToUpdate = $request->validated(); 
 
         if ($request->hasFile('picture')) {
             $file = $request->file('picture');
-            $new_image_name = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path("/image/"), $new_image_name);
-            if ($product->image && file_exists(public_path('image/' . $product->image))) {
-                unlink(public_path('image/' . $product->image));
+        if ($product->image) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($product->image); 
             }
-            $attributesToUpdate['image'] = $new_image_name; // Establecer el nuevo nombre de imagen
+        $path = $file->store('products', 'public'); 
+        $attributesToUpdate['image'] = $path; 
         }
-
-        // Remover 'picture' del array si existe, ya que no es una columna de BD
         unset($attributesToUpdate['picture']);
-        // --- DEBUG 2: Ver los atributos que se van a actualizar DESPUÉS de la validación ---
-        // Para la segunda prueba, comenta DEBUG 1 y DESCOMENTA esta línea:
-        // // dd($attributesToUpdate);
-        // --- FIN DEBUG 2 ---
         $product->update($attributesToUpdate);
         return redirect()->route('products.index')->with('success', 'Producto actualizado correctamente.');
     }
     public function destroy(Product $product)
     {
+    if ($product->image) {
+        \Illuminate\Support\Facades\Storage::disk('public')->delete($product->image); 
+    }
         $product->delete();
-        return redirect()->route('products.index');
+        return redirect()->route('products.index')->with('success', 'Producto archivado correctamente.');
     }
 }

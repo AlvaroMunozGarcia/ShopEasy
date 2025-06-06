@@ -27,12 +27,12 @@
                 <div class="row align-items-end">
                     <div class="col-md-5 mb-3 mb-md-0">
                         <label for="fecha_ini" class="form-label">Fecha Inicial</label>
-                        <input type="date" class="form-control" id="fecha_ini" name="fecha_ini" value="{{ isset($fecha_ini) ? $fecha_ini->format('Y-m-d') : old('fecha_ini', \Carbon\Carbon::today('America/Lima')->subMonth()->startOfMonth()->format('Y-m-d')) }}" required>
+                        <input type="date" class="form-control" id="fecha_ini" name="fecha_ini" value="{{ isset($fecha_ini) ? $fecha_ini->format('Y-m-d') : old('fecha_ini', \Carbon\Carbon::today(config('app.timezone', 'UTC'))->subMonth()->startOfMonth()->format('Y-m-d')) }}" required>
                         @error('fecha_ini')<div class="text-danger mt-1">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-md-5 mb-3 mb-md-0">
                         <label for="fecha_fin" class="form-label">Fecha Final</label>
-                        <input type="date" class="form-control" id="fecha_fin" name="fecha_fin" value="{{ isset($fecha_fin) ? $fecha_fin->format('Y-m-d') : old('fecha_fin', \Carbon\Carbon::today('America/Lima')->format('Y-m-d')) }}" required>
+                        <input type="date" class="form-control" id="fecha_fin" name="fecha_fin" value="{{ isset($fecha_fin) ? $fecha_fin->format('Y-m-d') : old('fecha_fin', \Carbon\Carbon::today(config('app.timezone', 'UTC'))->format('Y-m-d')) }}" required>
                         @error('fecha_fin')<div class="text-danger mt-1">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-md-2">
@@ -54,9 +54,6 @@
                         <h3 class="card-title mb-0">Resultados: {{ $fecha_ini->format('d/m/Y') }} - {{ $fecha_fin->format('d/m/Y') }}</h3>
                         @if($salesByCategory->count())
                             <div>
-                                <button id="exportReportCsvButton" class="btn btn-sm btn-outline-secondary me-2">
-                                    <i class="bi bi-filetype-csv me-1"></i> CSV
-                                </button>
                                 <button id="exportReportExcelButton" class="btn btn-sm btn-outline-success me-2">
                                     <i class="bi bi-file-earmark-excel me-1"></i> Excel
                                 </button>
@@ -75,7 +72,7 @@
                                 <tr>
                                     <th>Categoría</th>
                                     <th class="text-center">Cantidad Vendida</th>
-                                    <th class="text-right">Monto Total (S/)</th>
+                                    <th class="text-end">Monto Total (€)</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -83,7 +80,7 @@
                                     <tr>
                                         <td>{{ $saleCat->category_name }}</td>
                                         <td class="text-center">{{ $saleCat->total_quantity_sold }}</td>
-                                        <td class="text-right">{{ number_format($saleCat->total_amount_sold, 2) }}</td>
+                                        <td class="text-end">{{ number_format($saleCat->total_amount_sold, 2, ',', '.') }} €</td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -91,7 +88,7 @@
                                 <tr>
                                     <td class="text-right"><strong>TOTAL GENERAL:</strong></td>
                                     <td class="text-center"><strong>{{ $totalGeneralQuantity }}</strong></td>
-                                    <td class="text-right"><strong>S/ {{ number_format($totalGeneralAmount, 2) }}</strong></td>
+                                    <td class="text-end"><strong>{{ number_format($totalGeneralAmount, 2, ',', '.') }} €</strong></td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -122,36 +119,6 @@
         </div>
     </div>
     @endisset
-
-    {{-- Modals for Export Options (similar to other reports) --}}
-    {{-- Modal for CSV Export Options --}}
-    <div class="modal fade" id="csvExportModal" tabindex="-1" aria-labelledby="csvExportModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="csvExportModalLabel">Exportar a CSV</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="csvFilenameInput" class="form-label">Nombre del archivo:</label>
-                        <input type="text" class="form-control" id="csvFilenameInput" placeholder="nombre_archivo.csv">
-                    </div>
-                    <div class="mb-3">
-                        <label for="csvSeparatorSelect" class="form-label">Separador:</label>
-                        <select id="csvSeparatorSelect" class="form-select">
-                            <option value=";" selected>Punto y coma (;)</option>
-                            <option value=",">Coma (,)</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="confirmCsvExportBtn">Confirmar y Exportar</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     {{-- Modal for Excel Export Options --}}
     <div class="modal fade" id="excelExportModal" tabindex="-1" aria-labelledby="excelExportModalLabel" aria-hidden="true">
@@ -240,7 +207,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     "info": dataRowsCount > 10,
                     "columnDefs": [
                         { "type": "num-fmt", "targets": 1 }, // Cantidad
-                        { "type": "num-fmt", "targets": 2 }  // Monto
+                        { "type": "num-fmt", "targets": 2 }  // Monto (€)
                     ]
                 });
             } catch (e) { console.error(`Error inicializando DataTables:`, e); }
@@ -253,20 +220,19 @@ document.addEventListener('DOMContentLoaded', function () {
     const categoryLabels = salesByCategoryData.map(item => item.category_name);
     const categoryAmounts = salesByCategoryData.map(item => item.total_amount_sold);
 
-    // Generar colores aleatorios o predefinidos para el gráfico
     const backgroundColors = categoryLabels.map(() => `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 0.7)`);
 
     const chartCtx = document.getElementById('salesByCategoryChart')?.getContext('2d');
     if (chartCtx) {
         new Chart(chartCtx, {
-            type: 'pie', // o 'bar'
+            type: 'pie', 
             data: {
                 labels: categoryLabels,
                 datasets: [{
-                    label: 'Ventas por Categoría (S/)',
+                    label: 'Ventas por Categoría (€)',
                     data: categoryAmounts,
                     backgroundColor: backgroundColors,
-                    borderColor: backgroundColors.map(color => color.replace('0.7', '1')), // Borde más opaco
+                    borderColor: backgroundColors.map(color => color.replace('0.7', '1')), 
                     borderWidth: 1
                 }]
             },
@@ -275,7 +241,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        position: 'top', // o 'right', 'bottom', 'left'
+                        position: 'top', 
                     },
                     tooltip: {
                         callbacks: {
@@ -285,7 +251,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                     label += ': ';
                                 }
                                 if (context.parsed !== null) {
-                                    label += new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(context.parsed);
+                                    label += new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(context.parsed);
                                 }
                                 return label;
                             }
@@ -302,8 +268,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const headers = [];
         const body = [];
         const footer = [];
-        // Para este reporte no hay columna de acciones que excluir por defecto.
-
+        
         if (tableSource instanceof $.fn.dataTable.Api) {
             const headerCells = tableSource.table().header().querySelectorAll('th');
             headerCells.forEach(th => {
@@ -319,7 +284,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     $(footerRow).find('td, th').each(function() { footer.push($(this).text().trim()); });
                 }
             }
-        } else { // Fallback para tabla HTML
+        } else { 
             const tableElement = tableSource;
             if (!tableElement) return { headers, body, footer };
             $(tableElement).find('thead tr th').each(function() { headers.push($(this).text().trim()); });
@@ -336,31 +301,6 @@ document.addEventListener('DOMContentLoaded', function () {
         return { headers, body, footer };
     }
     
-    function escapeCsvCell(cellData) {
-        if (cellData == null) return '';
-        let dataString = String(cellData).replace(/"/g, '""');
-        if (dataString.search(/("|,|;|\n)/g) >= 0) dataString = '"' + dataString + '"';
-        return dataString;
-    }
-
-    function exportDataToCSV(filename = 'export.csv', separator = ',', dataSource) {
-        const { headers, body, footer } = getTableDataForExport(dataSource, false, true); // No excluir acciones, incluir footer
-        if (headers.length === 0) { alert("No hay datos para exportar."); return; }
-        let csv = ['\uFEFF'];
-        csv.push(headers.map(header => escapeCsvCell(header)).join(separator));
-        body.forEach(rowArray => csv.push(rowArray.map(cell => escapeCsvCell(cell)).join(separator)));
-        if (footer.length > 0) csv.push(footer.map(cell => escapeCsvCell(cell)).join(separator));
-        const blob = new Blob([csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = filename;
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(link.href);
-    }
-
     function parseNumericValue(text) {
         if (text === null || text === undefined) return text;
         let cleanText = String(text).trim().replace(/^(S\/\s*|\$\s*|€\s*)/, '').replace(/\s*€$/, '');
@@ -383,7 +323,7 @@ document.addEventListener('DOMContentLoaded', function () {
         dataRows.forEach(rowArray => {
             const processedRow = rowArray.map((cell, colIndex) => {
                 const headerName = headers[colIndex] ? headers[colIndex].toLowerCase() : '';
-                if (headerName === 'cantidad vendida' || headerName === 'monto total (s/)') return parseNumericValue(cell);
+                if (headerName === 'cantidad vendida' || headerName === 'monto total (€)') return parseNumericValue(cell);
                 return cell;
             });
             aoaData.push(processedRow);
@@ -391,7 +331,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (footerRow.length > 0) {
             const processedFooter = footerRow.map((cell, colIndex) => {
                 const headerName = headers[colIndex] ? headers[colIndex].toLowerCase() : '';
-                if (headerName === 'cantidad vendida' || headerName === 'monto total (s/)') return parseNumericValue(cell.replace(/[^0-9,.-]+/g,""));
+                if (headerName === 'cantidad vendida' || headerName === 'monto total (€)') return parseNumericValue(cell.replace(/[^0-9,.-]+/g,""));
                 return cell.includes('TOTAL GENERAL:') ? {v: cell, s: {font: {bold: true}}} : cell;
             });
             aoaData.push(processedFooter);
@@ -407,18 +347,18 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (!ws[cell_ref].s) ws[cell_ref].s = {};
                 const len = ws[cell_ref].v ? String(ws[cell_ref].v).length : 0;
                 if (colWidths[C]) colWidths[C].wch = Math.max(colWidths[C].wch, len + 2);
-                if (R === 0) { // Cabecera
+                if (R === 0) { 
                     ws[cell_ref].s.font = { bold: true };
                     ws[cell_ref].s.fill = { patternType: "solid", fgColor: { rgb: "FFD9D9D9" } };
                     ws[cell_ref].s.alignment = { horizontal: "center", vertical: "center" };
-                } else if (R === range.e.r && footerRow.length > 0) { // Pie de tabla
+                } else if (R === range.e.r && footerRow.length > 0) { 
                     ws[cell_ref].s.font = { bold: true };
                     ws[cell_ref].s.fill = { patternType: "solid", fgColor: { rgb: "FFEFEFEF" } };
                 }
                 const headerName = headers[C] ? headers[C].toLowerCase() : '';
                 if (ws[cell_ref].t === 'n') {
                     if (headerName === 'cantidad vendida') ws[cell_ref].s.numFmt = "0";
-                    else if (headerName === 'monto total (s/)') ws[cell_ref].s.numFmt = '"S/" #,##0.00';
+                    else if (headerName === 'monto total (€)') ws[cell_ref].s.numFmt = '#,##0.00 "€"';
                     ws[cell_ref].s.alignment = { horizontal: "right" };
                 } else if (headerName === 'cantidad vendida') {
                      ws[cell_ref].s.alignment = { horizontal: "center" };
@@ -437,7 +377,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const doc = new jsPDF();
             const fechaIni = "{{ isset($fecha_ini) ? $fecha_ini->format('d/m/Y') : '' }}";
             const fechaFin = "{{ isset($fecha_fin) ? $fecha_fin->format('d/m/Y') : '' }}";
-            const title = `Reporte Ventas por Categoría (${fechaIni} - ${fechaFin})`;
+            const title = `Reporte Ventas por Categoría (€) (${fechaIni} - ${fechaFin})`;
             const defaultFilename = `reporte_ventas_categoria_${fechaIni.replace(/\//g, '-')}_${fechaFin.replace(/\//g, '-')}.pdf`;
             const finalFilename = filename || defaultFilename;
             doc.setFontSize(18);
@@ -454,27 +394,16 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // --- Modal Instances & Export Button Event Listeners ---
-    const csvModalEl = document.getElementById('csvExportModal');
-    const csvModal = csvModalEl ? new bootstrap.Modal(csvModalEl) : null;
     const excelModalEl = document.getElementById('excelExportModal');
     const excelModal = excelModalEl ? new bootstrap.Modal(excelModalEl) : null;
     const pdfReportModalEl = document.getElementById('pdfReportExportModal');
     const pdfReportModal = pdfReportModalEl ? new bootstrap.Modal(pdfReportModalEl) : null;
 
-    const csvFilenameInput = document.getElementById('csvFilenameInput');
-    const csvSeparatorSelect = document.getElementById('csvSeparatorSelect');
     const excelFilenameInput = document.getElementById('excelFilenameInput');
     const pdfReportFilenameInput = document.getElementById('pdfReportFilenameInput');
 
     const baseFilename = "reporte_ventas_categoria_{{ isset($fecha_ini) ? $fecha_ini->format('Ymd') : 'FECHA_INI' }}_{{ isset($fecha_fin) ? $fecha_fin->format('Ymd') : 'FECHA_FIN' }}";
 
-    document.getElementById('exportReportCsvButton')?.addEventListener('click', () => {
-        if (csvModal && csvFilenameInput && csvSeparatorSelect) {
-            csvFilenameInput.value = `${baseFilename}.csv`;
-            csvSeparatorSelect.value = ';';
-            csvModal.show();
-        }
-    });
     document.getElementById('exportReportExcelButton')?.addEventListener('click', () => {
         if (excelModal && excelFilenameInput) {
             excelFilenameInput.value = `${baseFilename}.xlsx`;
@@ -485,14 +414,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if (pdfReportModal && pdfReportFilenameInput) {
             pdfReportFilenameInput.value = `${baseFilename}.pdf`;
             pdfReportModal.show();
-        }
-    });
-    document.getElementById('confirmCsvExportBtn')?.addEventListener('click', () => {
-        if (csvFilenameInput && csvSeparatorSelect) {
-            const filename = csvFilenameInput.value.trim() || `${baseFilename}.csv`;
-            const separator = csvSeparatorSelect.value;
-            exportDataToCSV(filename, separator, dataTableInstance || document.getElementById(tableIdToExport));
-            if(csvModal) csvModal.hide();
         }
     });
     document.getElementById('confirmExcelExportBtn')?.addEventListener('click', () => {

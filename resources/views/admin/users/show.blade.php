@@ -68,28 +68,6 @@
             </div>
         </div>
     </div>
-
-    {{-- Modal for PDF Export Options --}}
-    <div class="modal fade" id="pdfDetailExportModal" tabindex="-1" aria-labelledby="pdfDetailExportModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="pdfDetailExportModalLabel">Exportar Detalles a PDF</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="pdfDetailFilenameInput" class="form-label">Nombre del archivo:</label>
-                        <input type="text" class="form-control" id="pdfDetailFilenameInput" placeholder="nombre_archivo.pdf">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="confirmPdfDetailExportBtn">Confirmar y Exportar</button>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 @endsection
 
@@ -97,12 +75,33 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const pdfDetailModalEl = document.getElementById('pdfDetailExportModal');
-    const pdfDetailModal = pdfDetailModalEl ? new bootstrap.Modal(pdfDetailModalEl) : null;
-    const pdfDetailFilenameInput = document.getElementById('pdfDetailFilenameInput');
+    // Función para obtener el nombre de archivo personalizado
+    function getCustomFilename(baseName, extension) {
+        const now = new Date();
+        // Formato de fecha YYYY-MM-DD
+        const datePart = now.toISOString().slice(0, 10);
+        const defaultName = `${baseName}_${datePart}`;
 
-    function exportUserDetailsToPdf(filename) {
+        // Mostrar prompt al usuario
+        let userFilename = prompt("Introduce el nombre del archivo:", defaultName);
+
+        // Si el usuario cancela, devuelve null
+        if (userFilename === null) {
+            return null;
+        }
+
+        // Usar el nombre del usuario si no está vacío, de lo contrario usar el por defecto
+        let finalFilename = userFilename.trim() === '' ? defaultName : userFilename.trim();
+
+        // Asegurarse de que la extensión esté presente
+        if (!finalFilename.toLowerCase().endsWith(`.${extension}`)) {
+            finalFilename += `.${extension}`;
+        }
+        return finalFilename;
+    }
+
+document.addEventListener('DOMContentLoaded', function () {
+    function exportUserDetailsToPdf() {
         try {
             if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') { console.error("jsPDF no está cargado."); alert("Error: jsPDF no está cargado."); return; }
             const { jsPDF } = window.jspdf;
@@ -110,11 +109,12 @@ document.addEventListener('DOMContentLoaded', function () {
             let yPos = 15;
 
             const userName = document.getElementById('userNameHeader')?.innerText || // Del nuevo @page_header
-                             document.getElementById('userNameShowCardHeader')?.innerText.match(/\(([^)]+)\)/)?.[1] || // Del card-header (extraer de paréntesis)
                              '{{ $user->name }}'; // Fallback directo
-            const userId = document.getElementById('userId')?.innerText;
-            const defaultFilename = `detalle_usuario_${(userName || 'Usuario').replace(/[^a-z0-9]/gi, '_')}_${(userId || 'N_A').replace(/[^a-z0-9]/gi, '_')}.pdf`;
-            const finalFilename = filename || defaultFilename;
+
+            const baseFilename = `detalle_usuario_${userName.replace(/\s+/g, '_')}`;
+            const finalFilename = getCustomFilename(baseFilename, 'pdf');
+
+            if (!finalFilename) return; // El usuario canceló
 
             doc.setFontSize(18);
             doc.text(`Detalles del Usuario: ${userName}`, 14, yPos); yPos += 10;
@@ -150,23 +150,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     document.getElementById('exportDetailPdfButtonTrigger')?.addEventListener('click', function () {
-        if (pdfDetailModal && pdfDetailFilenameInput) {
-            const userId = document.getElementById('userId')?.innerText || 'N_A';
-            const userName = (document.getElementById('userNameHeader')?.innerText || // Del nuevo @page_header
-                              document.getElementById('userNameShowCardHeader')?.innerText.match(/\(([^)]+)\)/)?.[1] || // Del card-header
-                              '{{ $user->name }}').replace(/[^a-z0-9]/gi, '_').substring(0,30) || 'usuario';
-            const date = new Date();
-            const todayForFilename = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
-            pdfDetailFilenameInput.value = `detalle_${userName}_${userId}_${todayForFilename}.pdf`.replace(/[^a-z0-9_.-]/gi, '_').replace(/__+/g, '_');
-            pdfDetailModal.show();
-        }
+        exportUserDetailsToPdf();
     });
 
-    document.getElementById('confirmPdfDetailExportBtn')?.addEventListener('click', function () {
-        const filename = pdfDetailFilenameInput ? pdfDetailFilenameInput.value.trim() : null;
-        exportUserDetailsToPdf(filename);
-        if(pdfDetailModal) pdfDetailModal.hide();
-    });
 });
 </script>
 @endpush
