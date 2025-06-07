@@ -103,25 +103,18 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 
-    // Función para obtener el nombre de archivo personalizado
     function getCustomFilename(baseName, extension) {
         const now = new Date();
         // Formato de fecha YYYY-MM-DD
         const datePart = now.toISOString().slice(0, 10);
         const defaultName = `${baseName}_${datePart}`;
 
-        // Mostrar prompt al usuario
         let userFilename = prompt("Introduce el nombre del archivo:", defaultName);
 
-        // Si el usuario cancela, devuelve null
         if (userFilename === null) {
             return null;
         }
-
-        // Usar el nombre del usuario si no está vacío, de lo contrario usar el por defecto
         let finalFilename = userFilename.trim() === '' ? defaultName : userFilename.trim();
-
-        // Asegurarse de que la extensión esté presente
         if (!finalFilename.toLowerCase().endsWith(`.${extension}`)) {
             finalFilename += `.${extension}`;
         }
@@ -214,14 +207,12 @@ document.addEventListener('DOMContentLoaded', function () {
 function excelExport() {
     const table = document.getElementById('salesReportTable');
     const wb = XLSX.utils.book_new();
-
-    // Clonar la tabla y eliminar la última columna (Acciones) antes de convertir
     const tableClone = table.cloneNode(true);
     Array.from(tableClone.querySelectorAll('tr')).forEach(row => {
-        row.deleteCell(-1); // Elimina la última celda de cada fila (th o td)
+        row.deleteCell(-1); 
     });
 
-    const ws = XLSX.utils.table_to_sheet(tableClone, { // Usar la tabla clonada
+    const ws = XLSX.utils.table_to_sheet(tableClone, { 
         sheet: "Reportes de ventas",
         raw: true,
     });

@@ -73,10 +73,6 @@ class UserSeeder extends Seeder
         $roleAdmin = Role::firstOrCreate(['name' => 'Admin', 'guard_name' => 'web']);
         $roleVendedor = Role::firstOrCreate(['name' => 'Vendedor', 'guard_name' => 'web']);
         $roleAlmacenista = Role::firstOrCreate(['name' => 'Almacenista', 'guard_name' => 'web']);
-
-        // 4. ASIGNAR PERMISOS ESPECÍFICOS A ROLES
-
-        // Rol Admin: Todos los permisos en español que acabas de crear.
         $todosLosPermisos = [
             'ver usuarios', 'crear usuarios', 'editar usuarios', 'eliminar usuarios',
             'ver roles', 'asignar roles',
