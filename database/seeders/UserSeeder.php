@@ -15,7 +15,6 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Limpiar caché de permisos
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
         // 2. CREAR PERMISOS (Solo en Español)
