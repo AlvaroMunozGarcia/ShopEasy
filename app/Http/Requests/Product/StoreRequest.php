@@ -22,7 +22,7 @@ class StoreRequest extends FormRequest
         return [
             'name'=>'string|required|unique:products|max:255',
             'code'=>'string|required|unique:products,code',
-            'picture'=>'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048|dimensions:min_width=100,min_height=200',
+            'picture'=>'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048|dimensions:max_width=200,max_height=400',
             'sell_price'=>'required',
             'category_id' => 'required|exists:categories,id',
             'provider_id'=>'integer|required|exists:providers,id',
@@ -50,7 +50,7 @@ class StoreRequest extends FormRequest
             'picture.image'=>'El archivo debe ser una imagen válida (jpeg, png, jpg, gif, svg).',
             'picture.mimes'=>'La imagen debe ser de tipo: jpeg, png, jpg, gif, svg.',
             'picture.max'=>'La imagen no debe pesar más de 2MB.',
-            'picture.dimensions'=>'Las dimensiones mínimas de la imagen son 100x200 px.',
+            'picture.dimensions'=>'Las dimensiones máximas de la imagen son 200px de ancho por 400px de alto.',
 
             'sell_price.required'=>'El campo es requerido.',
 

@@ -11,17 +11,13 @@
 @section('content')
 <div class="content-wrapper py-4">
     <div class="container-fluid">
-        {{-- La cabecera anterior ha sido reemplazada por @page_header y @breadcrumbs del layout --}}
-
         <div class="row justify-content-center">
-            <div class="col-lg-10">
+            <div class="col-xl-9 col-lg-10 col-md-11 col-12">
                 <div class="card shadow-sm border-0">
                     <div class="card-header bg-primary text-white">
                         <h5 class="mb-0">Editar Información</h5>
                     </div>
                     <div class="card-body">
-
-                        {{-- Éxito --}}
                         @if (session('success'))
                             <div class="alert alert-success alert-dismissible fade show" role="alert">
                                 {{ session('success') }}
@@ -101,9 +97,7 @@
 @endsection
 
 @push('styles')
-{{-- CSS adicional si es necesario --}}
 @endpush
 
 @push('scripts')
-{{-- JS adicional si es necesario --}}
 @endpush

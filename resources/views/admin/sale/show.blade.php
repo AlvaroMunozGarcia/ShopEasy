@@ -1,4 +1,3 @@
-{{-- resources/views/admin/sale/show.blade.php --}}
 @extends('layouts.admin')
 
 @section('title', 'Detalles de la Venta')
@@ -13,39 +12,30 @@
 @endsection
 
 @section('content')
-<div class="content-wrapper">
-    {{-- La cabecera anterior con H1 y breadcrumbs se elimina,
-         ya que @page_header y @breadcrumbs del layout principal se encargarán de esto. --}}
-
-    <!-- Main content -->
-    <section class="content">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-12">
-                    <div class="card shadow-sm">
-                        <div class="card-header">
-                            <h3 class="card-title">Información de la Venta #{{ $sale->id }}</h3>
-                            <div class="card-tools">
+<div class="content-wrapper py-4">
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-xl-10 col-lg-11">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-primary text-white d-flex flex-column flex-md-row justify-content-md-between align-items-md-center">
+                        <h5 class="mb-2 mb-md-0">Información de la Venta #{{ $sale->id }}</h5>
+                        <div class="mt-2 mt-md-0">
                                 <button id="exportDetailPdfButtonTrigger" class="btn btn-sm btn-info">
                                     <i class="bi bi-file-earmark-pdf"></i> Exportar a PDF
                                 </button>
                                 <a href="{{ route('sales.index') }}" class="btn btn-sm btn-secondary">
-                                    <i class="fas fa-arrow-left"></i> Volver al Listado
+                                    <i class="bi bi-arrow-left-circle"></i> Volver al Listado
                                 </a>
                             </div>
                         </div>
-                        <!-- /.card-header -->
                         <div class="card-body">
                             <div class="row mb-4">
                                 <div class="col-md-6">
                                     <p><strong>Cliente:</strong> {{ $sale->client->name ?? 'N/A' }}</p>
-                                    {{-- Puedes añadir más detalles del cliente si los tienes y son relevantes --}}
-                                    {{-- <p><strong>Email Cliente:</strong> {{ $sale->client->email ?? 'N/A' }}</p> --}}
-                                </div>
-                                <div class="col-md-6 text-md-right">
-                                    <p><strong>ID Venta:</strong> {{ $sale->id }}</p>
-                                    <p><strong>Fecha de Venta:</strong> {{ $sale->sale_date->format('d/m/Y H:i') }}</p>
                                     <p><strong>Vendedor:</strong> {{ $sale->user->name ?? 'N/A' }}</p>
+                                </div>
+                                <div class="col-md-6 text-md-end">
+                                    <p><strong>Fecha de Venta:</strong> {{ $sale->sale_date->format('d/m/Y H:i') }}</p>
                                     <p><strong>Impuesto (%):</strong> {{ $sale->tax }}%</p>
                                     <h4><strong>Total Pagado:</strong> {{ number_format($sale->total, 2, ',', '.') }} €</h4>
                                 </div>
@@ -55,7 +45,7 @@
 
                             <h4>Detalles de la Venta</h4>
                             <div class="table-responsive">
-                                <table id="saleDetailsTable" class="table table-bordered table-striped">
+                                <table id="saleDetailsTable" class="table table-bordered table-hover table-sm">
                                     <thead>
                                         <tr>
                                             <th style="width: 35%;">Producto</th>
@@ -89,29 +79,27 @@
                                     </tbody>
                                     <tfoot>
                                         <tr>
-                                            <td colspan="5" class="text-right"><strong>Subtotal:</strong></td>
+                                            <td colspan="5" class="text-end"><strong>Subtotal:</strong></td>
                                             <td class="text-end">{{ number_format($subtotalGeneral, 2, ',', '.') }} €</td>
                                         </tr>
                                         <tr>
-                                            <td colspan="5" class="text-right"><strong>Impuesto ({{ $sale->tax }}%):</strong></td>
+                                            <td colspan="5" class="text-end"><strong>Impuesto ({{ $sale->tax }}%):</strong></td>
                                             <td class="text-end">{{ number_format($sale->total - $subtotalGeneral, 2, ',', '.') }} €</td>
                                         </tr>
                                         <tr>
-                                            <td colspan="5" class="text-right"><strong>TOTAL:</strong></td>
+                                            <td colspan="5" class="text-end"><strong>TOTAL:</strong></td>
                                             <td class="text-end"><strong>{{ number_format($sale->total, 2, ',', '.') }} €</strong></td>
                                         </tr>
                                     </tfoot>
                                 </table>
                             </div>
                         </div>
-                        <div class="card-footer">
-                            {{-- El footer puede quedar vacío o para acciones adicionales si las hubiera --}}
-                        </div>
+                        {{-- El card-footer puede eliminarse si no tiene contenido --}}
                     </div>
                 </div>
             </div>
         </div>
-    </section>
+    </div>
 </div>
 @endsection
 
@@ -119,40 +107,27 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 <script>
-    // Función para obtener el nombre de archivo personalizado
     function getCustomFilename(baseName, extension) {
         const now = new Date();
-        // Formato de fecha YYYY-MM-DD
         const datePart = now.toISOString().slice(0, 10);
         const defaultName = `${baseName}_${datePart}`;
-
-        // Mostrar prompt al usuario
         let userFilename = prompt("Introduce el nombre del archivo:", defaultName);
-
-        // Si el usuario cancela, devuelve null
         if (userFilename === null) {
             return null;
         }
-
-        // Usar el nombre del usuario si no está vacío, de lo contrario usar el por defecto
         let finalFilename = userFilename.trim() === '' ? defaultName : userFilename.trim();
-
-        // Asegurarse de que la extensión esté presente
         if (!finalFilename.toLowerCase().endsWith(`.${extension}`)) {
             finalFilename += `.${extension}`;
         }
         return finalFilename;
     }
 document.addEventListener('DOMContentLoaded', function () {
-    // Solo un botón de exportación ahora, en el card-header
     document.getElementById('exportDetailPdfButtonTrigger').addEventListener('click', exportSaleDetailsToPDF);
 });
 
 function exportSaleDetailsToPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-
-    // Información general de la venta
     const generalData = [
         ['ID Venta', '{{ $sale->id }}'],
         ['Cliente', '{{ $sale->client->name ?? "N/A" }}'],
@@ -176,8 +151,6 @@ function exportSaleDetailsToPDF() {
             1: { cellWidth: 120 }
         }
     });
-
-    // Tabla de productos
     const productData = [
         @foreach ($sale->saleDetails as $detail)
             [
@@ -196,20 +169,13 @@ function exportSaleDetailsToPDF() {
         startY: doc.lastAutoTable.finalY + 15,
         head: [['Producto', 'Código', 'Cantidad', 'Precio Unit. (€)', 'Desc. (%)', 'Subtotal (€)']],
         body: productData,
-        styles: { fontSize: 9 }, // Un poco más pequeño para que quepa mejor
-        headStyles: { fillColor: [52, 152, 219] }, // Azul más claro
+        styles: { fontSize: 9 }, 
+        headStyles: { fillColor: [52, 152, 219] }, 
         theme: 'striped'
     });
-
-    // Totales al final (ya están en la tabla HTML, pero para el PDF los replicamos si es necesario o los tomamos de la tabla)
-    // Para simplificar, los tomamos de los valores ya calculados en PHP para el tfoot
     const subtotalGeneralPDF = {{ number_format($subtotalGeneral, 2, '.', '') }};
     const impuestoPDF = {{ number_format($sale->total - $subtotalGeneral, 2, '.', '') }};
     const totalPDF = {{ number_format($sale->total, 2, '.', '') }};
-
-    // (Opcional) Añadir los totales como otra tabla o texto si se desea un formato diferente al de la tabla de productos.
-    // Por ahora, los totales ya están visualmente en la tabla de productos del HTML y se reflejarían si se exporta la tabla entera.
-    // El script de purchase.show añade una tabla separada para totales, lo replicaremos.
     doc.autoTable({
         startY: doc.lastAutoTable.finalY + 10,
         body: [
@@ -220,15 +186,13 @@ function exportSaleDetailsToPDF() {
         theme: 'plain',
         styles: { fontSize: 11 },
         columnStyles: {
-            0: { cellWidth: 130 + 15 + 15 }, // Ajustar cellWidth para que la segunda columna se alinee bien
+            0: { cellWidth: 130 + 15 + 15 }, 
             1: { cellWidth: 30, halign: 'right' }
         }
     });
-
-    // Usar el ID de la venta para el nombre base y llamar a getCustomFilename
     const baseFilename = `venta_{{ $sale->id }}`;
     const filename = getCustomFilename(baseFilename, 'pdf');
-    if (filename) { // Guardar solo si el usuario no canceló
+    if (filename) { 
         doc.save(filename);
     }
 }

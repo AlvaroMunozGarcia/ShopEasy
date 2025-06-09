@@ -19,11 +19,11 @@
     {{-- El H1 anterior se elimina ya que @page_header lo maneja --}}
 
     {{-- Formulario para seleccionar fechas --}}
-    <div class="card card-primary mb-4"> {{-- Añadido margen inferior --}}
-        <div class="card-header">
-            <h3 class="card-title">Seleccionar Rango</h3>
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-light">
+            <h5 class="card-title mb-0">Seleccionar Rango de Fechas</h5>
         </div>
-        <form action="{{ route('report.results') }}" method="POST">
+        <form action="{{ route('report.results') }}" method="POST" id="reportDateForm">
             @csrf
             <div class="card-body">
                 <div class="row align-items-end"> {{-- Alinea verticalmente al final --}}
@@ -39,26 +39,27 @@
                         <input type="date" class="form-control" id="fecha_fin" name="fecha_fin" value="{{ isset($fecha_fin) ? $fecha_fin->format('Y-m-d') : old('fecha_fin', \Carbon\Carbon::today('America/Lima')->format('Y-m-d')) }}" required>
                          @error('fecha_fin')<div class="text-danger mt-1">{{ $message }}</div>@enderror
                     </div>
-                    <div class="col-md-2">
-                        <button type="submit" class="btn btn-primary w-100">Consultar</button> {{-- w-100 para ancho completo --}}
+                    <div class="col-md-2 mt-3 mt-md-0">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-search me-1"></i> Consultar
+                        </button>
                     </div>
                 </div>
             </div>
         </form>
     </div>
-
     {{-- Sección para mostrar resultados (solo si existen) --}}
     @isset($sales)
-    <div class="card">
-        <div class="card-header">
-            <div class="d-flex justify-content-between align-items-center">
-                <h3 class="card-title mb-0">Resultados para el rango: {{ $fecha_ini->format('d/m/Y') }} - {{ $fecha_fin->format('d/m/Y') }}</h3>
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white">
+            <div class="d-flex flex-column flex-md-row justify-content-md-between align-items-md-center">
+                <h5 class="card-title mb-2 mb-md-0">Resultados para el rango: {{ $fecha_ini->format('d/m/Y') }} - {{ $fecha_fin->format('d/m/Y') }}</h5>
                 @if($sales->count())
-                    <div>
-                        <button id="exportReportExcelButton" class="btn btn-sm btn-outline-success me-2">
+                    <div class="mt-2 mt-md-0">
+                        <button id="exportReportExcelButton" class="btn btn-success me-2">
                             <i class="bi bi-file-earmark-excel me-1"></i> Excel
                         </button>
-                        <button id="exportReportPdfButtonTrigger" class="btn btn-sm btn-danger">
+                        <button id="exportReportPdfButtonTrigger" class="btn btn-danger">
                             <i class="bi bi-file-earmark-pdf me-1"></i> PDF
                         </button>
                     </div>

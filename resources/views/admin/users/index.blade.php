@@ -1,7 +1,6 @@
 @extends('layouts.admin')
 
 @push('styles')
-{{-- DataTables Bootstrap 5 CSS --}}
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
 @endpush
@@ -17,13 +16,10 @@
 @section('content')
 <div class="content-wrapper py-4">
     <div class="container-fluid">
-        {{-- El @page_header ya muestra el título principal de la página. --}}
-
-        {{-- Card principal --}}
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center"> {{-- Este encabezado de tarjeta puede mantenerse --}}
-                <h5 class="mb-0">Gestión de Usuarios</h5>
-                <div>
+            <div class="card-header bg-primary text-white d-flex flex-column flex-md-row justify-content-md-between align-items-md-center">
+                <h5 class="mb-2 mb-md-0">Gestión de Usuarios</h5>
+                <div class="mt-2 mt-md-0">
                     <button id="exportExcelButtonList" class="btn btn-outline-light btn-sm fw-semibold me-2">
                         <i class="bi bi-file-earmark-excel me-1"></i> Excel
                     </button>
@@ -84,53 +80,30 @@
                     </table>
                 </div>
             </div>
-
-            {{-- La paginación de Laravel se elimina o comenta, DataTables la manejará --}}
-            {{-- @if ($users->hasPages())
-                <div class="card-footer d-flex justify-content-center">
-                    {{ $users->links() }}
-                </div>
-            @endif --}}
         </div>
     </div>
 </div>
 @endsection
 
 @push('scripts')
-{{-- jQuery (necesario para DataTables) --}}
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
-{{-- DataTables JS --}}
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-{{-- DataTables Bootstrap 5 JS --}}
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
-
-{{-- Librerías para exportación --}}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-
-    // Función para obtener el nombre de archivo personalizado
     function getCustomFilename(baseName, extension) {
         const now = new Date();
-        // Formato de fecha YYYY-MM-DD
         const datePart = now.toISOString().slice(0, 10);
         const defaultName = `${baseName}_${datePart}`;
-
-        // Mostrar prompt al usuario
         let userFilename = prompt("Introduce el nombre del archivo:", defaultName);
-
-        // Si el usuario cancela, devuelve null
         if (userFilename === null) {
             return null;
         }
-
-        // Usar el nombre del usuario si no está vacío, de lo contrario usar el por defecto
         let finalFilename = userFilename.trim() === '' ? defaultName : userFilename.trim();
-
-        // Asegurarse de que la extensión esté presente
         if (!finalFilename.toLowerCase().endsWith(`.${extension}`)) {
             finalFilename += `.${extension}`;
         }
@@ -223,14 +196,11 @@
 function excelExport() {
     const table = document.getElementById('usersTable');
     const wb = XLSX.utils.book_new();
-
-    // Clonar la tabla y eliminar la última columna (Acciones) antes de convertir
     const tableClone = table.cloneNode(true);
     Array.from(tableClone.querySelectorAll('tr')).forEach(row => {
-        row.deleteCell(-1); // Elimina la última celda de cada fila (th o td)
+        row.deleteCell(-1); 
     });
-
-    const ws = XLSX.utils.table_to_sheet(tableClone, { // Usar la tabla clonada
+    const ws = XLSX.utils.table_to_sheet(tableClone, { 
         sheet: "Usuarios",
         raw: true,
     });

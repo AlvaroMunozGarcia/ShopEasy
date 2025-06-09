@@ -1,7 +1,6 @@
 @extends('layouts.admin')
 
 @push('styles')
-{{-- DataTables Bootstrap 5 CSS --}}
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
 @endpush
@@ -17,9 +16,6 @@
 @section('content')
 <div class="content-wrapper py-4">
     <div class="container-fluid">
-        {{-- El @page_header ya muestra el título principal de la página. --}}
-
-        {{-- INICIO: Mostrar Alertas de Stock Bajo (generadas por ventas/transacciones) --}}
         @if (session()->has('low_stock_alerts') && is_array(session('low_stock_alerts')) && count(session('low_stock_alerts')) > 0)
             <div class="alert alert-warning alert-dismissible fade show" role="alert">
                 <strong><i class="bi bi-exclamation-triangle-fill me-2"></i>¡Atención! Productos con stock bajo (detectado en transacciones recientes):</strong>
@@ -30,16 +26,12 @@
                 </ul>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
-            {{-- Limpiar las alertas de la sesión después de mostrarlas en esta página --}}
             @php session()->forget('low_stock_alerts'); @endphp
         @endif
-        {{-- FIN: Mostrar Alertas de Stock Bajo --}}
-
-        {{-- Tarjeta principal --}}
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center"> {{-- Este encabezado de tarjeta puede mantenerse --}}
-                <h5 class="mb-0">Compras Registradas</h5>
-                <div>
+            <div class="card-header bg-primary text-white d-flex flex-column flex-md-row justify-content-md-between align-items-md-center">
+                <h5 class="mb-2 mb-md-0">Compras Registradas</h5>
+                <div class="mt-2 mt-md-0">
                     <button id="exportExcelButtonList" class="btn btn-outline-light btn-sm fw-semibold me-2">
                         <i class="bi bi-file-earmark-excel me-1"></i> Excel
                     </button>
@@ -88,10 +80,6 @@
                                         <a href="{{ route('purchases.show', $purchase) }}" class="btn btn-sm btn-outline-info" title="Ver Detalles">
                                             <i class="bi bi-eye"></i>
                                         </a>
-                                        {{-- El PDF individual se genera ahora desde la vista show --}}
-                                        {{-- <a href="{{ route('purchases.print', $purchase) }}" target="_blank" class="btn btn-sm btn-outline-danger" title="Descargar PDF">
-                                            <i class="bi bi-file-earmark-pdf"></i>
-                                        </a> --}}
                                     </td>
                                 </tr>
                             @empty

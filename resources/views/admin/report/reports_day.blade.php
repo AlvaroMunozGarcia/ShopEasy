@@ -18,16 +18,16 @@
 @section('content')
     {{-- El H1 anterior se elimina ya que @page_header lo maneja --}}
 
-    <div class="card">
-        <div class="card-header">
-            <div class="d-flex justify-content-between align-items-center">
-                <h3 class="card-title mb-0">Ventas realizadas hoy: {{ \Carbon\Carbon::today(config('app.timezone', 'UTC'))->format('d/m/Y') }}</h3>
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white">
+            <div class="d-flex flex-column flex-md-row justify-content-md-between align-items-md-center">
+                <h5 class="card-title mb-2 mb-md-0">Ventas realizadas hoy: {{ \Carbon\Carbon::today(config('app.timezone', 'UTC'))->format('d/m/Y') }}</h5>
                 @if($sales->count())
-                    <div>
-                        <button id="exportReportExcelButton" class="btn btn-sm btn-outline-success me-2">
+                    <div class="mt-2 mt-md-0">
+                        <button id="exportReportExcelButton" class="btn btn-success me-2">
                             <i class="bi bi-file-earmark-excel me-1"></i> Excel
                         </button>
-                        <button id="exportReportPdfButtonTrigger" class="btn btn-sm btn-danger">
+                        <button id="exportReportPdfButtonTrigger" class="btn btn-danger">
                             <i class="bi bi-file-earmark-pdf me-1"></i> PDF
                         </button>
                     </div>

@@ -1,4 +1,4 @@
-@extends('layouts.admin') {{-- O tu layout principal --}}
+@extends('layouts.admin') 
 
 @section('title', 'Detalles del Usuario')
 
@@ -15,9 +15,9 @@
 <div class="content-wrapper py-4">
     <div class="container-fluid">
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center"> {{-- El título principal ya está en @page_header --}}
-                <h5 class="mb-0">Información Detallada <small class="text-white-50" id="userNameShowCardHeader">({{ $user->name }})</small></h5>
-                <div>
+            <div class="card-header bg-primary text-white d-flex flex-column flex-md-row justify-content-md-between align-items-md-center">
+                <h5 class="mb-2 mb-md-0">Información Detallada <small class="text-white-50" id="userNameShowCardHeader">({{ $user->name }})</small></h5>
+                <div class="mt-2 mt-md-0">
                     <button id="exportDetailPdfButtonTrigger" class="btn btn-sm btn-info me-2">
                         <i class="bi bi-file-earmark-pdf"></i> Exportar a PDF
                     </button>
@@ -33,7 +33,7 @@
                     <dd class="col-sm-9" id="userId">{{ $user->id }}</dd>
 
                     <dt class="col-sm-3">Nombre:</dt>
-                    <dd class="col-sm-9">{{ $user->name }}</dd> {{-- El nombre ya está en el @page_header y en el card-header --}}
+                    <dd class="col-sm-9">{{ $user->name }}</dd> 
 
                     <dt class="col-sm-3">Email:</dt>
                     <dd class="col-sm-9" id="userEmail">{{ $user->email }}</dd>
@@ -75,25 +75,15 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 <script>
-    // Función para obtener el nombre de archivo personalizado
     function getCustomFilename(baseName, extension) {
         const now = new Date();
-        // Formato de fecha YYYY-MM-DD
         const datePart = now.toISOString().slice(0, 10);
         const defaultName = `${baseName}_${datePart}`;
-
-        // Mostrar prompt al usuario
         let userFilename = prompt("Introduce el nombre del archivo:", defaultName);
-
-        // Si el usuario cancela, devuelve null
         if (userFilename === null) {
             return null;
         }
-
-        // Usar el nombre del usuario si no está vacío, de lo contrario usar el por defecto
         let finalFilename = userFilename.trim() === '' ? defaultName : userFilename.trim();
-
-        // Asegurarse de que la extensión esté presente
         if (!finalFilename.toLowerCase().endsWith(`.${extension}`)) {
             finalFilename += `.${extension}`;
         }
@@ -108,13 +98,13 @@ document.addEventListener('DOMContentLoaded', function () {
             const doc = new jsPDF();
             let yPos = 15;
 
-            const userName = document.getElementById('userNameHeader')?.innerText || // Del nuevo @page_header
-                             '{{ $user->name }}'; // Fallback directo
+            const userName = document.getElementById('userNameHeader')?.innerText || 
+                             '{{ $user->name }}'; 
 
             const baseFilename = `detalle_usuario_${userName.replace(/\s+/g, '_')}`;
             const finalFilename = getCustomFilename(baseFilename, 'pdf');
 
-            if (!finalFilename) return; // El usuario canceló
+            if (!finalFilename) return; 
 
             doc.setFontSize(18);
             doc.text(`Detalles del Usuario: ${userName}`, 14, yPos); yPos += 10;
@@ -136,7 +126,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             addDetail("ID", "userId");
-            // El nombre ya está en el título
             addDetail("Email", "userEmail");
             addDetail("Roles", "userRoles");
             addDetail("Fecha de Creación", "userCreatedAt");

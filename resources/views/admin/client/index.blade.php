@@ -1,7 +1,6 @@
 @extends('layouts.admin')
 
 @push('styles')
-{{-- DataTables Bootstrap 5 CSS --}}
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
 @endpush
@@ -17,9 +16,9 @@
 <div class="content-wrapper py-4">
     <div class="container-fluid">
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center"> {{-- Este encabezado de tarjeta puede mantenerse --}}
-                <h5 class="mb-0">Lista de Clientes</h5>
-                <div>
+            <div class="card-header bg-primary text-white d-flex flex-column flex-md-row justify-content-md-between align-items-md-center">
+                <h5 class="mb-2 mb-md-0">Lista de Clientes</h5>
+                <div class="mt-2 mt-md-0">
                     <button id="exportExcelButtonList" class="btn btn-outline-light btn-sm fw-semibold me-2">
                         <i class="bi bi-file-earmark-excel me-1"></i> Excel
                     </button>
@@ -102,25 +101,15 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-    // Función para obtener el nombre de archivo personalizado
     function getCustomFilename(baseName, extension) {
         const now = new Date();
-        // Formato de fecha YYYY-MM-DD
         const datePart = now.toISOString().slice(0, 10);
         const defaultName = `${baseName}_${datePart}`;
-
-        // Mostrar prompt al usuario
         let userFilename = prompt("Introduce el nombre del archivo:", defaultName);
-
-        // Si el usuario cancela, devuelve null
         if (userFilename === null) {
             return null;
         }
-
-        // Usar el nombre del usuario si no está vacío, de lo contrario usar el por defecto
         let finalFilename = userFilename.trim() === '' ? defaultName : userFilename.trim();
-
-        // Asegurarse de que la extensión esté presente
         if (!finalFilename.toLowerCase().endsWith(`.${extension}`)) {
             finalFilename += `.${extension}`;
         }
@@ -133,7 +122,6 @@
             language: {
                 processing: "Procesando...",
                 search: "Buscar",
-                // Modificación para incluir "Todos"
                 lengthMenu: "Mostrar <select class='form-select form-select-sm'>"+
                             "<option value='10'>10</option>"+
                             "<option value='25'>25</option>"+

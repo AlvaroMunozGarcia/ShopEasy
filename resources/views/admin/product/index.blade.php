@@ -1,14 +1,12 @@
 @extends('layouts.admin')
 
 @push('styles')
-{{-- DataTables Bootstrap 5 CSS --}}
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
 @endpush
 
 @section('title', 'Gestión de Productos')
 
-{{-- Modificar el page_header si está filtrado --}}
 @section('page_header')
     Gestión de Productos
     @if(isset($filtered_provider_name) && $filtered_provider_name)
@@ -27,16 +25,12 @@
 @section('content')
 <div class="content-wrapper py-4">
     <div class="container-fluid">
-        {{-- El @page_header ya muestra el título principal de la página. --}}
-
         @if (session('error'))
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
                 {{ session('error') }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
             </div>
         @endif
-
-        {{-- INICIO: Mostrar Alertas de Stock Bajo (generadas por ventas) --}}
         @if (session()->has('low_stock_alerts') && is_array(session('low_stock_alerts')) && count(session('low_stock_alerts')) > 0)
             <div class="alert alert-warning alert-dismissible fade show" role="alert">
                 <strong><i class="bi bi-exclamation-triangle-fill me-2"></i>¡Atención! Productos con stock bajo (detectado en transacciones recientes):</strong>
@@ -47,21 +41,17 @@
                 </ul>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
-            {{-- Limpiar las alertas de la sesión después de mostrarlas en esta página --}}
             @php session()->forget('low_stock_alerts'); @endphp
         @endif
-        {{-- FIN: Mostrar Alertas de Stock Bajo --}}
-
-        {{-- Card principal --}}
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">
+               <div class="card shadow-sm border-0">
+            <div class="card-header bg-primary text-white d-flex flex-column flex-md-row justify-content-md-between align-items-md-center">
+                <h5 class="mb-2 mb-md-0">
                     Lista de Productos
                     @if(isset($filtered_provider_name) && $filtered_provider_name)
                         <small class="text-white-50"> (Proveedor: {{ $filtered_provider_name }})</small>
                     @endif
                 </h5>
-                <div>
+                <div class="mt-2 mt-md-0">
                     @if(isset($filtered_provider_name) && $filtered_provider_name)
                         <a href="{{ route('products.index') }}" class="btn btn-outline-light btn-sm fw-semibold me-2" title="Quitar filtro de proveedor">
                             <i class="bi bi-x-lg"></i> Quitar Filtro
@@ -73,7 +63,6 @@
                     <button id="exportPdfButtonListTrigger" class="btn btn-info btn-sm fw-semibold me-2">
                         <i class="bi bi-file-earmark-pdf me-1"></i> PDF
                     </button>
-                    {{-- El enlace para añadir producto ahora considera si hay un filtro de proveedor activo --}}
                     <a href="{{ route('products.create', (isset($provider_id_for_create_link) && $provider_id_for_create_link ? ['provider_id' => $provider_id_for_create_link] : [])) }}" class="btn btn-light text-primary fw-semibold">
                         <i class="bi bi-plus-lg me-1"></i> Añadir Producto
                     </a>
@@ -81,15 +70,6 @@
             </div>
 
             <div class="card-body">
-                {{-- Mensaje alternativo de filtro (si prefieres no tenerlo en el título del card) --}}
-                {{-- @if(isset($filtered_provider_name) && $filtered_provider_name)
-                    <div class="alert alert-info d-flex justify-content-between align-items-center">
-                        <span>Mostrando productos del proveedor: <strong>{{ $filtered_provider_name }}</strong></span>
-                        <a href="{{ route('products.index') }}" class="btn btn-sm btn-outline-primary">
-                            <i class="bi bi-x-lg"></i> Quitar Filtro
-                        </a>
-                    </div>
-                @endif --}}
                 <div class="table-responsive">
                     <table id="productsTable" class="table table-bordered table-hover align-middle mb-0">
                         <thead class="table-dark text-center">
@@ -153,13 +133,6 @@
                     </table>
                 </div>
             </div>
-
-            {{-- La paginación de Laravel se elimina o comenta, DataTables la manejará --}}
-            {{-- @if(method_exists($products, 'links'))
-                <div class="card-footer d-flex justify-content-center">
-                    {{ $products->links() }}
-                </div>
-            @endif --}}
         </div>
     </div>
 
@@ -176,25 +149,15 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-    // Función para obtener el nombre de archivo personalizado
     function getCustomFilename(baseName, extension) {
         const now = new Date();
-        // Formato de fecha YYYY-MM-DD
         const datePart = now.toISOString().slice(0, 10);
         const defaultName = `${baseName}_${datePart}`;
-
-        // Mostrar prompt al usuario
         let userFilename = prompt("Introduce el nombre del archivo:", defaultName);
-
-        // Si el usuario cancela, devuelve null
         if (userFilename === null) {
             return null;
         }
-
-        // Usar el nombre del usuario si no está vacío, de lo contrario usar el por defecto
         let finalFilename = userFilename.trim() === '' ? defaultName : userFilename.trim();
-
-        // Asegurarse de que la extensión esté presente
         if (!finalFilename.toLowerCase().endsWith(`.${extension}`)) {
             finalFilename += `.${extension}`;
         }

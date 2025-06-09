@@ -48,15 +48,13 @@
           </div>
         </div>
 
-        <!-- Card Ingresos -->
         <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
           <div class="card shadow-sm h-100">
             <div class="card-body">
               <div class="d-flex justify-content-between align-items-center">
                 <div>
                   <h5 class="card-title text-success mb-1">Ingresos Totales</h5>
-                   {{-- Ajusta el símbolo de moneda y formato si es necesario --}}
-                  <h2 class="mb-0">$/ {{ number_format($totalRevenue ?? 0, 2) }}</h2>
+                  <h2 class="mb-0">€/ {{ number_format($totalRevenue ?? 0, 2) }}</h2>
                 </div>
                 <div class="text-success opacity-50">
                   <i class="fas fa-dollar-sign fa-3x"></i>
@@ -111,8 +109,6 @@
             </div>
           </div>
         </div>
-
-        <!-- Card Proveedores -->
         <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
           <div class="card shadow-sm h-100">
             <div class="card-body">
@@ -127,13 +123,10 @@
               </div>
             </div>
              <div class="card-footer bg-transparent border-top-0 text-right">
-                  {{-- Asegúrate que 'providers.index' sea el nombre correcto de tu ruta --}}
                  <a href="{{ route('providers.index') }}" class="btn btn-sm btn-outline-primary">Ver Proveedores</a>
             </div>
           </div>
         </div>
-
-        <!-- Card Productos -->
         <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
           <div class="card shadow-sm h-100">
             <div class="card-body">
@@ -278,7 +271,7 @@
       data: {
         labels: @json($salesLast7DaysLabels), // Etiquetas (días) desde el controlador
         datasets: [{
-          label: 'Ventas (S/)',
+          label: 'Ventas (€)',
           backgroundColor: 'rgba(60,141,188,0.9)', // Color azul AdminLTE
           borderColor: 'rgba(60,141,188,0.8)',
           pointRadius: false,
@@ -314,14 +307,14 @@
             labels: @json($monthlyComparisonLabels),
             datasets: [
                 {
-                    label: 'Ventas (S/)',
+                    label: 'Ventas (€)',
                     backgroundColor: 'rgba(0, 166, 90, 0.2)', // Verde AdminLTE con transparencia
                     borderColor: 'rgba(0, 166, 90, 1)',
                     data: @json($monthlySalesData),
                     fill: true, // Rellenar área bajo la línea
                 },
                 {
-                    label: 'Compras (S/)',
+                    label: 'Compras (€)',
                     backgroundColor: 'rgba(243, 156, 18, 0.2)', // Naranja AdminLTE con transparencia
                     borderColor: 'rgba(243, 156, 18, 1)',
                     data: @json($monthlyPurchasesData),

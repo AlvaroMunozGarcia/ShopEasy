@@ -16,9 +16,9 @@
 <div class="content-wrapper py-4">
     <div class="container-fluid">
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center"> {{-- El título principal ya está en @page_header --}}
-                <h5 class="mb-0">Información Detallada <small class="text-white-50" id="providerNameCardHeader">({{ $provider->name }})</small></h5>
-                <div>
+            <div class="card-header bg-primary text-white d-flex flex-column flex-md-row justify-content-md-between align-items-md-center">
+                <h5 class="mb-2 mb-md-0">Información Detallada <small class="text-white-50" id="providerNameCardHeader">({{ $provider->name }})</small></h5>
+                <div class="mt-2 mt-md-0">
                     <button id="exportDetailPdfButtonTrigger" class="btn btn-sm btn-info me-2">
                         <i class="bi bi-file-earmark-pdf"></i> Exportar a PDF
                     </button>
@@ -33,8 +33,8 @@
                     <dt class="col-sm-3">ID</dt>
                     <dd class="col-sm-9" id="providerId">{{ $provider->id }}</dd>
 
-                    <dt class="col-sm-3">Nombre</dt> {{-- El nombre ya está en el @page_header y en el card-header --}}
-                    <dd class="col-sm-9">{{ $provider->name }}</dd> {{-- Ya capturado en providerName --}}
+                    <dt class="col-sm-3">Nombre</dt> 
+                    <dd class="col-sm-9">{{ $provider->name }}</dd> 
 
                     <dt class="col-sm-3">Email</dt>
                     <dd class="col-sm-9" id="providerEmail">{{ $provider->email ?? 'N/A' }}</dd>
@@ -48,7 +48,7 @@
                     <dt class="col-sm-3">Dirección</dt>
                     <dd class="col-sm-9" id="providerAddress">{{ $provider->address ?? 'N/A' }}</dd>
 
-                    <dt class="col-sm-3">Sitio Web</dt> {{-- Añadido si existe en tu modelo Provider --}}
+                    <dt class="col-sm-3">Sitio Web</dt> 
                     <dd class="col-sm-9" id="providerWebsite">{{ $provider->website ?? 'N/A' }}</dd>
 
                     <dt class="col-sm-3">Creado</dt>
@@ -58,8 +58,6 @@
                     <dd class="col-sm-9" id="providerUpdatedAt">{{ $provider->updated_at->format('d/m/Y H:i:s') }}</dd>
                 </dl>
             </div>
-
-            {{-- Nueva sección para acciones de productos --}}
             <div class="card-body border-top">
                 <h5 class="mb-3 pt-3">Productos Relacionados con {{ $provider->name }}</h5>
                 <div class="mb-2">
@@ -71,8 +69,6 @@
                     </a>
                 </div>
             </div>
-            {{-- Fin de la nueva sección --}}
-
             <div class="card-footer text-end">
                 <a href="{{ route('providers.edit', $provider) }}" class="btn btn-warning fw-semibold me-2">
                     <i class="bi bi-pencil"></i> Editar
@@ -94,25 +90,15 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 <script>
-    // Función para obtener el nombre de archivo personalizado
     function getCustomFilename(baseName, extension) {
         const now = new Date();
-        // Formato de fecha YYYY-MM-DD
         const datePart = now.toISOString().slice(0, 10);
         const defaultName = `${baseName}_${datePart}`;
-
-        // Mostrar prompt al usuario
         let userFilename = prompt("Introduce el nombre del archivo:", defaultName);
-
-        // Si el usuario cancela, devuelve null
         if (userFilename === null) {
             return null;
         }
-
-        // Usar el nombre del usuario si no está vacío, de lo contrario usar el por defecto
         let finalFilename = userFilename.trim() === '' ? defaultName : userFilename.trim();
-
-        // Asegurarse de que la extensión esté presente
         if (!finalFilename.toLowerCase().endsWith(`.${extension}`)) {
             finalFilename += `.${extension}`;
         }

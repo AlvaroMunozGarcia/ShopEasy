@@ -36,9 +36,9 @@
 
         {{-- Card Principal --}}
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center"> {{-- Este encabezado de tarjeta puede mantenerse --}}
-                <h5 class="mb-0">Lista de Proveedores</h5>
-                <div>
+            <div class="card-header bg-primary text-white d-flex flex-column flex-md-row justify-content-md-between align-items-md-center">
+                <h5 class="mb-2 mb-md-0">Lista de Proveedores</h5>
+                <div class="mt-2 mt-md-0">
                     <button id="exportExcelButtonList" class="btn btn-outline-light btn-sm fw-semibold me-2">
                         <i class="bi bi-file-earmark-excel me-1"></i> Excel
                     </button>

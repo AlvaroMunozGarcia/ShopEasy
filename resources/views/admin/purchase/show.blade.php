@@ -1,7 +1,6 @@
-{{-- Asumiendo que tienes un layout base como 'layouts.admin' --}}
-@extends('layouts.admin') {{-- Cambia 'layouts.admin' por tu layout principal si es diferente --}}
+@extends('layouts.admin') 
 
-@section('title', 'Detalles de Compra') {{-- Título de la página --}}
+@section('title', 'Detalles de Compra') 
 
 @section('page_header')
     Detalles de la Compra <span class="text-muted">#{{ $purchase->id }}</span>
@@ -13,28 +12,22 @@
 @endsection
 
 @section('content')
-<div class="content-wrapper">
-    {{-- La cabecera anterior con H1 y breadcrumbs se elimina,
-         ya que @page_header y @breadcrumbs del layout principal se encargarán de esto. --}}
-
-    <!-- Main content -->
-    <section class="content">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Información de la Compra #{{ $purchase->id }}</h3>
-                            <div class="card-tools">
+<div class="content-wrapper py-4">
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-xl-10 col-lg-11">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-primary text-white d-flex flex-column flex-md-row justify-content-md-between align-items-md-center">
+                        <h5 class="mb-2 mb-md-0">Información de la Compra #{{ $purchase->id }}</h5>
+                        <div class="mt-2 mt-md-0">
                                 <button id="exportDetailPdfButtonTrigger" class="btn btn-sm btn-info">
                                     <i class="bi bi-file-earmark-pdf"></i> Exportar a PDF
                                 </button>
                                 <a href="{{ route('purchases.index') }}" class="btn btn-sm btn-secondary">
-                                    <i class="fas fa-arrow-left"></i> Volver al Listado
+                                    <i class="bi bi-arrow-left-circle"></i> Volver al Listado
                                 </a>
                             </div>
                         </div>
-                        <!-- /.card-header -->
                         <div class="card-body">
                             <div class="row mb-4">
                                 <div class="col-md-6">
@@ -54,7 +47,7 @@
 
                             <h4>Detalles de la Compra</h4>
                             <div class="table-responsive">
-                                <table id="purchaseDetailsTable" class="table table-bordered table-striped">
+                                <table id="purchaseDetailsTable" class="table table-bordered table-hover table-sm">
                                     <thead>
                                         <tr>
                                             <th style="width: 40%;">Producto</th>
@@ -97,13 +90,11 @@
                                 </table>
                             </div>
                         </div>
-                        <div class="card-footer">
-                        </div>
+                        {{-- El card-footer puede eliminarse si no tiene contenido o acciones específicas aquí --}}
                     </div>
                 </div>
             </div>
         </div>
-    </section>
 </div>
 @endsection
 
@@ -111,25 +102,15 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 <script>
-    // Función para obtener el nombre de archivo personalizado
     function getCustomFilename(baseName, extension) {
         const now = new Date();
-        // Formato de fecha YYYY-MM-DD
         const datePart = now.toISOString().slice(0, 10);
         const defaultName = `${baseName}_${datePart}`;
-
-        // Mostrar prompt al usuario
         let userFilename = prompt("Introduce el nombre del archivo:", defaultName);
-
-        // Si el usuario cancela, devuelve null
         if (userFilename === null) {
             return null;
         }
-
-        // Usar el nombre del usuario si no está vacío, de lo contrario usar el por defecto
         let finalFilename = userFilename.trim() === '' ? defaultName : userFilename.trim();
-
-        // Asegurarse de que la extensión esté presente
         if (!finalFilename.toLowerCase().endsWith(`.${extension}`)) {
             finalFilename += `.${extension}`;
         }
@@ -144,8 +125,6 @@ document.addEventListener('DOMContentLoaded', function () {
 function exportPurchaseDetailsToPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-
-    // Información general de la compra
     const generalData = [
         ['ID Compra', '{{ $purchase->id }}'],
         ['Proveedor', '{{ $purchase->provider->name ?? "N/A" }}'],
@@ -171,8 +150,6 @@ function exportPurchaseDetailsToPDF() {
             1: { cellWidth: 120 }
         }
     });
-
-    // Tabla de productos
     const productData = [
         @foreach ($purchase->purchaseDetails as $detail)
             [
@@ -193,8 +170,6 @@ function exportPurchaseDetailsToPDF() {
         headStyles: { fillColor: [52, 152, 219] },
         theme: 'striped'
     });
-
-    // Totales al final
     const subtotal = {{ number_format($subtotalGeneral, 2, '.', '') }};
     const impuesto = {{ number_format($purchase->total - $subtotalGeneral, 2, '.', '') }};
     const total = {{ number_format($purchase->total, 2, '.', '') }};
@@ -213,7 +188,6 @@ function exportPurchaseDetailsToPDF() {
             1: { cellWidth: 50, halign: 'right' }
         }
     });
-    // Usar el ID de la compra para el nombre base y llamar a getCustomFilename
     const baseFilename = `compra_{{ $purchase->id }}`;
     const filename = getCustomFilename(baseFilename, 'pdf');
     if (filename) {
